@@ -1,0 +1,25 @@
+# sample node_edge map
+NODE:
+    - id: "0"
+      type: "intersection"
+      point: 
+           - x: 0
+             y: 0
+      specification: "start"
+    - id: "1"
+      type: "intersection"
+      point: 
+           - x: 1
+             y: 1
+      specification: ""
+    - id: "2"
+      type: "gps"
+      point: 
+           - x: 2
+             y: 2
+      specification: "goal"
+
+EDGE:
+    - node_id: ["0", "1"] 
+    - node_id: ["1", "2"] 
+
