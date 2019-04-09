@@ -1,4 +1,5 @@
 # sample node_edge map
+MAP_FRAME: '/map'
 NODE:
     - id: 0
       type: "intersection"

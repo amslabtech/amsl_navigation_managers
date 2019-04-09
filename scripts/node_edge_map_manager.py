@@ -25,20 +25,41 @@ class NodeEdgeMapManager:
 
         pprint.pprint(self.map_data)
 
-        self.marker_pub = rospy.Publisher('/node_edge_map/viz', MarkerArray, queue_size=1)
+        self.node_marker = MarkerArray()
+        self.node_marker_pub = rospy.Publisher('/node_edge_map/node/viz', MarkerArray, queue_size=1, latch=True)
         self.lock = threading.Lock()
 
         print '=== node edge map manager ==='
 
     def process(self):
         r = rospy.Rate(10)
+        self.make_node_marker()
         while not rospy.is_shutdown():
+            self.node_marker_pub.publish(self.node_marker)
             r.sleep()
 
-
-    def landmark_callback(self, lm):
-        with self.lock:
-            pass
+    def make_node_marker(self):
+        self.node_marker = MarkerArray()
+        time = rospy.get_rostime()
+        for node in self.map_data['NODE']:
+            n = Marker()
+            n.header.frame_id = self.map_data['MAP_FRAME']
+            n.header.stamp = time
+            n.id = node['id']
+            n.action = Marker().ADD
+            n.type = Marker().CUBE
+            n.lifetime = rospy.Duration()
+            n.scale.x = 0.5
+            n.scale.y = 0.5
+            n.scale.z = 0.5
+            n.color.r = 0.0
+            n.color.g = 1.0
+            n.color.b = 0.0
+            n.color.a = 0.7
+            n.pose.position.x = node['point']['x']
+            n.pose.position.y = node['point']['y']
+            self.node_marker.markers.append(n)
+            print node
 
 if __name__ == '__main__':
     node_edge_map_manager = NodeEdgeMapManager()
