@@ -30,6 +30,8 @@ class NodeEdgeMapManager:
         self.node_marker_pub = rospy.Publisher('/node_edge_map/viz/node', MarkerArray, queue_size=1, latch=True)
         self.edge_marker = Marker()
         self.edge_marker_pub = rospy.Publisher('/node_edge_map/viz/edge', Marker, queue_size=1, latch=True)
+        self.id_marker = MarkerArray()
+        self.id_marker_pub = rospy.Publisher('/node_edge_map/viz/id', MarkerArray, queue_size=1, latch=True)
         self.lock = threading.Lock()
 
         print '=== node edge map manager ==='
@@ -38,9 +40,11 @@ class NodeEdgeMapManager:
         r = rospy.Rate(10)
         self.make_node_marker()
         self.make_edge_marker()
+        self.make_id_marker()
         while not rospy.is_shutdown():
             self.node_marker_pub.publish(self.node_marker)
             self.edge_marker_pub.publish(self.edge_marker)
+            self.id_marker_pub.publish(self.id_marker)
             r.sleep()
 
     def make_node_marker(self):
@@ -48,6 +52,7 @@ class NodeEdgeMapManager:
         time = rospy.get_rostime()
         for node in self.map_data['NODE']:
             n = Marker()
+            n.ns = "node"
             n.header.frame_id = self.map_data['MAP_FRAME']
             n.header.stamp = time
             n.id = node['id']
@@ -68,6 +73,7 @@ class NodeEdgeMapManager:
         self.edge_marker.type = Marker().LINE_LIST
         self.edge_marker.lifetime = rospy.Duration()
         self.edge_marker.scale.x = 0.3
+        self.edge_marker.ns = "edge"
         for edge in self.map_data['EDGE']:
             p0 = Point()
             p0.x = self.map_data['NODE'][edge['node_id'][0]]['point']['x']
@@ -85,6 +91,24 @@ class NodeEdgeMapManager:
             self.edge_marker.colors.append(color)
             self.edge_marker.colors.append(color)
 
+    def make_id_marker(self):
+        self.id_marker = MarkerArray()
+        time = rospy.get_rostime()
+        for node in self.map_data['NODE']:
+            m = Marker()
+            m.ns = "id"
+            m.header.frame_id = self.map_data['MAP_FRAME']
+            m.header.stamp = time
+            m.id = node['id']
+            m.action = Marker().ADD
+            m.type = Marker().TEXT_VIEW_FACING
+            m.lifetime = rospy.Duration()
+            m.scale.z = 1.0
+            self.set_marker_position(m, node['point']['x'], node['point']['y'], 1)
+            self.set_marker_rgb(m, 1.0, 1.0, 1.0)
+            m.text = str(node['id'])
+            self.id_marker.markers.append(m)
+
     def set_marker_scale(self, marker, x, y, z):
         marker.scale.x = x
         marker.scale.y = y
@@ -95,7 +119,7 @@ class NodeEdgeMapManager:
         marker.pose.position.y = y
         marker.pose.position.z = z
 
-    def set_marker_rgb(self, marker, r, g, b, a=1.7):
+    def set_marker_rgb(self, marker, r, g, b, a=0.7):
         marker.color.r = r
         marker.color.g = g
         marker.color.b = b
