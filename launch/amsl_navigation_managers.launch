@@ -1,0 +1,9 @@
+<launch>
+
+    <arg name="map_path" default="$(find amsl_navigation_managers)/sample/map/sample_map.yaml"/>
+
+    <node pkg="amsl_navigation_managers" type="node_edge_map_manager.py" name="node_edge_map_manager">
+        <param name="MAP_PATH" value="$(arg map_path)"/>
+    </node>
+
+</launch>
