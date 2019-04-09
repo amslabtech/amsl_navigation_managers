@@ -2,24 +2,24 @@
 NODE:
     - id: "0"
       type: "intersection"
-      point: 
+      point:
            - x: 0
              y: 0
-      specification: "start"
+      label: "start"
     - id: "1"
       type: "intersection"
-      point: 
+      point:
            - x: 1
              y: 1
-      specification: ""
+      label: ""
     - id: "2"
       type: "gps"
-      point: 
+      point:
            - x: 2
              y: 2
-      specification: "goal"
+      label: "goal"
 
 EDGE:
-    - node_id: ["0", "1"] 
-    - node_id: ["1", "2"] 
+    - node_id: ["0", "1"]
+    - node_id: ["1", "2"]
 
