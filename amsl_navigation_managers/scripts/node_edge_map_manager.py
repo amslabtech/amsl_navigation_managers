@@ -6,6 +6,10 @@ import math
 import threading
 import yaml
 import pprint
+import os
+import time
+import datetime
+from stat import *
 
 import rospy
 import tf
@@ -22,10 +26,9 @@ class NodeEdgeMapManager:
     def __init__(self):
         rospy.init_node('node_edge_map_manager')
 
-        MAP_PATH = rospy.get_param('~MAP_PATH')
-        with open(MAP_PATH) as file:
-            self.map_data = yaml.load(file)
+        self.MAP_PATH = rospy.get_param('~MAP_PATH')
 
+        self.map_data = self.load_map_from_yaml()
         pprint.pprint(self.map_data)
 
         self.node_marker = MarkerArray()
@@ -44,6 +47,33 @@ class NodeEdgeMapManager:
 
     def process(self):
         r = rospy.Rate(10)
+
+        self.make_and_publish_map()
+
+        timestamp = time.mktime(datetime.datetime.now().utctimetuple())
+        dir_name = os.path.dirname(self.MAP_PATH)
+
+        while not rospy.is_shutdown():
+            for file in os.listdir(dir_name):
+                if 0 is file.find('.'):
+                    continue
+                file_timestamp = os.stat(dir_name+'/'+file)[ST_MTIME]
+                if timestamp < file_timestamp:
+                    timestamp = file_timestamp
+                    try:
+                        self.map_data = self.load_map_from_yaml()
+                        self.make_and_publish_map()
+                        print 'map updated!'
+                    except:
+                        print 'failed to update map'
+            r.sleep()
+
+    def load_map_from_yaml(self):
+        with open(self.MAP_PATH) as file:
+            map_data = yaml.load(file)
+        return map_data
+
+    def make_and_publish_map(self):
         self.make_node_marker()
         self.make_edge_marker()
         self.make_id_marker()
@@ -52,8 +82,6 @@ class NodeEdgeMapManager:
         self.edge_marker_pub.publish(self.edge_marker)
         self.id_marker_pub.publish(self.id_marker)
         self.node_edge_map_pub.publish(self.node_edge_map)
-        while not rospy.is_shutdown():
-            r.sleep()
 
     def make_node_marker(self):
         self.node_marker = MarkerArray()
