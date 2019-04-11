@@ -10,17 +10,105 @@ NODE:
     - id: 1
       type: "intersection"
       point:
-           x: 1
-           y: 1
+           x: -17.7421 
+           y: 1.00188 
       label: ""
     - id: 2
-      type: "gps"
+      type: "intersection"
       point:
-           x: 2
-           y: 2
-      label: "goal"
+           x: -18.1946 
+           y: -5.96597 
+      label: ""
+    - id: 3
+      type: "intersection"
+      point:
+           x: -0.271493 
+           y: -6.7 
+      label: ""
+    - id: 4
+      type: "intersection"
+      point:
+           x: 15.0905 
+           y: -7.515 
+      label: ""
+    - id: 5
+      type: "intersection"
+      point:
+           x: 27.1493 
+           y: -8.79424 
+      label: ""
+    - id: 6
+      type: "intersection"
+      point:
+           x: 34.2081 
+           y: -2.87354 
+      label: ""
+    - id: 7
+      type: "intersection"
+      point:
+           x: 15.5 
+           y: -1.16979 
+      label: ""
+    - id: 8
+      type: "intersection"
+      point:
+           x: 28.5067 
+           y: 5.06597 
+      label: ""
+    - id: 9
+      type: "intersection"
+      point:
+           x: 15.7715 
+           y: 6.46597 
+      label: ""
+    - id: 10
+      type: "intersection"
+      point:
+           x: 0.36199 
+           y: 7.79236 
+      label: ""
+    - id: 11
+      type: "intersection"
+      point:
+           x: -17.8325 
+           y: 9.23252 
+      label: ""
+    - id: 12
+      type: "intersection"
+      point:
+           x: -27.0588 
+           y: 10.0188 
+      label: ""
+    - id: 13
+      type: "intersection"
+      point:
+           x: -31.6742 
+           y: 2.00563 
+      label: ""
+    - id: 14
+      type: "intersection"
+      point:
+           x: -27.0588 
+           y: -5.5 
+      label: ""
 
 EDGE:
     - node_id: [0, 1]
     - node_id: [1, 2]
+    - node_id: [2, 3]
+    - node_id: [3, 4]
+    - node_id: [4, 5]
+    - node_id: [6, 7]
+    - node_id: [8, 9]
+    - node_id: [9, 10]
+    - node_id: [10, 11]
+    - node_id: [11, 12]
+    - node_id: [1, 13]
+    - node_id: [2, 14]
+    - node_id: [4, 7]
+    - node_id: [7, 9]
+    - node_id: [7, 0]
+    - node_id: [1, 11]
+    - node_id: [0, 10]
+    - node_id: [0, 3]
 
