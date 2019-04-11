@@ -72,7 +72,7 @@ Visualization Manager:
       Value: true
   Enabled: true
   Global Options:
-    Background Color: 100; 100; 100
+    Background Color: 48; 48; 48
     Default Light: true
     Fixed Frame: map
     Frame Rate: 30
