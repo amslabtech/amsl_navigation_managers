@@ -10,6 +10,7 @@ import os
 import time
 import datetime
 from stat import *
+import copy
 
 import rospy
 import tf
@@ -45,11 +46,12 @@ class CheckpointManager:
     def process(self):
         r = rospy.Rate(10)
 
+        self.make_and_publish_checkpoint()
+
         timestamp = time.mktime(datetime.datetime.now().utctimetuple())
         dir_name = os.path.dirname(self.CHECKPOINT_PATH)
 
         while not rospy.is_shutdown():
-            self.make_and_publish_checkpoint()
             for file in os.listdir(dir_name):
                 if 0 is file.find('.'):
                     continue
@@ -58,6 +60,7 @@ class CheckpointManager:
                     timestamp = file_timestamp
                     try:
                         self.cp_data = self.load_cp_from_yaml()
+                        self.make_and_publish_checkpoint()
                         print 'checkpoint updated!'
                     except:
                         print 'failed to update checkpoint'
@@ -70,6 +73,7 @@ class CheckpointManager:
 
     def make_and_publish_checkpoint(self):
         self.make_checkpoint()
+        self.update_node_color()
         self.checkpoint_list_pub.publish(self.checkpoint_list)
         self.cp_marker_pub.publish(self.cp_marker)
 
@@ -81,15 +85,21 @@ class CheckpointManager:
     def node_callback(self, node):
         with self.lock:
             self.node_markers = node
+        self.make_and_publish_checkpoint()
 
+    def update_node_color(self):
         self.cp_marker = MarkerArray()
-        for cp in self.checkpoint_list.data:
-            for node in self.node_markers.markers:
-                if cp == node.id:
+        markers = copy.deepcopy(self.node_markers.markers)
+        for node in markers:
+            appended = False
+            for cp_id in self.checkpoint_list.data:
+                if cp_id == node.id:
+                    self.set_marker_rgb(node, 1.0, 0.0, 0.0)
                     self.cp_marker.markers.append(node)
+                    appended = True
                     break
-        for cp in self.cp_marker.markers:
-            self.set_marker_rgb(cp, 1.0, 0.0, 0.0)
+            if not appended:
+                self.cp_marker.markers.append(node)
             
     def set_marker_scale(self, marker, x, y, z):
         marker.scale.x = x

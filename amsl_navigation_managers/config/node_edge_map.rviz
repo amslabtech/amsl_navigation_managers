@@ -63,19 +63,18 @@ Visualization Manager:
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
-      Enabled: true
+      Enabled: false
       Marker Topic: /node_edge_map/viz/node
       Name: MarkerArray
       Namespaces:
-        node: true
+        {}
       Queue Size: 100
-      Value: true
+      Value: false
     - Class: rviz/MarkerArray
       Enabled: true
       Marker Topic: /node_edge_map/viz/node/checkpoint
       Name: MarkerArray
       Namespaces:
-        checkpoint: true
         node: true
       Queue Size: 100
       Value: true
@@ -104,16 +103,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 67.794899
+      Distance: 78.6359406
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 1.44673157
-        Y: -1.71966457
-        Z: -6.02114964
+        X: 2.51048136
+        Y: 2.40409231
+        Z: -11.321557
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
@@ -122,7 +121,7 @@ Visualization Manager:
       Pitch: 1.56979632
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.47537279
+      Yaw: 1.52037299
     Saved: ~
 Window Geometry:
   Displays:
