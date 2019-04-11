@@ -98,6 +98,7 @@ class NodeEdgeMapManager:
             self.set_marker_scale(n, 0.5, 0.5, 0.5)
             self.set_marker_rgb(n, 0.0, 1.0, 0.0)
             self.set_marker_position(n, node['point']['x'], node['point']['y'], 0)
+            self.set_marker_orientation(n, 0, 0, 0)
             self.node_marker.markers.append(n)
 
     def make_edge_marker(self):
@@ -141,6 +142,7 @@ class NodeEdgeMapManager:
             m.lifetime = rospy.Duration()
             m.scale.z = 1.0
             self.set_marker_position(m, node['point']['x'], node['point']['y'], 1)
+            self.set_marker_orientation(m, 0, 0, 0)
             self.set_marker_rgb(m, 1.0, 1.0, 1.0)
             m.text = str(node['id'])
             self.id_marker.markers.append(m)
@@ -160,6 +162,10 @@ class NodeEdgeMapManager:
         marker.color.g = g
         marker.color.b = b
         marker.color.a = a
+
+    def set_marker_orientation(self, marker, r, p, y):
+        q = tf.transformations.quaternion_from_euler(r, p, y)
+        marker.pose.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3]) 
 
     def make_node_edge_map(self):
         time = rospy.get_rostime()
