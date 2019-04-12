@@ -31,6 +31,8 @@ class NodeEdgeMapManager:
         self.map_data = self.load_map_from_yaml()
         pprint.pprint(self.map_data)
 
+        self.deleted_id_list = []
+
         self.node_marker = MarkerArray()
         self.node_marker_pub = rospy.Publisher('/node_edge_map/viz/node', MarkerArray, queue_size=1, latch=True)
         self.edge_marker = Marker()
@@ -61,10 +63,14 @@ class NodeEdgeMapManager:
                 if timestamp < file_timestamp:
                     timestamp = file_timestamp
                     try:
-                        self.map_data = self.load_map_from_yaml()
+                        self.new_map_data = self.load_map_from_yaml()
+                        self.deleted_id_list = self.compare_id()
+                        self.map_data = self.new_map_data
+                        self.delete_invalid_edge()
                         self.make_and_publish_map()
                         print 'map updated!'
-                    except:
+                    except Exception as e:
+                        print e
                         print 'failed to update map'
             r.sleep()
 
@@ -100,6 +106,17 @@ class NodeEdgeMapManager:
             self.set_marker_position(n, node['point']['x'], node['point']['y'], 0)
             self.set_marker_orientation(n, 0, 0, 0)
             self.node_marker.markers.append(n)
+        for n_id in self.deleted_id_list:
+            n = Marker()
+            n.ns = "node"
+            n.header.frame_id = self.map_data['MAP_FRAME']
+            n.header.stamp = time
+            n.id = n_id
+            n.action = Marker().DELETE
+            n.type = Marker().CUBE
+            n.lifetime = rospy.Duration()
+            self.set_marker_orientation(n, 0, 0, 0)
+            self.node_marker.markers.append(n)
 
     def make_edge_marker(self):
         self.edge_marker = Marker()
@@ -113,11 +130,11 @@ class NodeEdgeMapManager:
         self.edge_marker.ns = "edge"
         for edge in self.map_data['EDGE']:
             p0 = Point()
-            p0.x = self.map_data['NODE'][edge['node_id'][0]]['point']['x']
-            p0.y = self.map_data['NODE'][edge['node_id'][0]]['point']['y']
+            p0.x = self.map_data['NODE'][self.get_index_from_id(edge['node_id'][0])]['point']['x']
+            p0.y = self.map_data['NODE'][self.get_index_from_id(edge['node_id'][0])]['point']['y']
             p1 = Point()
-            p1.x = self.map_data['NODE'][edge['node_id'][1]]['point']['x']
-            p1.y = self.map_data['NODE'][edge['node_id'][1]]['point']['y']
+            p1.x = self.map_data['NODE'][self.get_index_from_id(edge['node_id'][1])]['point']['x']
+            p1.y = self.map_data['NODE'][self.get_index_from_id(edge['node_id'][1])]['point']['y']
             self.edge_marker.points.append(p0)
             self.edge_marker.points.append(p1)
             color = ColorRGBA()
@@ -145,6 +162,16 @@ class NodeEdgeMapManager:
             self.set_marker_orientation(m, 0, 0, 0)
             self.set_marker_rgb(m, 1.0, 1.0, 1.0)
             m.text = str(node['id'])
+            self.id_marker.markers.append(m)
+        for n_id in self.deleted_id_list:
+            m = Marker()
+            m.ns = "id"
+            m.header.frame_id = self.map_data['MAP_FRAME']
+            m.header.stamp = time
+            m.id = n_id
+            m.action = Marker().DELETE
+            m.type = Marker().TEXT_VIEW_FACING
+            m.lifetime = rospy.Duration()
             self.id_marker.markers.append(m)
 
     def set_marker_scale(self, marker, x, y, z):
@@ -183,14 +210,44 @@ class NodeEdgeMapManager:
             self.node_edge_map.nodes.append(n)
         for edge in self.map_data['EDGE']:
             e = Edge()
-            x0 = self.map_data['NODE'][edge['node_id'][0]]['point']['x']
-            y0 = self.map_data['NODE'][edge['node_id'][0]]['point']['y']
-            x1 = self.map_data['NODE'][edge['node_id'][1]]['point']['x']
-            y1 = self.map_data['NODE'][edge['node_id'][1]]['point']['y']
+            x0 = self.map_data['NODE'][self.get_index_from_id(edge['node_id'][0])]['point']['x']
+            y0 = self.map_data['NODE'][self.get_index_from_id(edge['node_id'][0])]['point']['y']
+            x1 = self.map_data['NODE'][self.get_index_from_id(edge['node_id'][1])]['point']['x']
+            y1 = self.map_data['NODE'][self.get_index_from_id(edge['node_id'][1])]['point']['y']
             e.length = math.sqrt((x0 - x1) ** 2 + (y0 - y1) ** 2)
             e.node0_id = edge['node_id'][0]
             e.node1_id = edge['node_id'][1]
             self.node_edge_map.edges.append(e)
+
+    def compare_id(self):
+        deleted_id_list = []
+        original_id_list = []
+        for node in self.map_data['NODE']:
+            original_id_list.append(node['id'])
+        new_id_list = []
+        for node in self.new_map_data['NODE']:
+            new_id_list.append(node['id'])
+        if len(original_id_list) > 0:
+            for n_id in original_id_list:
+                if not (n_id in new_id_list):
+                    deleted_id_list.append(n_id)
+        return deleted_id_list
+
+    def delete_invalid_edge(self):
+        for edge in self.map_data['EDGE'][:]:
+            for n_id in self.deleted_id_list:
+                if n_id in edge['node_id']:
+                    self.map_data['EDGE'].remove(edge)
+                    #print edge
+        if self.deleted_id_list != []:
+            print "deleted:", self.deleted_id_list
+
+    def get_index_from_id(self, n_id):
+        index = 0;
+        for node in self.map_data['NODE']:
+            if node['id'] == n_id:
+                return index 
+            index+=1
 
 if __name__ == '__main__':
     node_edge_map_manager = NodeEdgeMapManager()
