@@ -1,0 +1,16 @@
+task:
+    - trigger: "arrival/node" 
+      node_id: 1
+      task_type: "run/searching_target_person_recognizer"
+
+    - trigger: "recognition/white_line"
+      task_type: "stop"
+
+    - trigger: "recognition/searching_target_person"
+      task_type: "go_to_temp_goal"
+
+    - trigger: "arrival/temp_goal"
+      task_type: "kill/searching_target_person_recognizer"
+
+    - trigger: "start"
+      task_type: "follow_global_path"
