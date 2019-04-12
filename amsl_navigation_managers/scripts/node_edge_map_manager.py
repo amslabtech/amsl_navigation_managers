@@ -19,6 +19,7 @@ from geometry_msgs.msg import Quaternion, Point
 from visualization_msgs.msg import Marker, MarkerArray
 
 from amsl_navigation_msgs.msg import Node, Edge, NodeEdgeMap
+from amsl_navigation_msgs.srv import UpdateNode, UpdateEdge, UpdateNodeResponse, UpdateEdgeResponse
 
 np.set_printoptions(linewidth=200)
 
@@ -42,6 +43,9 @@ class NodeEdgeMapManager:
 
         self.node_edge_map = NodeEdgeMap()
         self.node_edge_map_pub = rospy.Publisher('/node_edge_map', NodeEdgeMap, queue_size=1, latch=True)
+
+        self.update_node_server = rospy.Service('/node_edge_map/update_node', UpdateNode, self.update_node_handler)
+        self.update_edge_server = rospy.Service('/node_edge_map/update_edge', UpdateEdge, self.update_edge_handler)
 
         self.lock = threading.Lock()
 
@@ -248,6 +252,88 @@ class NodeEdgeMapManager:
             if node['id'] == n_id:
                 return index 
             index+=1
+        return -1
+
+    def update_node_handler(self, request):
+        self.deleted_id_list = []
+        if request.operation == request.ADD or request.operation == request.MODIFY:
+            try:
+                n = self.get_dict_from_node_msg(request.node)
+                index = self.get_index_from_id(n['id'])
+                if index < 0:
+                    # ADD
+                    self.map_data['NODE'].append(self.get_dict_from_node_msg(request.node))
+                else:
+                    # MODIFY
+                    n = self.get_dict_from_node_msg(request.node)
+                    self.map_data['NODE'][self.get_index_from_id(n['id'])] = n
+                self.make_and_publish_map()
+                return UpdateNodeResponse(True)
+            except Exception as e:
+                print e
+                print 'failed to update map'
+                return UpdateNodeResponse(False)
+        elif request.operation == request.DELETE:
+            try:
+                n = self.get_dict_from_node_msg(request.node)
+                self.deleted_id_list.append(n['id'])
+                self.delete_invalid_edge()
+                self.make_and_publish_map()
+                return UpdateNodeResponse(True)
+            except Exception as e:
+                print e
+                print 'failed to update map'
+                return UpdateNodeResponse(False)
+
+
+    def update_edge_handler(self, request):
+        if request.operation == request.ADD or request.operation == request.MODIFY:
+            try:
+                edge = self.get_dict_from_edge_msg(request.edge)
+                index = self.get_corresponding_edge_index(edge)
+                if index < 0:
+                    self.map_data['EDGE'].append(edge)
+                    self.make_and_publish_map()
+                return UpdateEdgeResponse(True)
+            except Exception as e:
+                print e
+                print 'failed to update map'
+                return UpdateEdgeResponse(False)
+        elif request.operation == request.DELETE:
+            try:
+                edge = self.get_dict_from_edge_msg(request.edge)
+                index = self.get_corresponding_edge_index(edge)
+                if index >= 0:
+                    del self.map_data['EDGE'][index]
+                    self.make_and_publish_map()
+                    return UpdateEdgeResponse(True)
+                else:
+                    return UpdateEdgeResponse(False)
+            except Exception as e:
+                print e
+                print 'failed to update map'
+                return UpdateEdgeResponse(False)
+
+
+    def get_dict_from_node_msg(self, msg):
+        node_dict = {'id' : msg.id, 
+                     'label' : msg.label,
+                     'type' : msg.type,
+                     'point' : {'x' : msg.point.x, 'y' : msg.point.y}
+                    }
+        return node_dict
+
+    def get_dict_from_edge_msg(self, msg):
+        edge_dict = {'node_id' : [msg.node0_id, msg.node1_id]} 
+        return edge_dict
+
+    def get_corresponding_edge_index(self, edge): 
+        index = 0
+        for e in self.map_data['EDGE']:
+            if set(e['node_id']) == set(edge['node_id']):
+                return index 
+            index += 1
+        return -1
 
 if __name__ == '__main__':
     node_edge_map_manager = NodeEdgeMapManager()
