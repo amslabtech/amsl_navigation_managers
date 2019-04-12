@@ -1,0 +1,7 @@
+amsl_navigation_msgs/Edge edge
+uint8 operation
+uint8 ADD=0
+uint8 MODIFY=0
+uint8 DELETE=1
+---
+bool succeeded
