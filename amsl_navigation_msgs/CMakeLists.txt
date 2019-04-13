@@ -61,6 +61,7 @@ add_service_files(
   FILES
   UpdateNode.srv
   UpdateEdge.srv
+  RunStop.srv
 )
 
 ## Generate actions in the 'action' folder

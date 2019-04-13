@@ -1,0 +1,5 @@
+bool operation
+bool RUN=1
+bool STOP=0
+---
+bool succeeded
