@@ -218,7 +218,7 @@ class NodeEdgeMapManager:
             y0 = self.map_data['NODE'][self.get_index_from_id(edge['node_id'][0])]['point']['y']
             x1 = self.map_data['NODE'][self.get_index_from_id(edge['node_id'][1])]['point']['x']
             y1 = self.map_data['NODE'][self.get_index_from_id(edge['node_id'][1])]['point']['y']
-            e.length = math.sqrt((x0 - x1) ** 2 + (y0 - y1) ** 2)
+            e.distance = math.sqrt((x0 - x1) ** 2 + (y0 - y1) ** 2)
             e.node0_id = edge['node_id'][0]
             e.node1_id = edge['node_id'][1]
             self.node_edge_map.edges.append(e)
