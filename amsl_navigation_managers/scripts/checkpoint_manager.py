@@ -30,6 +30,8 @@ class CheckpointManager:
         self.cp_data = self.load_cp_from_yaml()
         pprint.pprint(self.cp_data)
 
+        self.cp_passed = []
+
         self.cp_marker = MarkerArray()
         self.cp_marker_pub = rospy.Publisher('/node_edge_map/viz/node/checkpoint', MarkerArray, queue_size=1, latch=True)
 
@@ -38,6 +40,9 @@ class CheckpointManager:
 
         self.node_markers = MarkerArray()
         self.node_sub = rospy.Subscriber('/node_edge_map/viz/node', MarkerArray, self.node_callback)
+
+        self.current_edge = Edge()
+        self.edge_sub = rospy.Subscriber('/estimated_pose/edge', Edge, self.edge_callback)
 
         self.lock = threading.Lock()
 
@@ -85,6 +90,14 @@ class CheckpointManager:
     def node_callback(self, node):
         with self.lock:
             self.node_markers = node
+        self.make_and_publish_checkpoint()
+
+    def edge_callback(self, edge):
+        with self.lock:
+            self.current_edge = edge
+            if self.cp_data['checkpoints'][0] == self.current_edge.node0_id: 
+                self.cp_passed.append(self.cp_data['checkpoints'][0])
+                del(self.cp_data['checkpoints'][0])
         self.make_and_publish_checkpoint()
 
     def update_node_color(self):
