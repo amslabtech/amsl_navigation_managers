@@ -63,6 +63,7 @@ add_service_files(
   UpdateEdge.srv
   RunStop.srv
   UpdateCheckpoint.srv
+  Replan.srv
 )
 
 ## Generate actions in the 'action' folder
