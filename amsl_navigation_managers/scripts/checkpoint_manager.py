@@ -20,6 +20,7 @@ from geometry_msgs.msg import Quaternion, Point
 from visualization_msgs.msg import Marker, MarkerArray
 
 from amsl_navigation_msgs.msg import Node, Edge, NodeEdgeMap
+from amsl_navigation_msgs.srv import UpdateCheckpoint, UpdateCheckpointResponse
 
 class CheckpointManager:
     def __init__(self):
@@ -43,6 +44,8 @@ class CheckpointManager:
 
         self.current_edge = Edge()
         self.edge_sub = rospy.Subscriber('/estimated_pose/edge', Edge, self.edge_callback)
+
+        self.update_checkpoint_server = rospy.Service('/node_edge_map/update_checkpoint', UpdateCheckpoint, self.update_checkpoint_handler)
 
         self.lock = threading.Lock()
 
@@ -129,6 +132,33 @@ class CheckpointManager:
         marker.color.g = g
         marker.color.b = b
         marker.color.a = a
+
+    def update_checkpoint_handler(self, request):
+        if request.operation == request.ADD:
+            try:
+                flag = False
+                for node in self.node_markers.markers:
+                    if node.id == request.id:
+                        flag = True
+                if flag: 
+                    self.cp_data['checkpoints'].insert(0, request.id)
+                else:
+                    raise Exception
+                self.make_and_publish_checkpoint()
+                return UpdateCheckpointResponse(True)
+            except Exception as e:
+                print e
+                print 'failed to update checkpoint'
+                return UpdateCheckpointResponse(False)
+        elif request.operation == request.DELETE:
+            try:
+                self.cp_data['checkpoints'].remove(request.id)
+                self.make_and_publish_checkpoint()
+                return UpdateCheckpointResponse(True)
+            except Exception as e:
+                print e
+                print 'failed to update checkpoint'
+                return UpdateCheckpointResponse(False)
 
 if __name__ == '__main__':
     checkpoint_manager = CheckpointManager()
