@@ -213,6 +213,7 @@ class NodeEdgeMapManager:
             n.point.y = node['point']['y']
             self.node_edge_map.nodes.append(n)
         for edge in self.map_data['EDGE']:
+            # forward
             e = Edge()
             x0 = self.map_data['NODE'][self.get_index_from_id(edge['node_id'][0])]['point']['x']
             y0 = self.map_data['NODE'][self.get_index_from_id(edge['node_id'][0])]['point']['y']
@@ -222,6 +223,17 @@ class NodeEdgeMapManager:
             e.direction = math.atan2((y1 - y0), (x1 - x0));
             e.node0_id = edge['node_id'][0]
             e.node1_id = edge['node_id'][1]
+            self.node_edge_map.edges.append(e)
+            # backward
+            e = Edge()
+            x0 = self.map_data['NODE'][self.get_index_from_id(edge['node_id'][1])]['point']['x']
+            y0 = self.map_data['NODE'][self.get_index_from_id(edge['node_id'][1])]['point']['y']
+            x1 = self.map_data['NODE'][self.get_index_from_id(edge['node_id'][0])]['point']['x']
+            y1 = self.map_data['NODE'][self.get_index_from_id(edge['node_id'][0])]['point']['y']
+            e.distance = math.sqrt((x0 - x1) ** 2 + (y0 - y1) ** 2)
+            e.direction = math.atan2((y1 - y0), (x1 - x0));
+            e.node0_id = edge['node_id'][1]
+            e.node1_id = edge['node_id'][0]
             self.node_edge_map.edges.append(e)
 
     def compare_id(self):
