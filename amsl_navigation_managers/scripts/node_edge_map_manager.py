@@ -42,7 +42,7 @@ class NodeEdgeMapManager:
         self.id_marker_pub = rospy.Publisher('/node_edge_map/viz/id', MarkerArray, queue_size=1, latch=True)
 
         self.node_edge_map = NodeEdgeMap()
-        self.node_edge_map_pub = rospy.Publisher('/node_edge_map', NodeEdgeMap, queue_size=1, latch=True)
+        self.node_edge_map_pub = rospy.Publisher('/node_edge_map/map', NodeEdgeMap, queue_size=1, latch=True)
 
         self.update_node_server = rospy.Service('/node_edge_map/update_node', UpdateNode, self.update_node_handler)
         self.update_edge_server = rospy.Service('/node_edge_map/update_edge', UpdateEdge, self.update_edge_handler)
