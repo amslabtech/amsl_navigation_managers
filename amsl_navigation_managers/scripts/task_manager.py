@@ -28,7 +28,7 @@ class TaskManager:
         self.TASK_LIST_PATH = rospy.get_param('~TASK_LIST_PATH')
 
         self.map = NodeEdgeMap()
-        self.map_sub = rospy.Subscriber('/node_edge_map', NodeEdgeMap, self.map_callback)
+        self.map_sub = rospy.Subscriber('/node_edge_map/map', NodeEdgeMap, self.map_callback)
 
         self.lock = threading.Lock()
 
