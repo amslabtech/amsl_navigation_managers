@@ -289,6 +289,11 @@ class NodeEdgeMapManager:
         elif request.operation == request.DELETE:
             try:
                 n = self.get_dict_from_node_msg(request.node)
+                index = self.get_index_from_id(n['id'])
+                if index >= 0:
+                    del self.map_data['NODE'][index]
+                else:
+                    return UpdateNodeResponse(False)
                 self.deleted_id_list.append(n['id'])
                 self.delete_invalid_edge()
                 self.make_and_publish_map()
