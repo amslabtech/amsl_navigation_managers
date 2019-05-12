@@ -3,7 +3,7 @@
 ## node_edge_map_manager
 - This node loads map data from yaml(sample at ./sample/map/sample_map.yaml), and publishes map data for path planning, localization, etc.
 - published topics
-  - /node_edge_map (amsl_navigation_msgs/NodeEdgeMap)
+  - /node_edge_map/map (amsl_navigation_msgs/NodeEdgeMap)
 - services
   - /node_edge_map/update_node (amsl_navigation_msgs/UpdateNode)
   - /node_edge_map/update_edge (amsl_navigation_msgs/UpdateNode)
