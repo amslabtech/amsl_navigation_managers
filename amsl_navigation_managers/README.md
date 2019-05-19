@@ -1,5 +1,12 @@
 # amsl_navigation_managers
 
+## Environments
+- Ubuntu 16.04LTS & ROS Kinetic
+- Ubuntu 18.04LTS & ROS Melodic
+
+## Requirements
+- pyyaml
+
 ## node_edge_map_manager
 - This node loads map data from yaml(sample at ./sample/map/sample_map.yaml), and publishes map data for path planning, localization, etc.
 - published topics
