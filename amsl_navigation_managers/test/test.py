@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 import unittest
-import rostest, rospy
+import rostest
+import rospy
 
 class TestCase(unittest.TestCase):
     def setUp(self):
@@ -12,3 +13,4 @@ class TestCase(unittest.TestCase):
         
 if __name__ == '__main__':
     rospy.init_node('test_amsl_navigation_managers')
+    rostest.rosrun('test_case', 'test_case', TestCase)
