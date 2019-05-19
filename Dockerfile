@@ -31,7 +31,7 @@ ENV ROS_WORKSPACE=/root/catkin_ws
 RUN ln -sf /usr/include/eigen3/Eigen /usr/include/Eigen
 
 RUN apt clean \
-    rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/*
 
 RUN pip install pyyaml
 
