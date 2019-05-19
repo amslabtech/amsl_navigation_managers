@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   visualization_msgs
+  tf
 )
 
 ## System dependencies are found with CMake's conventions
@@ -106,7 +107,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES amsl_navigation_managers
-#  CATKIN_DEPENDS roscpp rospy std_msgs visualization_msgs
+   CATKIN_DEPENDS roscpp rospy std_msgs visualization_msgs tf
 #  DEPENDS system_lib
 )
 
