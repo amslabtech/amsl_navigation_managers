@@ -29,5 +29,7 @@ ENV ROS_WORKSPACE=/root/catkin_ws
 
 RUN ln -sf /usr/include/eigen3/Eigen /usr/include/Eigen
 
+RUN pip install pyyaml
+
 # clone repository
 WORKDIR /root
