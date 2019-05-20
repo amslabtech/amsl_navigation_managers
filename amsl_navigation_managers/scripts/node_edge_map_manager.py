@@ -223,7 +223,6 @@ class NodeEdgeMapManager:
             e.direction = math.atan2((y1 - y0), (x1 - x0));
             e.node0_id = edge['node_id'][0]
             e.node1_id = edge['node_id'][1]
-            e.passable = True
             self.node_edge_map.edges.append(e)
             # backward
             e = Edge()
@@ -235,7 +234,6 @@ class NodeEdgeMapManager:
             e.direction = math.atan2((y1 - y0), (x1 - x0));
             e.node0_id = edge['node_id'][1]
             e.node1_id = edge['node_id'][0]
-            e.passable = True
             self.node_edge_map.edges.append(e)
 
     def compare_id(self):
