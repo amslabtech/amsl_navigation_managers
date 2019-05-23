@@ -1,4 +1,4 @@
-#include "node_edge_map_interface/node_edge_map_interface.h"
+#include "amsl_navigation_managers/node_edge_map_interface.h"
 
 NodeEdgeMapInterface::NodeEdgeMapInterface(void)
 {
