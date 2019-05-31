@@ -27,7 +27,12 @@ class NodeEdgeMapManager:
     def __init__(self):
         rospy.init_node('node_edge_map_manager')
 
-        self.MAP_PATH = rospy.get_param('~MAP_PATH')
+        if rospy.has_param('~MAP_PATH'):
+            self.MAP_PATH = rospy.get_param('~MAP_PATH')
+
+        self.HZ = 10
+        if rospy.has_param('~HZ'):
+            self.HZ = rospy.get_param('~HZ')
 
         self.map_data = self.load_map_from_yaml()
         pprint.pprint(self.map_data)
@@ -52,7 +57,7 @@ class NodeEdgeMapManager:
         print '=== node edge map manager ==='
 
     def process(self):
-        r = rospy.Rate(10)
+        r = rospy.Rate(self.HZ)
 
         self.make_and_publish_map()
 
@@ -71,11 +76,11 @@ class NodeEdgeMapManager:
                         self.deleted_id_list = self.compare_id()
                         self.map_data = self.new_map_data
                         self.delete_invalid_edge()
-                        self.make_and_publish_map()
                         print 'map updated!'
                     except Exception as e:
                         print e
                         print 'failed to update map'
+            self.make_and_publish_map()
             r.sleep()
 
     def load_map_from_yaml(self):
@@ -196,13 +201,13 @@ class NodeEdgeMapManager:
 
     def set_marker_orientation(self, marker, r, p, y):
         q = tf.transformations.quaternion_from_euler(r, p, y)
-        marker.pose.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3]) 
+        marker.pose.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
 
     def make_node_edge_map(self):
         time = rospy.get_rostime()
         self.node_edge_map.header.stamp = time
-        self.node_edge_map.header.frame_id = self.map_data['MAP_FRAME'] 
-        self.node_edge_map.nodes = [] 
+        self.node_edge_map.header.frame_id = self.map_data['MAP_FRAME']
+        self.node_edge_map.nodes = []
         self.node_edge_map.edges = []
         for node in self.map_data['NODE']:
             n = Node()
@@ -263,7 +268,7 @@ class NodeEdgeMapManager:
         index = 0;
         for node in self.map_data['NODE']:
             if node['id'] == n_id:
-                return index 
+                return index
             index+=1
         return -1
 
@@ -334,7 +339,7 @@ class NodeEdgeMapManager:
 
 
     def get_dict_from_node_msg(self, msg):
-        node_dict = {'id' : msg.id, 
+        node_dict = {'id' : msg.id,
                      'label' : msg.label,
                      'type' : msg.type,
                      'point' : {'x' : msg.point.x, 'y' : msg.point.y}
@@ -342,14 +347,14 @@ class NodeEdgeMapManager:
         return node_dict
 
     def get_dict_from_edge_msg(self, msg):
-        edge_dict = {'node_id' : [msg.node0_id, msg.node1_id]} 
+        edge_dict = {'node_id' : [msg.node0_id, msg.node1_id]}
         return edge_dict
 
-    def get_corresponding_edge_index(self, edge): 
+    def get_corresponding_edge_index(self, edge):
         index = 0
         for e in self.map_data['EDGE']:
             if set(e['node_id']) == set(edge['node_id']):
-                return index 
+                return index
             index += 1
         return -1
 

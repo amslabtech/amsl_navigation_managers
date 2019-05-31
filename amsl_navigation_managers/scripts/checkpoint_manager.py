@@ -26,7 +26,12 @@ class CheckpointManager:
     def __init__(self):
         rospy.init_node('checkpoint_manager')
 
-        self.CHECKPOINT_PATH = rospy.get_param('~CHECKPOINT_PATH')
+        if rospy.has_param('~CHECKPOINT_PATH'):
+            self.CHECKPOINT_PATH = rospy.get_param('~CHECKPOINT_PATH')
+
+        self.HZ = 10
+        if rospy.has_param('~HZ'):
+            self.HZ = rospy.get_param('~HZ')
 
         self.cp_data = self.load_cp_from_yaml()
         pprint.pprint(self.cp_data)
@@ -52,7 +57,7 @@ class CheckpointManager:
         print '=== checkpoint manager ==='
 
     def process(self):
-        r = rospy.Rate(10)
+        r = rospy.Rate(self.HZ)
 
         self.make_and_publish_checkpoint()
 
@@ -68,10 +73,10 @@ class CheckpointManager:
                     timestamp = file_timestamp
                     try:
                         self.cp_data = self.load_cp_from_yaml()
-                        self.make_and_publish_checkpoint()
                         print 'checkpoint updated!'
                     except:
                         print 'failed to update checkpoint'
+            self.make_and_publish_checkpoint()
             r.sleep()
 
     def load_cp_from_yaml(self):
@@ -93,15 +98,13 @@ class CheckpointManager:
     def node_callback(self, node):
         with self.lock:
             self.node_markers = node
-        self.make_and_publish_checkpoint()
 
     def edge_callback(self, edge):
         with self.lock:
             self.current_edge = edge
-            if self.cp_data['checkpoints'][0] == self.current_edge.node0_id: 
+            if self.cp_data['checkpoints'][0] == self.current_edge.node0_id:
                 self.cp_passed.append(self.cp_data['checkpoints'][0])
                 del(self.cp_data['checkpoints'][0])
-        self.make_and_publish_checkpoint()
 
     def update_node_color(self):
         self.cp_marker = MarkerArray()
@@ -116,7 +119,7 @@ class CheckpointManager:
                     break
             if not appended:
                 self.cp_marker.markers.append(node)
-            
+
     def set_marker_scale(self, marker, x, y, z):
         marker.scale.x = x
         marker.scale.y = y
@@ -140,7 +143,7 @@ class CheckpointManager:
                 for node in self.node_markers.markers:
                     if node.id == request.id:
                         flag = True
-                if flag: 
+                if flag:
                     self.cp_data['checkpoints'].insert(0, request.id)
                 else:
                     raise Exception
