@@ -7,6 +7,10 @@
   - Distance between node0 and node1 ([m])
 - float32 progress
   - Progress rate from node0 to node1 (no unit)
+- float32 direction
+  - Yaw angle from node0 to node1 in map frame
+- bool impassable
+  - If true, this edge is not used by global path planner
 - int32 node0_id
 - int32 node1_id
 
