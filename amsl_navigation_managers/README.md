@@ -24,8 +24,10 @@
 
 ## checkpoint_manager
 - This node loads checkpoint(node) id from yaml. 
-- published topics
+### published topics
   - /node_edge_map/checkpoint (std_msgs/Int32MultiArray)
+### subscribed topics
+  - this node doesn't subscribe topics
 
 ## task_manager
 - This node loads task list from yaml. This node sends commands to the nodes involved in the execution of each task.
