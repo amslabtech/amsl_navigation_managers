@@ -18,7 +18,7 @@
 - int32 id
   - Node id (>=0)
 - string type
-  - Property for node recognition. "intersection", "landmark", etc.
+  - Property for node recognition. "position", "intersection", "landmark", etc.
 - string label
   - Name of node. "start", "goal", etc.
 - geometry_msgs/Point
