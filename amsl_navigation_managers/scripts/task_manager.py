@@ -11,6 +11,7 @@ import time
 import datetime
 from stat import *
 import copy
+from pprint import pprint
 
 import rospy
 import tf
@@ -28,11 +29,16 @@ class TaskManager:
         self.TASK_LIST_PATH = rospy.get_param('~TASK_LIST_PATH')
 
         self.map = NodeEdgeMap()
+        self.estimated_pose = Odometry()
+        self.estimated_edge = Edge()
         self.map_sub = rospy.Subscriber('/node_edge_map/map', NodeEdgeMap, self.map_callback)
+        self.pose_sub = rospy.Subscriber('/estimated_pose/pose', Odometry, self.pose_callback)
+        self.edge_sub = rospy.Subscriber('/estimated_pose/edge', Edge, self.edge_callback)
 
         self.lock = threading.Lock()
 
         print '=== task manager ==='
+        self.task_data = self.load_task_from_yaml()
 
     def process(self):
         r = rospy.Rate(10)
@@ -57,10 +63,17 @@ class TaskManager:
     def load_task_from_yaml(self):
         with open(self.TASK_LIST_PATH) as file:
             task_data = yaml.load(file)
+        pprint(task_data)
         return task_data
 
     def map_callback(self, node_edge_map):
         self.map = node_edge_map
+
+    def pose_callback(self, pose):
+        self.estimated_pose = pose
+
+    def edge_callback(self, edge):
+        self.estimated_edge = edge
 
 if __name__ == '__main__':
     task_manager = TaskManager()
