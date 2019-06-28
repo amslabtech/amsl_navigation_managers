@@ -15,12 +15,22 @@ from pprint import pprint
 
 import rospy
 import tf
-from std_msgs.msg import ColorRGBA, Int32MultiArray
+from std_msgs.msg import ColorRGBA, Int32MultiArray, Bool
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Quaternion, Point
 from visualization_msgs.msg import Marker, MarkerArray
 
 from amsl_navigation_msgs.msg import Node, Edge, NodeEdgeMap
+
+class Task:
+    def __init__(self):
+        self.trigger = None
+        self.task_type = None
+        self.node0_id = None
+        self.node1_id = None
+        self.progress_min = None
+        self.progress_max = None
+        self.repeat = None
 
 class TaskManager:
     def __init__(self):
@@ -35,9 +45,12 @@ class TaskManager:
         self.pose_sub = rospy.Subscriber('/estimated_pose/pose', Odometry, self.pose_callback)
         self.edge_sub = rospy.Subscriber('/estimated_pose/edge', Edge, self.edge_callback)
 
+        self.stop_pub = rospy.Publisher('/task/stop', Bool, queue_size=1)
+        self.stop_line_sub = rospy.Subscriber('/recognition/stop_line', Bool, self.stop_line_callback)
+        self.line_detected = False
+
         self.lock = threading.Lock()
 
-        print '=== task manager ==='
         self.task_data = self.load_task_from_yaml()
 
     def process(self):
@@ -47,6 +60,25 @@ class TaskManager:
         dir_name = os.path.dirname(self.TASK_LIST_PATH)
 
         while not rospy.is_shutdown():
+            print '=== task manager ==='
+            count = 0
+            for task in self.task_data['task']:
+                pprint(task)
+                if (task['edge']['node0_id'] == self.estimated_edge.node0_id) and (task['edge']['node1_id'] == self.estimated_edge.node1_id):
+                    print "task ", count, " is related to this edge"
+                    if (task['edge']['progress_min'] < self.estimated_edge.progress) and (self.estimated_edge.progress < task['edge']['progress_max']):
+                        print "task ", count, " is enabled"
+                        if task['trigger'] == 'recognition/stop_line':
+                            if self.line_detected:
+                                if 'performed' in task:
+                                    pass
+                                else:
+                                    print "task is performed"
+                                    self.stop_pub.publish(Bool(self.line_detected))
+                                    task['performed'] = True
+                count += 1
+
+
             for file in os.listdir(dir_name):
                 if 0 is file.find('.'):
                     continue
@@ -74,6 +106,9 @@ class TaskManager:
 
     def edge_callback(self, edge):
         self.estimated_edge = edge
+
+    def stop_line_callback(self, detection):
+        self.line_detected = detection.data
 
 if __name__ == '__main__':
     task_manager = TaskManager()
