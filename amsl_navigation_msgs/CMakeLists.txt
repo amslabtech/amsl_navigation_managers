@@ -52,8 +52,10 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   Node.msg
-  Edge.msg 
+  Edge.msg
   NodeEdgeMap.msg
+  Road.msg
+  Roads.msg
 )
 
 ## Generate services in the 'srv' folder
