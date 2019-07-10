@@ -55,7 +55,7 @@ add_message_files(
   Edge.msg
   NodeEdgeMap.msg
   Road.msg
-  Roads.msg
+  RoadArray.msg
 )
 
 ## Generate services in the 'srv' folder
