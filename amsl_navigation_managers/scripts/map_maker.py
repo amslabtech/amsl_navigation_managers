@@ -81,15 +81,17 @@ class MapMaker:
 
             if len(self.nodes) is 0:
                 self.origin_utm = utm_position
-            print self.origin_utm
+            print "origin(utm):", self.origin_utm
+            print "utm positin:", utm_position
 
             position = utm_position -  self.origin_utm
             node = {'id': len(self.nodes),
                     'type': 'intersection',
                     'point': {'x': position[0], 'y': position[1]},
                     'label': ''}
-            print node
+            # print node
             self.nodes.append(node)
+            print self.nodes
 
             print ""
 
@@ -109,15 +111,21 @@ class MapMaker:
             https://www.gsi.go.jp/sokuchikijun/datum-main.html#p5
         '''
         # IX from https://www.gsi.go.jp/LAW/heimencho.html
+        # Noda, Chiba (36.0000, 139.8333)
         lat0 = np.deg2rad(36.)
         lng0 = np.deg2rad(139 + 50. / 60)
+        # utm origin
+        origin_x = 394848.541
+        origin_y = 3984577.763
+
         lat = np.deg2rad(lat)
         lng = np.deg2rad(lng)
 
         # constants
         m0 = 0.9999
         a = 6378137.
-        F = 298.257222101
+        F = 298.257222101# GRS80
+        #F = 298.257223563# WGS84
 
         n = 1. / (2 * F - 1)
         A = self.get_a(n)
