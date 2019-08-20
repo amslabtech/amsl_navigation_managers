@@ -114,9 +114,6 @@ class MapMaker:
         # Noda, Chiba (36.0000, 139.8333)
         lat0 = np.deg2rad(36.)
         lng0 = np.deg2rad(139 + 50. / 60)
-        # utm origin
-        origin_x = 394848.541
-        origin_y = 3984577.763
 
         lat = np.deg2rad(lat)
         lng = np.deg2rad(lng)
@@ -148,6 +145,36 @@ class MapMaker:
 
         return np.array([float(x), float(y)])
 
+    def get_latlng_from_xy(self, x, y):
+        # IX from https://www.gsi.go.jp/LAW/heimencho.html
+        # Noda, Chiba (36.0000, 139.8333)
+        lat0 = np.deg2rad(36.)
+        lng0 = np.deg2rad(139 + 50. / 60)
+        # constants
+        m0 = 0.9999
+        a = 6378137.
+        F = 298.257222101# GRS80
+        #F = 298.257223563# WGS84
+
+        n = 1. / (2 * F - 1)
+        A = self.get_a(n)
+        alpha = self.get_alpha(n)
+        beta = self.get_beta(n)
+        delta = self.get_delta(n)
+
+        A_ = ((m0 * a) / (1. + n)) * A[0]
+        S_ = ((m0 * a) / (1. + n)) * (A[0] * lat0 + np.dot(A[1:], np.sin(2 * lat0 * np.arange(1 ,6))))
+
+        xi = (x + S_) / A_
+        eta = y / A_
+        xi_ = xi - np.sum(np.multiply(beta[1:], np.multiply(np.sin(2 * np.arange(1, 6) * xi), np.cosh(2 * np.arange(1, 6) * eta))))
+        eta_ = eta - np.sum(np.multiply(beta[1:], np.multiply(np.cos(2 * np.arange(1, 6) * xi), np.sinh(2 * np.arange(1, 6) * eta))))
+        chi = np.arcsin(np.sin(xi_) / np.cosh(eta_))
+
+        lat = chi + np.sum(np.multiply(delta, np.sin(2 * chi * np.arange(1, 7))))
+        lng = lng0 + np.arctan(np.sinh(eta_) / np.cos(xi_))
+        return lat, lng
+
     def get_a(self, n):
         A0 = 1 + n**2 / 4. + n**4 / 64.
         A1 = - 3. * (n - n**3 / 8. - n**5 / 64.) / 2.
@@ -166,8 +193,30 @@ class MapMaker:
         alpha5 = 34729. * n**5 / 80640
         return np.array([alpha0, alpha1, alpha2, alpha3, alpha4, alpha5])
 
+    def get_beta(self, n):
+        beta0 = np.nan
+        beta1 = n / 2. - 2. * n**2 / 3 + 37. * n**3 / 96 - n**4 / 360. - 81. * n**5 / 512
+        beta2 = n**2 / 48. + n**3 / 15. - 437. * n**4 / 1440 + 46. * n**5 / 105
+        beta3 = 17. * n**3 / 480 - 37. * n**4 / 840 - 209 * n**5 / 4480
+        beta4 = 4397. * n**4 / 161280 - 11. * n**5 / 504
+        beta5 = 4583. * n**5 / 161280
+        return np.array([beta0, beta1, beta2, beta3, beta4, beta5])
+
+    def get_delta(self, n):
+        delta0 = 2 * n - 2. * n**2 / 3 + 116. * n**4 / 45 + 26. * n**5 / 45 - 2854. * n**6 / 675
+        delta1 = 7. * n**2 / 3 - 8. * n**3 / 5 - 227. * n**4 / 45 + 2704. * n**5 / 315 + 2323. * n**6 / 945
+        delta2 = 56. * n**3 / 15 - 136. * n**4 / 35 - 1262. * n**5 / 105 + 73814. * n**6 / 2835
+        delta3 = 4279. * n**4 / 630 - 332. * n**5 / 35 - 399572. * n**6 / 14175
+        delta4 = 4174. * n**5 / 315 - 144838. * n**6 / 6237
+        delta5 = 601676. * n**6 / 22275
+        return np.array([delta0, delta1, delta2, delta3, delta4, delta5])
+
 if __name__ == '__main__':
     map_maker = MapMaker()
     map_maker.process()
-    #x, y = map_maker.get_xy_from_latlng(36.103774791666666, 140.08785504166664)
-    #print x, y
+    # x, y = map_maker.get_xy_from_latlng(36.103774791666666, 140.08785504166664)
+    # x, y = map_maker.get_xy_from_latlng(36.0, 139 + 50/60.)
+    # x, y = map_maker.get_xy_from_latlng(36.082882, 140.077230)
+    # print x, y
+    # lat, lng = map_maker.get_latlng_from_xy(x, y)
+    # print np.rad2deg(lat), np.rad2deg(lng)
