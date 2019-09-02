@@ -68,8 +68,8 @@ class MapMaker:
                     'point': {'x': position[0], 'y': position[1]},
                     'label': ''}
             nodes.append(node)
-        self.map_data['NODES'] = nodes
-        self.map_data['EDGES'] = [{'node_id': [0, 0]}]
+        self.map_data['NODE'] = nodes
+        self.map_data['EDGE'] = [{'node_id': [0, 0]}]
         print('map')
         pprint(self.map_data)
         self.save_map_to_yaml(self.map_data, map_path)
