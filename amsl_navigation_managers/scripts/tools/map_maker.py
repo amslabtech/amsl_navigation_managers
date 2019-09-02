@@ -1,106 +1,88 @@
 #!/usr/bin/env python
 #! coding:utf-8
 
+from __future__ import print_function
+
 import numpy as np
-import math
-import threading
 import yaml
-import pprint
 import os
 import time
 import datetime
-from stat import *
-import copy
 from pprint import pprint
-
-import rospy
-import tf
-from std_msgs.msg import ColorRGBA, Int32MultiArray
-from nav_msgs.msg import Odometry
-from geometry_msgs.msg import Quaternion, Point
-from visualization_msgs.msg import Marker, MarkerArray
-
-from amsl_navigation_msgs.msg import Node, Edge, NodeEdgeMap
+import argparse
+import csv
 
 class MapMaker:
-    def __init__(self):
-        rospy.init_node('map_maker')
+    def __init__(self, args):
+        print('=== map_maker ===')
+        self.origin_utm = np.zeros(2)
 
-        if rospy.has_param('~OUTPUT_MAP_PATH'):
-            self.OUTPUT_MAP_PATH = rospy.get_param('~OUTPUT_MAP_PATH')
-        if rospy.has_param('~INPUT_MAP_PATH'):
-            self.INPUT_MAP_PATH = rospy.get_param('~INPUT_MAP_PATH')
-        else:
-            self.INPUT_MAP_PATH = None
-
-        self.lock = threading.Lock()
-
-        self.origin_utm = np.empty(2)
-
-        self.map_data = None
-        self.nodes = []
+        self.map_data = dict()
+        self.nodes = list()
 
         self.utm = UTMUtils()
 
-        if self.INPUT_MAP_PATH is not None:
-            print "load map from ", self.INPUT_MAP_PATH
+        if args.INPUT_LATLNG_PATH is not None:
+            self.make_map_from_latlng(args.INPUT_LATLNG_PATH, args.OUTPUT_MAP_PATH)
+
+        if args.INPUT_MAP_PATH is not None:
+            print("load map from ", self.INPUT_MAP_PATH)
             self.map_data = self.load_map_from_yaml(self.INPUT_MAP_PATH)
 
             self.nodes = self.map_data['NODE']
-            self.origin_utm = np.array([self.nodes[0]['point']['x'], self.nodes[0]['point']['y']])
-            ###### from xy to utm #####
-            print self.origin_utm
+            self.origin_utm = np.array([self.map_data['ORIGIN_UTM']['x'], self.map_data['ORIGIN_UTM']['y']])
+            print(self.origin_utm)
             #pprint(self.nodes)
-        print '=== map_maker ==='
 
-    def process(self):
-        r = rospy.Rate(10)
+    def make_map_from_latlng(self, latlng_path, map_path):
+        print('--- make map from latlng ---')
+        self.map_data['MAP_FRAME'] = 'map'
+        data = list()
+        with open(latlng_path, 'r') as f:
+            reader = csv.reader(f)
+            for row in reader:
+                data.append(row)
+        data = np.array(data).astype(np.float)
+        print('latlng')
+        print(data)
 
-        while not rospy.is_shutdown():
-            input_data = raw_input("input latitude and longitude like XXX.XXXXXX, YYY.YYYYYY\n(type 'save' or 'exit' to finish editting map)\n:")
-            if input_data == 'save':
-                pass
-            elif input_data == 'exit':
-                exit(0)
-            input_data = input_data.split(",")
+        utm_positions = list()
+        for latlng in data:
+            x, y = self.utm.get_xy_from_latlng(latlng[0], latlng[1])
+            utm_positions.append([x, y])
 
-            if len(input_data) < 2:
-                print '\033[91m' + 'ERROR: both latitude and longitude are required\033[00m'
-                continue
-            elif len(input_data) > 2:
-                print '\033[91m' + 'ERROR: only two values (latitude and longitude) are required\033[00m'
-                continue
-
-            try:
-                input_data = [float(data) for data in input_data]
-            except:
-                print '\033[91m' + 'ERROR: numbers are required\033[00m'
-                continue
-
-            utm_position = self.utm.get_xy_from_latlng(input_data[0], input_data[1])
-
-            if len(self.nodes) is 0:
-                self.origin_utm = utm_position
-            print "origin(utm):", self.origin_utm
-            print "utm positin:", utm_position
-
-            position = utm_position -  self.origin_utm
-            node = {'id': len(self.nodes),
+        utm_positions = np.array(utm_positions)
+        print('utm')
+        print(utm_positions)
+        origin = utm_positions[0].copy().tolist()
+        self.map_data['ORIGIN_UTM'] = {'x' : origin[0], 'y' : origin[1]}
+        for utm_position in utm_positions:
+            utm_position -= origin
+        print('map coordinate')
+        print(utm_positions)
+        utm_positions = utm_positions.tolist()
+        nodes = list()
+        for position in utm_positions:
+            node = {'id': len(nodes),
                     'type': 'intersection',
                     'point': {'x': position[0], 'y': position[1]},
                     'label': ''}
-            # print node
-            self.nodes.append(node)
-            print self.nodes
-
-            print ""
-
-            r.sleep()
+            nodes.append(node)
+        self.map_data['NODES'] = nodes
+        self.map_data['EDGES'] = [{'node_id': [0, 0]}]
+        print('map')
+        pprint(self.map_data)
+        self.save_map_to_yaml(self.map_data, map_path)
 
     def load_map_from_yaml(self, path):
-        with open(path) as file:
-            map_data = yaml.load(file)
+        with open(path, 'r') as f:
+            map_data = yaml.load(f)
         return map_data
+
+    def save_map_to_yaml(self, map_data, path):
+        with open(path, 'w') as f:
+            f.write(yaml.dump(map_data))
+        print('\033[32msuccessfully saved!\033[0m')
 
 class UTMUtils:
     def __init__(self):
@@ -230,9 +212,10 @@ class UTMUtils:
         return delta
 
 if __name__ == '__main__':
-    map_maker = MapMaker()
-    map_maker.process()
-    # x, y = map_maker.get_xy_from_latlng(36.0, 139 + 50/60.)
-    # print x, y
-    # lat, lng = map_maker.get_latlng_from_xy(x, y)
-    # print np.rad2deg(lat), np.rad2deg(lng)
+    parser = argparse.ArgumentParser(description='Edge Node Map Maker')
+    parser.add_argument('--INPUT_MAP_PATH', type=str, help='map path to load (yaml)', default=None)
+    parser.add_argument('--OUTPUT_MAP_PATH', type=str, help='map path to save (yaml)', default='test.yaml')
+    parser.add_argument('--INPUT_LATLNG_PATH', type=str, help='input data path (csv)', default=None)
+    args = parser.parse_args()
+
+    map_maker = MapMaker(args)
