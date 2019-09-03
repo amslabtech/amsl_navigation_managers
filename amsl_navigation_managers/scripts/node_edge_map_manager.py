@@ -207,8 +207,10 @@ class NodeEdgeMapManager:
         time = rospy.get_rostime()
         self.node_edge_map.header.stamp = time
         self.node_edge_map.header.frame_id = self.map_data['MAP_FRAME']
-        self.node_edge_map.origin_utm.x = self.map_data['ORIGIN_UTM']['x']
-        self.node_edge_map.origin_utm.y = self.map_data['ORIGIN_UTM']['y']
+        if 'ORIGIN_UTM' in self.map_data:
+            # old version support
+            self.node_edge_map.origin_utm.x = self.map_data['ORIGIN_UTM']['x']
+            self.node_edge_map.origin_utm.y = self.map_data['ORIGIN_UTM']['y']
         self.node_edge_map.nodes = []
         self.node_edge_map.edges = []
         for node in self.map_data['NODE']:
