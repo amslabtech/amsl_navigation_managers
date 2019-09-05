@@ -110,6 +110,7 @@ class NodeEdgeMapManager:
             n.action = Marker().ADD
             n.type = Marker().CUBE
             n.lifetime = rospy.Duration()
+            n.frame_locked = True
             self.set_marker_scale(n, 0.5, 0.5, 0.5)
             self.set_marker_rgb(n, 0.0, 1.0, 0.0)
             self.set_marker_position(n, node['point']['x'], node['point']['y'], 0)
@@ -137,6 +138,7 @@ class NodeEdgeMapManager:
         self.edge_marker.lifetime = rospy.Duration()
         self.edge_marker.scale.x = 0.3
         self.edge_marker.ns = "edge"
+        self.edge_marker.frame_locked = True
         for edge in self.map_data['EDGE']:
             p0 = Point()
             p0.x = self.map_data['NODE'][self.get_index_from_id(edge['node_id'][0])]['point']['x']
@@ -167,6 +169,7 @@ class NodeEdgeMapManager:
             m.type = Marker().TEXT_VIEW_FACING
             m.lifetime = rospy.Duration()
             m.scale.z = 1.0
+            m.frame_locked = True
             self.set_marker_position(m, node['point']['x'], node['point']['y'], 1)
             self.set_marker_orientation(m, 0, 0, 0)
             self.set_marker_rgb(m, 1.0, 1.0, 1.0)
