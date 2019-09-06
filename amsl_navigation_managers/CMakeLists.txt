@@ -206,6 +206,11 @@ add_dependencies(node_edge_map_interface ${${PROJECT_NAME}_EXPORTED_TARGETS} ${c
 # catkin_add_nosetests(test)
 
 if(CATKIN_ENABLE_TESTING)
-	find_package(rostest REQUIRED)
-	add_rostest(test/amsl_navigation_managers.test)
+    find_package(rostest REQUIRED)
+    # add_rostest(test/amsl_navigation_managers.test)
+    add_rostest_gtest(amsl_navigation_managers_test
+        test/amsl_navigation_managers.test
+        test/amsl_navigation_managers_test.cpp
+    )
+    target_link_libraries(amsl_navigation_managers_test node_edge_map_interface ${catkin_LIBRARIES})
 endif()

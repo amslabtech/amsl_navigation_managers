@@ -18,9 +18,11 @@ public:
     amsl_navigation_msgs::Edge get_edge_from_index(int);
     std::string get_map_header_frame_id(void);
     int get_edge_num(void);
+    int get_reversed_edge_index_from_edge_index(int);
 
 protected:
     amsl_navigation_msgs::NodeEdgeMap map;
+    std::vector<int> reversed_edge_list;
 };
 
 #endif// __NODE_EDGE_MAP_INTERFACE_H
