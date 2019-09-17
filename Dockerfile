@@ -6,6 +6,7 @@ RUN apt-get install -y sudo \
                        wget \
                        lsb-release \
                        mesa-utils \
+					   python-catkin-tools \
 					   python-pip 
 
 RUN echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-latest.list \
