@@ -1,27 +1,17 @@
-FROM osrf/ros:kinetic-desktop
+FROM ros:melodic-ros-base
 
-RUN apt-get update
-
-RUN apt-get install -y sudo \
-                       wget \
-                       lsb-release \
-                       mesa-utils \
-					   python-catkin-tools \
-					   python-pip 
-
-RUN echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-latest.list \
-         && wget http://packages.osrfoundation.org/gazebo.key -O - | apt-key add -
-
-RUN apt-get update
+RUN apt-get update && apt-get install -y  \
+		ros-melodic-tf* \
+		python-catkin-tools
 
 WORKDIR /root
 
 # ROS setting
 RUN /bin/bash -c "mkdir -p catkin_ws/src"
 
-RUN cd catkin_ws/src && /bin/bash -c "source /opt/ros/kinetic/setup.bash; catkin_init_workspace"
+# RUN cd catkin_ws/src && /bin/bash -c "source /opt/ros/melodic/setup.bash; catkin_init_workspace"
 
-RUN cd catkin_ws && /bin/bash -c "source /opt/ros/kinetic/setup.bash; catkin_make"
+RUN cd catkin_ws && /bin/bash -c "source /opt/ros/melodic/setup.bash; catkin build"
 
 RUN cd /root && echo source /root/catkin_ws/devel/setup.bash >> .bashrc
 
@@ -31,10 +21,7 @@ ENV ROS_WORKSPACE=/root/catkin_ws
 
 RUN ln -sf /usr/include/eigen3/Eigen /usr/include/Eigen
 
-RUN apt clean \
+RUN apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install pyyaml
-
-# clone repository
 WORKDIR /root
