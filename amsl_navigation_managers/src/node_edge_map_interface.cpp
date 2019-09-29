@@ -86,7 +86,7 @@ int NodeEdgeMapInterface::get_reversed_edge_index_from_edge_index(int edge_index
     return reversed_edge_list[edge_index];
 }
 
-void NodeEdgeMapInterface::get_edge_directions_from_node_id(int node_id, std::vector<double> edge_directions)
+void NodeEdgeMapInterface::get_edge_directions_from_node_id(int node_id, std::vector<double>& edge_directions)
 {
     /*
      * outputs edge directions in map frame
