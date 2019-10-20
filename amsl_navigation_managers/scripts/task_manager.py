@@ -15,7 +15,7 @@ from pprint import pprint
 
 import rospy
 import tf
-from std_msgs.msg import ColorRGBA, Int32MultiArray, Bool
+from std_msgs.msg import ColorRGBA, Int32MultiArray, Bool, Empty
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Quaternion, Point
 from visualization_msgs.msg import Marker, MarkerArray
@@ -41,9 +41,11 @@ class TaskManager:
         self.map = NodeEdgeMap()
         self.estimated_pose = Odometry()
         self.estimated_edge = Edge()
+        self.goal_flag = Empty()
         self.map_sub = rospy.Subscriber('/node_edge_map/map', NodeEdgeMap, self.map_callback)
         self.pose_sub = rospy.Subscriber('/estimated_pose/pose', Odometry, self.pose_callback)
         self.edge_sub = rospy.Subscriber('/estimated_pose/edge', Edge, self.edge_callback)
+        self.goal_flag_sub = rospy.Subscriber('/node_edge_navigator/goal_flag', Empty, self.goal_flag_callback)
 
         self.stop_pub = rospy.Publisher('/task/stop', Bool, queue_size=1)
         self.stop_line_sub = rospy.Subscriber('/recognition/stop_line', Bool, self.stop_line_callback)
@@ -106,6 +108,10 @@ class TaskManager:
 
     def edge_callback(self, edge):
         self.estimated_edge = edge
+
+    def goal_flag_callback(self, goal_flag):
+        self.goal_flag = goal_flag
+        self.stop_pub.publish(Bool(True))
 
     def stop_line_callback(self, detection):
         self.line_detected = detection.data
