@@ -1,3 +1,4 @@
+<?xml version="1.0"?>
 <launch>
 
     <arg name="map_path" default="$(find amsl_navigation_managers)/sample/map/sample_map.yaml"/>
