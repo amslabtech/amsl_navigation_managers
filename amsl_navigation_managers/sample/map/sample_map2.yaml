@@ -180,83 +180,83 @@ NODE:
   point: {x: 232.20815408334602, y: -97.04539341339841}
   type: intersection
 - id: 18
-  label: ''
+  label: park 
   point: {x: 240.6245821219636, y: -149.70605530496687}
   type: intersection
 - id: 19
-  label: ''
+  label: park
   point: {x: 248.28197155165253, y: -263.59313603909686}
   type: intersection
 - id: 20
-  label: ''
+  label: park
   point: {x: 257.4849282322102, y: -318.81259988667443}
   type: intersection
 - id: 21
-  label: ''
+  label: park
   point: {x: 331.2716608279152, y: -324.39098061434925}
   type: intersection
 - id: 22
-  label: ''
+  label: park
   point: {x: 353.1043200772838, y: -320.0490797753446}
   type: intersection
 - id: 23
-  label: ''
+  label: park
   point: {x: 426.45974323141854, y: -323.6258362173103}
   type: intersection
 - id: 24
-  label: ''
+  label: park
   point: {x: 469.0676600072766, y: -341.1111017172225}
   type: intersection
 - id: 25
-  label: ''
+  label: park
   point: {x: 547.7095260815695, y: -347.5099560394883}
   type: intersection
 - id: 26
-  label: ''
+  label: park
   point: {x: 535.1095262459712, y: -375.4565908270888}
   type: intersection
 - id: 27
-  label: ''
+  label: park
   point: {x: 547.2169213662855, y: -246.89149211812764}
   type: intersection
 - id: 28
-  label: ''
+  label: park
   point: {x: 548.5846890734974, y: -206.8585228244774}
   type: intersection
 - id: 29
-  label: ''
+  label: park
   point: {x: 499.08414461644134, y: -194.63329605665058}
   type: intersection
 - id: 30
-  label: ''
+  label: park
   point: {x: 398.9390930896043, y: -186.47796296328306}
   type: intersection
 - id: 31
-  label: ''
+  label: park
   point: {x: 384.9307007333264, y: -201.43224065983668}
   type: intersection
 - id: 32
-  label: ''
+  label: park
   point: {x: 373.68104114430025, y: -210.3113762009889}
   type: intersection
 - id: 33
-  label: ''
+  label: park
   point: {x: 361.2294228216051, y: -222.50705822231248}
   type: intersection
 - id: 34
-  label: ''
+  label: park
   point: {x: 316.16461604624055, y: -245.93135711550713}
   type: intersection
 - id: 35
-  label: ''
+  label: park
   point: {x: 280.2597307357937, y: -186.24419601727277}
   type: intersection
 - id: 36
-  label: ''
+  label: park
   point: {x: 283.94035375572275, y: -149.33915040222928}
   type: intersection
 - id: 37
-  label: ''
+  label: park
   point: {x: 267.5537052091677, y: -130.10417763050646}
   type: position
 - id: 38
@@ -264,79 +264,79 @@ NODE:
   point: {x: 206.13475366623607, y: -102.34522680239752}
   type: intersection
 - id: 39
-  label: ''
+  label: park
   point: {x: 208.32437864755047, y: -261.1074640713632}
   type: intersection
 - id: 40
-  label: ''
+  label: park
   point: {x: 206.4577917730203, y: -344.17671677516773}
   type: intersection
 - id: 41
-  label: ''
+  label: park
   point: {x: 372.4377122678561, y: -341.97402877081186}
   type: intersection
 - id: 42
-  label: ''
+  label: park
   point: {x: 366.69080180011224, y: -349.79581614769995}
   type: intersection
 - id: 43
-  label: ''
+  label: park
   point: {x: 376.5103684179485, y: -368.41392005234957}
   type: intersection
 - id: 44
-  label: ''
+  label: park
   point: {x: 422.03529138385784, y: -372.6153085757978}
   type: intersection
 - id: 45
-  label: ''
+  label: park
   point: {x: 427.5643599673058, y: -349.7048993976787}
   type: intersection
 - id: 46
-  label: ''
+  label: park
   point: {x: 530.1823892093962, y: -219.88580330275}
   type: intersection
 - id: 47
-  label: ''
+  label: park
   point: {x: 499.0340348437894, y: -209.49749405216426}
   type: intersection
 - id: 48
-  label: ''
+  label: park
   point: {x: 482.38005377771333, y: -218.54766743490472}
   type: intersection
 - id: 49
-  label: ''
+  label: park
   point: {x: 441.67206069501117, y: -247.89300093054771}
   type: intersection
 - id: 50
-  label: ''
+  label: park
   point: {x: 408.04867904353887, y: -223.06006244011223}
   type: intersection
 - id: 51
-  label: ''
+  label: park
   point: {x: 440.3906093027326, y: -259.63953078445047}
   type: intersection
 - id: 52
-  label: ''
+  label: park
   point: {x: 355.89308462908957, y: -215.46803924022242}
   type: intersection
 - id: 53
-  label: ''
+  label: park
   point: {x: 337.49604098603595, y: -189.78025230579078}
   type: intersection
 - id: 54
-  label: ''
+  label: park
   point: {x: 342.18546809459804, y: -179.5080246445723}
   type: intersection
 - id: 55
-  label: ''
+  label: park
   point: {x: 345.2480573921348, y: -150.80597383202985}
   type: intersection
 - id: 56
-  label: ''
+  label: park
   point: {x: 577.6545206979499, y: -198.9235673956573}
   type: intersection
 - id: 57
-  label: ''
+  label: park
   point: {x: 428.35992625157814, y: -284.4853426832706}
   type: intersection
 - id: 58
@@ -356,15 +356,15 @@ NODE:
   point: {x: -40.86678536783438, y: 29.895327675621957}
   type: intersection
 - id: 62
-  label: ''
+  label: park
   point: {x: 564.6103953681886, y: -197.58044581580907}
   type: intersection
 - id: 63
-  label: ''
+  label: park
   point: {x: 230.7077384479926, y: -103.35423718811944}
   type: intersection
 - id: 64
-  label: ''
+  label: 
   point: {x: 229.23353426670656, y: -59.30088634509593}
   type: intersection
 - id: 65
@@ -392,11 +392,11 @@ NODE:
   point: {x: 233.79565837269183, y: -81.53014272497967}
   type: intersection
 - id: 71
-  label: ''
+  label: park
   point: {x: 449.0445837629377, y: -191.8317838050425}
   type: intersection
 - id: 72
-  label: ''
+  label: park
   point: {x: 448.6048929677927, y: -200.25834539486095}
   type: intersection
 - id: 73
@@ -416,7 +416,7 @@ NODE:
   point: {x: 541.3340784315369, y: -106.7310001864098}
   type: intersection
 - id: 77
-  label: ''
+  label: park
   point: {x: 319.54668086359743, y: -116.7293515582569}
   type: position
 - id: 78

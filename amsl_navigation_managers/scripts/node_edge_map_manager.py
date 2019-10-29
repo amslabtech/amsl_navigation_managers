@@ -235,6 +235,9 @@ class NodeEdgeMapManager:
             e.direction = math.atan2((y1 - y0), (x1 - x0));
             e.node0_id = edge['node_id'][0]
             e.node1_id = edge['node_id'][1]
+            if 'impassable' in edge:
+                if edge['impassable']:
+                    e.impassable = True
             self.node_edge_map.edges.append(e)
             # backward
             e = Edge()
@@ -246,6 +249,9 @@ class NodeEdgeMapManager:
             e.direction = math.atan2((y1 - y0), (x1 - x0));
             e.node0_id = edge['node_id'][1]
             e.node1_id = edge['node_id'][0]
+            if 'impassable' in edge:
+                if edge['impassable']:
+                    e.impassable = True
             self.node_edge_map.edges.append(e)
 
     def compare_id(self):
@@ -354,13 +360,15 @@ class NodeEdgeMapManager:
         return node_dict
 
     def get_dict_from_edge_msg(self, msg):
-        edge_dict = {'node_id' : [msg.node0_id, msg.node1_id]}
+        edge_dict = {'node_id' : [msg.node0_id, msg.node1_id], 'impassable' :msg.impassable}
         return edge_dict
 
     def get_corresponding_edge_index(self, edge):
         index = 0
         for e in self.map_data['EDGE']:
             if set(e['node_id']) == set(edge['node_id']):
+                if edge['impassable']:
+                    e['impassable'] = True
                 return index
             index += 1
         return -1
