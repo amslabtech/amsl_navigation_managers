@@ -364,7 +364,7 @@ NODE:
   point: {x: 230.7077384479926, y: -103.35423718811944}
   type: intersection
 - id: 64
-  label: 
+  label: ''
   point: {x: 229.23353426670656, y: -59.30088634509593}
   type: intersection
 - id: 65
