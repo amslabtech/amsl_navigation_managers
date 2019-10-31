@@ -52,6 +52,7 @@ class TaskManager:
         self.stop_pub = rospy.Publisher('/task/stop', Bool, queue_size=1)
         self.stop_line_sub = rospy.Subscriber('/recognition/stop_line', Bool, self.stop_line_callback)
         self.closed_sign_sub = rospy.Subscriber('/recognition/closed_sign', Bool, self.closed_sign_callback)
+
         self.line_detected = False
         self.road_closed = False
         self.first_park_flag = True
@@ -59,15 +60,12 @@ class TaskManager:
 
         self.subprocess1 = "road_closed_sign_detector"
         self.lock = threading.Lock()
-
         self.task_data = self.load_task_from_yaml()
 
     def process(self):
         r = rospy.Rate(10)
-
         timestamp = time.mktime(datetime.datetime.now().utctimetuple())
         dir_name = os.path.dirname(self.TASK_LIST_PATH)
-
         while not rospy.is_shutdown():
             # print '=== task manager ==='
             if self.map is not None:
@@ -82,7 +80,7 @@ class TaskManager:
                         if self.road_closed:
                             self.set_impassable_edge(self.estimated_edge)
                             self.request_replan()
-
+                            self.road_closed = False
                 else:
                     if (not self.first_park_flag and not self.process_terminated):
                         print("killing %s" % self.subprocess1)
@@ -102,6 +100,7 @@ class TaskManager:
                                 else:
                                     print "task is performed"
                                     self.stop_pub.publish(Bool(self.line_detected))
+                                    self.line_detected = False
                                     task['performed'] = True
 
             for file in os.listdir(dir_name):
