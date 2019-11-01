@@ -79,6 +79,7 @@ class TaskManager:
                     if not self.process_terminated:
                         if self.road_closed:
                             self.set_impassable_edge(self.estimated_edge)
+                            rospy.sleep(0.1)
                             self.request_replan()
                             self.road_closed = False
                 else:
