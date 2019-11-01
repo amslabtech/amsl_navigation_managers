@@ -2,7 +2,7 @@
 #! coding:utf-8
 
 import numpy as np
-import math
+import math 
 import threading
 import yaml
 import pprint
@@ -39,8 +39,10 @@ class TaskManager:
         rospy.init_node('task_manager')
 
         self.TASK_LIST_PATH = rospy.get_param('~TASK_LIST_PATH')
+        self.LINE_DIST_THRESHOLD = rospy.get_param('LINE_DIST_THRESHOLD', 3.0)
 
         self.map = None
+        self.line_detected_pose = None 
         self.estimated_pose = Odometry()
         self.estimated_edge = Edge()
         self.goal_flag = Empty()
@@ -91,18 +93,27 @@ class TaskManager:
             for count, task in enumerate(self.task_data['task']):
                 # pprint(task)
                 if (task['edge']['node0_id'] == self.estimated_edge.node0_id) and (task['edge']['node1_id'] == self.estimated_edge.node1_id):
-                    print "task ", count, " is related to this edge"
+                    # print "task ", count, " is related to this edge"
                     if (task['edge']['progress_min'] < self.estimated_edge.progress) and (self.estimated_edge.progress < task['edge']['progress_max']):
-                        print "task ", count, " is enabled"
+                        # print "task ", count, " is enabled"
                         if task['trigger'] == 'recognition/stop_line':
                             if self.line_detected:
-                                if 'performed' in task:
-                                    pass
-                                else:
-                                    print "task is performed"
-                                    self.stop_pub.publish(Bool(self.line_detected))
-                                    self.line_detected = False
-                                    task['performed'] = True
+                                line_dist = self.calc_line_dist()
+                                if line_dist > self.LINE_DIST_THRESHOLD:
+                                    print("line dist :{}".format(line_dist))
+                                    self.line_detected_pose = self.estimated_pose
+                                    if 'performed' in task:
+                                        if task['repeat']:
+                                            print "task is performed"
+                                            self.stop_pub.publish(Bool(self.line_detected))
+                                            self.line_detected = False
+                                        else:
+                                           pass
+                                    else:
+                                        print "task is performed"
+                                        self.stop_pub.publish(Bool(self.line_detected))
+                                        self.line_detected = False
+                                        task['performed'] = True
 
             for file in os.listdir(dir_name):
                 if 0 is file.find('.'):
@@ -116,6 +127,12 @@ class TaskManager:
                     except:
                         print 'failed to update task'
             r.sleep()
+
+    def calc_line_dist(self):
+        curr_pose = self.estimated_pose.pose.pose.position
+        past_pose = self.line_detected_pose.pose.pose.position
+        dist = math.sqrt((past_pose.x - curr_pose.x)**2 + (past_pose.y - curr_pose.y)**2)
+        return dist
 
     def kill_node(self, nodename):
         node_list_cmd = "rosnode list"
@@ -171,6 +188,8 @@ class TaskManager:
 
     def pose_callback(self, pose):
         self.estimated_pose = pose
+        if self.line_detected_pose == None:
+            self.line_detected_pose = pose
 
     def edge_callback(self, edge):
         self.estimated_edge = edge
