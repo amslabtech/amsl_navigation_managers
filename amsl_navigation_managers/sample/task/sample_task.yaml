@@ -4,6 +4,33 @@ task:
       edge:
         node0_id: 12
         node1_id: 13
-        progress_min: 0.8
+        progress_min: 0.7
         progress_max: 1.2
       repeat: False
+    - trigger: "recognition/stop_line"
+      task_type: "stop"
+      edge:
+        node0_id: 13
+        node1_id: 14
+        progress_min: 0.0
+        progress_max: 1.2
+      repeat: True
+    - trigger: "recognition/stop_line"
+      task_type: "stop"
+      edge:
+        node0_id: 14
+        node1_id: 15
+        progress_min: 0.8
+        progress_max: 1.2
+      repeat: True
+    - trigger: "recognition/stop_line/T"
+      task_type: "stop"
+      edge:
+        node0_id: 14
+        node1_id: 15
+        progress_min: 0.7
+        progress_max: 1.2
+      repeat: True
+      local_goal:
+          x: 1.0
+          y: 0.5
