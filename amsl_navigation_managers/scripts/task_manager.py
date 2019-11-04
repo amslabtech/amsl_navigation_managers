@@ -5,7 +5,6 @@ import numpy as np
 import math 
 import threading
 import yaml
-import pprint
 import os
 import time
 import datetime
@@ -16,12 +15,13 @@ import subprocess
 
 import rospy
 import tf
+from tf.transformations import quaternion_from_euler, euler_from_quaternion, rotation_matrix
 from std_msgs.msg import ColorRGBA, Int32MultiArray, Bool, Empty
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import Quaternion, Point
+from geometry_msgs.msg import Quaternion, Point, PoseStamped
 from visualization_msgs.msg import Marker, MarkerArray
 
-from amsl_navigation_msgs.msg import Node, Edge, NodeEdgeMap
+from amsl_navigation_msgs.msg import Node, Edge, NodeEdgeMap, StopLine
 from amsl_navigation_msgs.srv import UpdateEdge, Replan
 
 class Task:
@@ -39,10 +39,12 @@ class TaskManager:
         rospy.init_node('task_manager')
 
         self.TASK_LIST_PATH = rospy.get_param('~TASK_LIST_PATH')
-        self.LINE_DIST_THRESHOLD = rospy.get_param('LINE_DIST_THRESHOLD', 3.0)
+        self.LINE_DIST_THRESHOLD = rospy.get_param('LINE_DIST_THRESHOLD', 2.5)
+        self.ROBOT_FRAME = rospy.get_param('ROBOT_FRAME', "base_link")
 
         self.map = None
         self.line_detected_pose = None 
+        self.line_info = StopLine()
         self.estimated_pose = Odometry()
         self.estimated_edge = Edge()
         self.goal_flag = Empty()
@@ -52,12 +54,14 @@ class TaskManager:
         self.goal_flag_sub = rospy.Subscriber('/node_edge_navigator/goal_flag', Empty, self.goal_flag_callback)
 
         self.stop_pub = rospy.Publisher('/task/stop', Bool, queue_size=1)
-        self.stop_line_sub = rospy.Subscriber('/recognition/stop_line', Bool, self.stop_line_callback)
+        self.local_goal_pub = rospy.Publisher('/local_goal', PoseStamped, queue_size=1)
+        self.stop_line_sub = rospy.Subscriber('/recognition/stop_line', StopLine, self.stop_line_callback)
         self.closed_sign_sub = rospy.Subscriber('/recognition/closed_sign', Bool, self.closed_sign_callback)
 
         self.line_detected = False
         self.road_closed = False
         self.first_park_flag = True
+        self.t_flag = False
         self.process_terminated = False
 
         self.subprocess1 = "road_closed_sign_detector"
@@ -98,22 +102,49 @@ class TaskManager:
                         # print "task ", count, " is enabled"
                         if task['trigger'] == 'recognition/stop_line':
                             if self.line_detected:
-                                line_dist = self.calc_line_dist()
-                                if line_dist > self.LINE_DIST_THRESHOLD:
-                                    print("line dist :{}".format(line_dist))
-                                    self.line_detected_pose = self.estimated_pose
-                                    if 'performed' in task:
-                                        if task['repeat']:
+                                line_angle = self.line_info.angle
+                                line_direction = self.calc_line_direction(line_angle)
+                                # print("direction :{} angle :{}".format(line_direction, line_angle))
+                                if (line_direction > math.pi*0.25 and line_direction < math.pi*0.75) or self.t_flag:
+                                    line_dist = self.calc_line_dist()
+                                    if line_dist > self.LINE_DIST_THRESHOLD:
+                                        # print("line dist :{}".format(line_dist))
+                                        self.line_detected_pose = self.estimated_pose
+                                        if 'performed' in task:
+                                            if task['repeat']:
+                                                print "task is performed"
+                                                self.stop_pub.publish(Bool(self.line_detected))
+                                                self.line_detected = False
+                                                self.t_flag = False
+                                            else:
+                                               pass
+                                        else:
                                             print "task is performed"
                                             self.stop_pub.publish(Bool(self.line_detected))
                                             self.line_detected = False
-                                        else:
-                                           pass
+                                            task['performed'] = True
+                                            self.t_flag = False
+                        elif task['trigger'] == 'recognition/stop_line/T':
+                            if self.line_detected:
+                                if self.line_info.is_t_shape:
+                                    if 'performed' in task:
+                                        pass
                                     else:
                                         print "task is performed"
-                                        self.stop_pub.publish(Bool(self.line_detected))
-                                        self.line_detected = False
+                                        abs_local_goal = np.array((task['local_goal']['x'], task['local_goal']['y'], 0))
+                                        line_angle = self.line_info.angle
+                                        if line_angle < 0:
+                                            line_angle += math.pi
+                                        Rz = rotation_matrix(-line_angle, (0,0,1))[:3,:3]
+                                        rel_local_goal = Rz.dot(abs_local_goal)
+                                        # print("line angle :{}".format(line_angle))
+                                        # print("absolute local goal :{}\nrelative local goal :{}".format(abs_local_goal, rel_local_goal))
+                                        self.publish_local_goal(rel_local_goal[:2], line_angle)
+                                        self.line_detected_pose = self.estimated_pose
                                         task['performed'] = True
+                                        self.t_flag = True
+                    else:
+                        self.line_detected = False
 
             for file in os.listdir(dir_name):
                 if 0 is file.find('.'):
@@ -127,6 +158,25 @@ class TaskManager:
                     except:
                         print 'failed to update task'
             r.sleep()
+
+    def get_yaw(self, orientation):
+        quaternion = [orientation.x, orientation.y, orientation.z, orientation.w]
+        _, _, yaw = euler_from_quaternion(quaternion)
+        return yaw
+
+    def create_quaternion_from_yaw(self, yaw):
+        q = quaternion_from_euler(0.0, 0.0, yaw) 
+        return Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
+
+    def calc_line_direction(self, line_angle):
+        robot_direction = self.get_yaw(self.estimated_pose.pose.pose.orientation)
+        edge_direction = self.estimated_edge.direction
+        direction_diff = robot_direction - edge_direction
+        # print("robot :{} edge :{} diff :{}".format(robot_direction, edge_direction, direction_diff))
+        line_direction = line_angle - math.pi*0.5 + direction_diff
+        line_direction = abs(math.atan2(math.sin(line_direction), math.cos(line_direction)))
+        return line_direction
+                
 
     def calc_line_dist(self):
         curr_pose = self.estimated_pose.pose.pose.position
@@ -142,8 +192,7 @@ class TaskManager:
         nodelist = nodetuple[0]
         nodelist = nodelist.split("\n")
         for nd in nodelist:
-            idx = nd.find(nodename)
-            if idx==0:
+            if nd.find(nodename) == 0:
                 kill_cmd = "rosnode kill %s" % nd
                 subprocess.call(kill_cmd.split())
                 self.process_terminated = True
@@ -183,6 +232,19 @@ class TaskManager:
         pprint(task_data)
         return task_data
 
+    def publish_local_goal(self, pose, line_angle):
+        local_goal = PoseStamped()
+        local_goal.header.stamp = rospy.get_rostime()
+        local_goal.header.frame_id = self.ROBOT_FRAME
+        local_goal.pose.position.x = pose[0]
+        local_goal.pose.position.y = pose[1]
+        local_goal.pose.position.z = 0.0 
+        line_direction = self.calc_line_direction(line_angle + math.pi*0.5)
+        local_goal.pose.orientation = self.create_quaternion_from_yaw(line_direction)
+        self.local_goal_pub.publish(local_goal)
+        print(local_goal)
+        print("----- published local goal -----")
+
     def map_callback(self, node_edge_map):
         self.map = node_edge_map
 
@@ -198,8 +260,9 @@ class TaskManager:
         self.goal_flag = goal_flag
         self.stop_pub.publish(Bool(True))
 
-    def stop_line_callback(self, detection):
-        self.line_detected = detection.data
+    def stop_line_callback(self, line_info):
+        self.line_detected = True
+        self.line_info = line_info
 
     def closed_sign_callback(self, detection):
         self.road_closed = detection.data
