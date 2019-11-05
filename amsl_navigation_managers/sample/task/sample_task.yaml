@@ -30,7 +30,72 @@ task:
         node1_id: 15
         progress_min: 0.7
         progress_max: 1.2
-      repeat: True
+      repeat: False
       local_goal:
-          x: 1.0
+          x: 2.0
           y: 0.5
+    - trigger: "recognition/stop_line"
+      task_type: "stop"
+      edge:
+        node0_id: 67
+        node1_id: 68
+        progress_min: 0.8
+        progress_max: 1.2
+      repeat: True
+    - trigger: "recognition/stop_line/T"
+      task_type: "stop"
+      edge:
+        node0_id: 67
+        node1_id: 68
+        progress_min: 0.7
+        progress_max: 1.2
+      repeat: False
+      local_goal:
+          x: 3.0
+          y: 0.5
+    - trigger: "recognition/stop_line"
+      task_type: "stop"
+      edge:
+        node0_id: 77
+        node1_id: 69
+        progress_min: 0.8
+        progress_max: 1.2
+      repeat: True
+    - trigger: "recognition/stop_line/T"
+      task_type: "stop"
+      edge:
+        node0_id: 77
+        node1_id: 69
+        progress_min: 0.7
+        progress_max: 1.2
+      repeat: False
+      local_goal:
+          x: 4.0
+          y: 0.0
+    - trigger: "recognition/stop_line"
+      task_type: "stop"
+      edge:
+        node0_id: 70
+        node1_id: 16
+        progress_min: 0.0
+        progress_max: 1.2
+      repeat: True
+    - trigger: "recognition/stop_line/T"
+      task_type: "stop"
+      edge:
+        node0_id: 70
+        node1_id: 16
+        progress_min: 0.0
+        progress_max: 1.2
+      repeat: False
+      local_goal:
+          x: 4.0
+          y: 0.0
+    - trigger: "recognition/stop_line"
+      task_type: "stop"
+      edge:
+        node0_id: 14
+        node1_id: 13
+        progress_min: 0.0
+        progress_max: 1.2
+      repeat: True
