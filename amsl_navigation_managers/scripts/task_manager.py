@@ -45,12 +45,14 @@ class TaskManager:
         self.map = None
         self.line_detected_pose = None 
         self.line_info = StopLine()
+        self.odom = Odometry()
         self.estimated_pose = Odometry()
         self.estimated_edge = Edge()
         self.goal_flag = Empty()
         self.map_sub = rospy.Subscriber('/node_edge_map/map', NodeEdgeMap, self.map_callback)
         self.pose_sub = rospy.Subscriber('/estimated_pose/pose', Odometry, self.pose_callback)
         self.edge_sub = rospy.Subscriber('/estimated_pose/edge', Edge, self.edge_callback)
+        self.odom_sub = rospy.Subscriber('/odom/complement', Odometry, self.odom_callback)
         self.goal_flag_sub = rospy.Subscriber('/node_edge_navigator/goal_flag', Empty, self.goal_flag_callback)
 
         self.stop_pub = rospy.Publisher('/task/stop', Bool, queue_size=1)
@@ -109,7 +111,7 @@ class TaskManager:
                                     line_dist = self.calc_line_dist()
                                     if line_dist > self.LINE_DIST_THRESHOLD:
                                         # print("line dist :{}".format(line_dist))
-                                        self.line_detected_pose = self.estimated_pose
+                                        self.line_detected_pose = self.odom
                                         if 'performed' in task:
                                             if task['repeat']:
                                                 print "task is performed"
@@ -133,14 +135,14 @@ class TaskManager:
                                         print "task is performed"
                                         abs_local_goal = np.array((task['local_goal']['x'], task['local_goal']['y'], 0))
                                         line_angle = self.line_info.angle
-                                        if line_angle < 0:
-                                            line_angle += math.pi
+                                        if abs(line_angle) > math.pi*0.75:
+                                            line_angle += -np.sign(line_angle) * math.pi
                                         Rz = rotation_matrix(-line_angle, (0,0,1))[:3,:3]
                                         rel_local_goal = Rz.dot(abs_local_goal)
                                         # print("line angle :{}".format(line_angle))
                                         # print("absolute local goal :{}\nrelative local goal :{}".format(abs_local_goal, rel_local_goal))
                                         self.publish_local_goal(rel_local_goal[:2], line_angle)
-                                        self.line_detected_pose = self.estimated_pose
+                                        self.line_detected_pose = self.odom
                                         task['performed'] = True
                                         self.t_flag = True
                     else:
@@ -179,7 +181,7 @@ class TaskManager:
                 
 
     def calc_line_dist(self):
-        curr_pose = self.estimated_pose.pose.pose.position
+        curr_pose = self.odom.pose.pose.position
         past_pose = self.line_detected_pose.pose.pose.position
         dist = math.sqrt((past_pose.x - curr_pose.x)**2 + (past_pose.y - curr_pose.y)**2)
         return dist
@@ -239,19 +241,29 @@ class TaskManager:
         local_goal.pose.position.x = pose[0]
         local_goal.pose.position.y = pose[1]
         local_goal.pose.position.z = 0.0 
-        line_direction = self.calc_line_direction(line_angle + math.pi*0.5)
+        line_direction = math.pi*0.5 - line_angle
         local_goal.pose.orientation = self.create_quaternion_from_yaw(line_direction)
         self.local_goal_pub.publish(local_goal)
-        print(local_goal)
-        print("----- published local goal -----")
+        # print("----- published local goal -----")
+        # print("target angle :{}".format(line_direction))
+        # print("line angle :{}".format(self.line_info.angle))
+        # print(local_goal)
 
     def map_callback(self, node_edge_map):
         self.map = node_edge_map
 
     def pose_callback(self, pose):
         self.estimated_pose = pose
+        # if self.line_detected_pose == None:
+        #     self.line_detected_pose = pose
+        # print("line detected pose x:{}, y:{}".format(self.line_detected_pose.pose.pose.position.x, self.line_detected_pose.pose.pose.position.y))
+
+    def odom_callback(self, odom):
+        self.odom = odom
         if self.line_detected_pose == None:
-            self.line_detected_pose = pose
+            self.line_detected_pose = odom
+        # print("pose x:{}, y:{}".format(odom.pose.pose.position.x, odom.pose.pose.position.y))
+
 
     def edge_callback(self, edge):
         self.estimated_edge = edge
