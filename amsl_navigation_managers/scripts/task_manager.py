@@ -17,6 +17,7 @@ import rospy
 import tf
 from tf.transformations import quaternion_from_euler, euler_from_quaternion, rotation_matrix
 from std_msgs.msg import ColorRGBA, Int32MultiArray, Bool, Empty
+from std_srvs.srv import SetBool
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Quaternion, Point, PoseStamped
 from visualization_msgs.msg import Marker, MarkerArray
@@ -113,7 +114,7 @@ class TaskManager:
                                 if self.ignore_intensity_flag:
                                     self.ignore_intensity_flag = False
                                     self.ignore_pub.publish(Bool(self.ignore_intensity_flag))
-                        if task['trigger'] == 'recognition/stop_line':
+                        elif task['trigger'] == 'recognition/stop_line':
                             if self.line_detected:
                                 line_angle = self.line_info.angle
                                 line_direction = self.calc_line_direction(line_angle)
@@ -128,15 +129,19 @@ class TaskManager:
                                                 print "task is performed"
                                                 self.stop_pub.publish(Bool(self.line_detected))
                                                 self.line_detected = False
-                                                self.t_flag = False
+                                                if self.t_flag:
+                                                    self.interrupt_local_goal(False)
+                                                    self.t_flag = False
                                             else:
                                                pass
                                         else:
                                             print "task is performed"
                                             self.stop_pub.publish(Bool(self.line_detected))
                                             self.line_detected = False
+                                            if self.t_flag:
+                                                self.interrupt_local_goal(False)
+                                                self.t_flag = False
                                             task['performed'] = True
-                                            self.t_flag = False
                         elif task['trigger'] == 'recognition/stop_line/T':
                             if self.line_detected:
                                 if self.line_info.is_t_shape:
@@ -152,10 +157,13 @@ class TaskManager:
                                         rel_local_goal = Rz.dot(abs_local_goal)
                                         # print("line angle :{}".format(line_angle))
                                         # print("absolute local goal :{}\nrelative local goal :{}".format(abs_local_goal, rel_local_goal))
+                                        self.interrupt_local_goal(True)
+                                        rospy.sleep(0.1)
                                         self.publish_local_goal(rel_local_goal[:2], line_angle)
                                         self.line_detected_pose = self.odom
-                                        task['performed'] = True
+                                        self.line_detected = False
                                         self.t_flag = True
+                                        task['performed'] = True
                     else:
                         self.line_detected = False
 
@@ -189,7 +197,6 @@ class TaskManager:
         line_direction = line_angle - math.pi*0.5 + direction_diff
         line_direction = abs(math.atan2(math.sin(line_direction), math.cos(line_direction)))
         return line_direction
-                
 
     def calc_line_dist(self):
         curr_pose = self.odom.pose.pose.position
@@ -212,6 +219,22 @@ class TaskManager:
                 print("success to kill the process")
                 return
         print("failed to kill the process")
+
+    def interrupt_local_goal(self, flag):
+        rospy.wait_for_service('/local_goal/interruption')
+        try:
+            client = rospy.ServiceProxy('/local_goal/interruption', SetBool)
+            req = SetBool()
+            req.data = flag
+            res = client(req.data)
+            if res.success:
+                if flag:
+                    print "success to stop local_goal_creator"
+                else:
+                    print "success to restart local_goal_creator"
+
+        except rospy.ServiceException, e:
+            print "Service call failed: %s"%e
 
     def set_impassable_edge(self, edge):
         rospy.wait_for_service('/node_edge_map/update_edge')
@@ -255,10 +278,10 @@ class TaskManager:
         line_direction = math.pi*0.5 - line_angle
         local_goal.pose.orientation = self.create_quaternion_from_yaw(line_direction)
         self.local_goal_pub.publish(local_goal)
-        # print("----- published local goal -----")
-        # print("target angle :{}".format(line_direction))
-        # print("line angle :{}".format(self.line_info.angle))
-        # print(local_goal)
+        print("----- published local goal -----")
+        print("target angle :{}".format(line_direction))
+        print("line angle :{}".format(self.line_info.angle))
+        print(local_goal)
 
     def map_callback(self, node_edge_map):
         self.map = node_edge_map
