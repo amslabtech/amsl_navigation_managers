@@ -56,6 +56,7 @@ class TaskManager:
         self.goal_flag_sub = rospy.Subscriber('/node_edge_navigator/goal_flag', Empty, self.goal_flag_callback)
 
         self.stop_pub = rospy.Publisher('/task/stop', Bool, queue_size=1)
+        self.ignore_pub = rospy.Publisher('/task/ignore_intensity', Bool, queue_size=1)
         self.local_goal_pub = rospy.Publisher('/local_goal', PoseStamped, queue_size=1)
         self.stop_line_sub = rospy.Subscriber('/recognition/stop_line', StopLine, self.stop_line_callback)
         self.closed_sign_sub = rospy.Subscriber('/recognition/closed_sign', Bool, self.closed_sign_callback)
@@ -65,6 +66,7 @@ class TaskManager:
         self.first_park_flag = True
         self.t_flag = False
         self.process_terminated = False
+        self.ignore_intensity_flag = False
 
         self.subprocess1 = "road_closed_sign_detector"
         self.lock = threading.Lock()
@@ -102,6 +104,15 @@ class TaskManager:
                     # print "task ", count, " is related to this edge"
                     if (task['edge']['progress_min'] < self.estimated_edge.progress) and (self.estimated_edge.progress < task['edge']['progress_max']):
                         # print "task ", count, " is enabled"
+                        if task['trigger'] == 'enter/edge':
+                            if task['task_type'] == "ignore_intensity" :
+                                if not self.ignore_intensity_flag:
+                                    self.ignore_intensity_flag = True
+                                    self.ignore_pub.publish(Bool(self.ignore_intensity_flag))
+                            elif task['task_type'] == "use_intensity" :
+                                if self.ignore_intensity_flag:
+                                    self.ignore_intensity_flag = False
+                                    self.ignore_pub.publish(Bool(self.ignore_intensity_flag))
                         if task['trigger'] == 'recognition/stop_line':
                             if self.line_detected:
                                 line_angle = self.line_info.angle
