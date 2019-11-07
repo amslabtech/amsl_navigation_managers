@@ -142,11 +142,14 @@ class TaskManager:
                                                     self.line_detected = False
                                                     self.interrupt_local_goal(False)
                                                     self.t_flag = False
+                                                    task['performed'] = True
                                             else:
                                                 print "task is performed"
                                                 self.stop_pub.publish(Bool(self.line_detected))
                                                 self.line_detected = False
                                                 task['performed'] = True
+                                    else:
+                                        self.line_detected = False
 
                         elif task['trigger'] == 'recognition/stop_line/T':
                             if self.line_detected:
