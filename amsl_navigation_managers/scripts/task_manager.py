@@ -40,7 +40,7 @@ class TaskManager:
         rospy.init_node('task_manager')
 
         self.TASK_LIST_PATH = rospy.get_param('~TASK_LIST_PATH')
-        self.LINE_DIST_THRESHOLD = rospy.get_param('LINE_DIST_THRESHOLD', 2.5)
+        self.LINE_DIST_THRESHOLD = rospy.get_param('LINE_DIST_THRESHOLD', 3.0)
         self.ROBOT_FRAME = rospy.get_param('ROBOT_FRAME', "base_link")
 
         self.map = None
@@ -135,13 +135,19 @@ class TaskManager:
                                             else:
                                                pass
                                         else:
-                                            print "task is performed"
-                                            self.stop_pub.publish(Bool(self.line_detected))
-                                            self.line_detected = False
-                                            if self.t_flag:
-                                                self.interrupt_local_goal(False)
-                                                self.t_flag = False
-                                            task['performed'] = True
+                                            if task['after_t']:
+                                                if self.t_flag:
+                                                    print "task is performed"
+                                                    self.stop_pub.publish(Bool(self.line_detected))
+                                                    self.line_detected = False
+                                                    self.interrupt_local_goal(False)
+                                                    self.t_flag = False
+                                            else:
+                                                print "task is performed"
+                                                self.stop_pub.publish(Bool(self.line_detected))
+                                                self.line_detected = False
+                                                task['performed'] = True
+
                         elif task['trigger'] == 'recognition/stop_line/T':
                             if self.line_detected:
                                 if self.line_info.is_t_shape:
@@ -157,6 +163,7 @@ class TaskManager:
                                         rel_local_goal = Rz.dot(abs_local_goal)
                                         # print("line angle :{}".format(line_angle))
                                         # print("absolute local goal :{}\nrelative local goal :{}".format(abs_local_goal, rel_local_goal))
+                                        self.stop_pub.publish(Bool(self.line_detected))
                                         self.interrupt_local_goal(True)
                                         rospy.sleep(0.1)
                                         self.publish_local_goal(rel_local_goal[:2], line_angle)
