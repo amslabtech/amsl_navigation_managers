@@ -128,7 +128,7 @@ class TaskManager:
                                         if 'performed' in task:
                                             if task['repeat']:
                                                 print "task is performed"
-                                                rospy.sleep(REST_TIME)
+                                                rospy.sleep(self.REST_TIME)
                                                 self.stop_pub.publish(Bool(self.line_detected))
                                                 self.line_detected = False
                                                 if self.t_flag:
@@ -140,7 +140,7 @@ class TaskManager:
                                             if task['after_t']:
                                                 if self.t_flag:
                                                     print "task is performed"
-                                                    rospy.sleep(REST_TIME)
+                                                    rospy.sleep(self.REST_TIME)
                                                     self.stop_pub.publish(Bool(self.line_detected))
                                                     self.line_detected = False
                                                     self.interrupt_local_goal(False)
@@ -148,7 +148,7 @@ class TaskManager:
                                                     task['performed'] = True
                                             else:
                                                 print "task is performed"
-                                                rospy.sleep(REST_TIME)
+                                                rospy.sleep(self.REST_TIME)
                                                 self.stop_pub.publish(Bool(self.line_detected))
                                                 self.line_detected = False
                                                 task['performed'] = True
@@ -178,7 +178,7 @@ class TaskManager:
                                         rel_local_goal = Rz.dot(abs_local_goal)
                                         # print("line angle :{}".format(line_angle))
                                         # print("absolute local goal :{}\nrelative local goal :{}".format(abs_local_goal, rel_local_goal))
-                                        rospy.sleep(REST_TIME)
+                                        rospy.sleep(self.REST_TIME)
                                         self.stop_pub.publish(Bool(self.line_detected))
                                         # self.interrupt_local_goal(True)
                                         # rospy.sleep(0.1)
