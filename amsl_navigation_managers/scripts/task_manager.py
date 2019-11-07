@@ -2,7 +2,7 @@
 #! coding:utf-8
 
 import numpy as np
-import math 
+import math
 import threading
 import yaml
 import os
@@ -45,7 +45,7 @@ class TaskManager:
         self.REST_TIME = rospy.get_param('REST_TIME', 3.0)
 
         self.map = None
-        self.line_detected_pose = None 
+        self.line_detected_pose = None
         self.line_info = StopLine()
         self.odom = Odometry()
         self.estimated_pose = Odometry()
@@ -155,14 +155,6 @@ class TaskManager:
                                     else:
                                         self.line_detected = False
 
-                        elif task['trigger'] == 'recognition/stop_line/line_trace':
-                            if not self.line_info.center_point.x == 0.0:
-                                print "task is performed"
-                                self.interrupt_local_goal(True)
-                                rospy.sleep(0.1)
-                                rel_local_goal = np.array((self.line_info.center_point.x, self.line_info.center_point.y, 0))
-                                self.publish_local_goal(rel_local_goal[:2], self.line_info.angle)
-                                self.line_detected = False
                         elif task['trigger'] == 'recognition/stop_line/T':
                             if self.line_detected:
                                 if self.line_info.is_t_shape:
@@ -180,13 +172,21 @@ class TaskManager:
                                         # print("absolute local goal :{}\nrelative local goal :{}".format(abs_local_goal, rel_local_goal))
                                         rospy.sleep(self.REST_TIME)
                                         self.stop_pub.publish(Bool(self.line_detected))
-                                        # self.interrupt_local_goal(True)
-                                        # rospy.sleep(0.1)
+                                        self.interrupt_local_goal(True)
+                                        rospy.sleep(0.1)
                                         self.publish_local_goal(rel_local_goal[:2], line_angle)
                                         self.line_detected_pose = self.odom
                                         self.line_detected = False
                                         self.t_flag = True
                                         task['performed'] = True
+                        # elif task['trigger'] == 'recognition/stop_line/line_trace':
+                        #     if self.line_info.center_point.x > 0.1:
+                        #         print "task is performed"
+                        #         self.interrupt_local_goal(True)
+                        #         rospy.sleep(0.1)
+                        #         rel_local_goal = np.array((self.line_info.center_point.x, self.line_info.center_point.y, 0))
+                        #         self.publish_local_goal(rel_local_goal[:2], abs(self.line_info.angle))
+                        #         self.line_detected = False
                     else:
                         self.line_detected = False
 
@@ -209,7 +209,7 @@ class TaskManager:
         return yaw
 
     def create_quaternion_from_yaw(self, yaw):
-        q = quaternion_from_euler(0.0, 0.0, yaw) 
+        q = quaternion_from_euler(0.0, 0.0, yaw)
         return Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
 
     def calc_line_direction(self, line_angle):
@@ -281,7 +281,7 @@ class TaskManager:
             req.edge = self.estimated_edge
             res = client(req.edge)
             if res.succeeded:
-                print "success to request replan" 
+                print "success to request replan"
         except rospy.ServiceException, e:
             print "Service call failed: %s"%e
 
@@ -297,7 +297,7 @@ class TaskManager:
         local_goal.header.frame_id = self.ROBOT_FRAME
         local_goal.pose.position.x = pose[0]
         local_goal.pose.position.y = pose[1]
-        local_goal.pose.position.z = 0.0 
+        local_goal.pose.position.z = 0.0
         line_direction = math.pi*0.5 - line_angle
         local_goal.pose.orientation = self.create_quaternion_from_yaw(line_direction)
         self.local_goal_pub.publish(local_goal)
