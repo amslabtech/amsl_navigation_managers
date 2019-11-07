@@ -42,7 +42,7 @@ class TaskManager:
         self.TASK_LIST_PATH = rospy.get_param('~TASK_LIST_PATH')
         self.LINE_DIST_THRESHOLD = rospy.get_param('LINE_DIST_THRESHOLD', 3.0)
         self.ROBOT_FRAME = rospy.get_param('ROBOT_FRAME', "base_link")
-        self.ROBOT_FRAME = rospy.get_param('REST_TIME', "REST_TIME", 3.0)
+        self.REST_TIME = rospy.get_param('REST_TIME', 3.0)
 
         self.map = None
         self.line_detected_pose = None 
@@ -155,6 +155,14 @@ class TaskManager:
                                     else:
                                         self.line_detected = False
 
+                        elif task['trigger'] == 'recognition/stop_line/line_trace':
+                            if not self.line_info.center_point.x == 0.0:
+                                print "task is performed"
+                                self.interrupt_local_goal(True)
+                                rospy.sleep(0.1)
+                                rel_local_goal = np.array((self.line_info.center_point.x, self.line_info.center_point.y, 0))
+                                self.publish_local_goal(rel_local_goal[:2], self.line_info.angle)
+                                self.line_detected = False
                         elif task['trigger'] == 'recognition/stop_line/T':
                             if self.line_detected:
                                 if self.line_info.is_t_shape:
@@ -172,8 +180,8 @@ class TaskManager:
                                         # print("absolute local goal :{}\nrelative local goal :{}".format(abs_local_goal, rel_local_goal))
                                         rospy.sleep(REST_TIME)
                                         self.stop_pub.publish(Bool(self.line_detected))
-                                        self.interrupt_local_goal(True)
-                                        rospy.sleep(0.1)
+                                        # self.interrupt_local_goal(True)
+                                        # rospy.sleep(0.1)
                                         self.publish_local_goal(rel_local_goal[:2], line_angle)
                                         self.line_detected_pose = self.odom
                                         self.line_detected = False
