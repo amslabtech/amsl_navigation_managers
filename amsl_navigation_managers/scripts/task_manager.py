@@ -42,7 +42,7 @@ class TaskManager:
         self.TASK_LIST_PATH = rospy.get_param('~TASK_LIST_PATH')
         self.LINE_DIST_THRESHOLD = rospy.get_param('LINE_DIST_THRESHOLD', 3.0)
         self.ROBOT_FRAME = rospy.get_param('ROBOT_FRAME', "base_link")
-        self.REST_TIME = rospy.get_param('REST_TIME', 3.0)
+        self.REST_TIME = rospy.get_param('REST_TIME', 0.0)
 
         self.map = None
         self.line_detected_pose = None
@@ -59,6 +59,7 @@ class TaskManager:
 
         self.stop_pub = rospy.Publisher('/task/stop', Bool, queue_size=1)
         self.ignore_pub = rospy.Publisher('/task/ignore_intensity', Bool, queue_size=1)
+        self.grassy_pub = rospy.Publisher('/task/grassy', Bool, queue_size=1)
         self.local_goal_pub = rospy.Publisher('/local_goal', PoseStamped, queue_size=1)
         self.stop_line_sub = rospy.Subscriber('/recognition/stop_line', StopLine, self.stop_line_callback)
         self.closed_sign_sub = rospy.Subscriber('/recognition/closed_sign', Bool, self.closed_sign_callback)
@@ -69,6 +70,7 @@ class TaskManager:
         self.t_flag = False
         self.process_terminated = False
         self.ignore_intensity_flag = False
+        self.grassy_flag = False
 
         self.subprocess1 = "road_closed_sign_detector"
         self.lock = threading.Lock()
@@ -115,6 +117,14 @@ class TaskManager:
                                 if self.ignore_intensity_flag:
                                     self.ignore_intensity_flag = False
                                     self.ignore_pub.publish(Bool(self.ignore_intensity_flag))
+                            if task['task_type'] == "grassy_area" :
+                                if not self.grassy_flag:
+                                    self.grassy_flag = True
+                                    self.grassy_pub.publish(Bool(self.grassy_flag))
+                            elif task['task_type'] == "not_grassy_area" :
+                                if self.grassy_flag:
+                                    self.grassy_flag = False
+                                    self.grassy_pub.publish(Bool(self.grassy_flag))
                         elif task['trigger'] == 'recognition/stop_line':
                             if self.line_detected:
                                 line_angle = self.line_info.angle
