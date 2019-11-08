@@ -162,8 +162,6 @@ class TaskManager:
                                                 self.stop_pub.publish(Bool(self.line_detected))
                                                 self.line_detected = False
                                                 task['performed'] = True
-                                    else:
-                                        self.line_detected = False
 
                         elif task['trigger'] == 'recognition/stop_line/T':
                             if self.line_detected:
@@ -190,16 +188,16 @@ class TaskManager:
                                         self.t_flag = True
                                         task['performed'] = True
                         # elif task['trigger'] == 'recognition/stop_line/line_trace':
-                        #     if self.line_info.center_point.x > 0.1:
-                        #         print "task is performed"
-                        #         self.interrupt_local_goal(True)
-                        #         rospy.sleep(0.1)
-                        #         rel_local_goal = np.array((self.line_info.center_point.x, self.line_info.center_point.y, 0))
-                        #         self.publish_local_goal(rel_local_goal[:2], abs(self.line_info.angle))
-                        #         self.line_detected = False
-                    else:
-                        self.line_detected = False
+                        #     if self.line_detected:
+                        #         if self.line_info.center_point.x > 0.1:
+                        #             print "task is performed"
+                        #             self.interrupt_local_goal(True)
+                        #             rospy.sleep(0.1)
+                        #             rel_local_goal = np.array((self.line_info.center_point.x, self.line_info.center_point.y, 0))
+                        #             self.publish_local_goal(rel_local_goal[:2], abs(self.line_info.angle))
+                        #             self.line_detected = False
 
+            self.line_detected = False
             for file in os.listdir(dir_name):
                 if 0 is file.find('.'):
                     continue
