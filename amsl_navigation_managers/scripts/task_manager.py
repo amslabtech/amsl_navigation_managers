@@ -43,6 +43,7 @@ class TaskManager:
         self.LINE_DIST_THRESHOLD = rospy.get_param('LINE_DIST_THRESHOLD', 3.0)
         self.ROBOT_FRAME = rospy.get_param('ROBOT_FRAME', "base_link")
         self.REST_TIME = rospy.get_param('REST_TIME', 0.0)
+        self.STOP_DIST = rospy.get_param('STOP_DIST', 1.0)
 
         self.map = None
         self.line_detected_pose = None
@@ -71,6 +72,7 @@ class TaskManager:
         self.process_terminated = False
         self.ignore_intensity_flag = False
         self.grassy_flag = False
+        self.stop_flag = False
 
         self.subprocess1 = "road_closed_sign_detector"
         self.lock = threading.Lock()
@@ -101,6 +103,12 @@ class TaskManager:
                         print("killing %s" % self.subprocess1)
                         node1 = "/navigation_managers/%s/%s" % (self.subprocess1, self.subprocess1)
                         self.kill_node(node1)
+
+            if self.stop_flag:
+                line_dist = self.calc_line_dist()
+                if line_dist > self.STOP_DIST:
+                    self.stop_pub.publish(Bool(True))
+                    self.stop_flag = False
 
             for count, task in enumerate(self.task_data['task']):
                 # pprint(task)
@@ -138,8 +146,9 @@ class TaskManager:
                                         if 'performed' in task:
                                             if task['repeat']:
                                                 print "task is performed"
-                                                rospy.sleep(self.REST_TIME)
-                                                self.stop_pub.publish(Bool(self.line_detected))
+                                                self.stop_flag = True
+                                                # rospy.sleep(self.REST_TIME)
+                                                # self.stop_pub.publish(Bool(self.line_detected))
                                                 self.line_detected = False
                                                 if self.t_flag:
                                                     self.interrupt_local_goal(False)
@@ -150,16 +159,18 @@ class TaskManager:
                                             if task['after_t']:
                                                 if self.t_flag:
                                                     print "task is performed"
-                                                    rospy.sleep(self.REST_TIME)
-                                                    self.stop_pub.publish(Bool(self.line_detected))
+                                                    self.stop_flag = True
+                                                    # rospy.sleep(self.REST_TIME)
+                                                    # self.stop_pub.publish(Bool(self.line_detected))
                                                     self.line_detected = False
                                                     self.interrupt_local_goal(False)
                                                     self.t_flag = False
                                                     task['performed'] = True
                                             else:
                                                 print "task is performed"
-                                                rospy.sleep(self.REST_TIME)
-                                                self.stop_pub.publish(Bool(self.line_detected))
+                                                self.stop_flag = True
+                                                # rospy.sleep(self.REST_TIME)
+                                                # self.stop_pub.publish(Bool(self.line_detected))
                                                 self.line_detected = False
                                                 task['performed'] = True
 
@@ -178,8 +189,9 @@ class TaskManager:
                                         rel_local_goal = Rz.dot(abs_local_goal)
                                         # print("line angle :{}".format(line_angle))
                                         # print("absolute local goal :{}\nrelative local goal :{}".format(abs_local_goal, rel_local_goal))
-                                        rospy.sleep(self.REST_TIME)
-                                        self.stop_pub.publish(Bool(self.line_detected))
+                                        self.stop_flag = True
+                                        # rospy.sleep(self.REST_TIME)
+                                        # self.stop_pub.publish(Bool(self.line_detected))
                                         self.interrupt_local_goal(True)
                                         rospy.sleep(0.1)
                                         self.publish_local_goal(rel_local_goal[:2], line_angle)
@@ -187,15 +199,15 @@ class TaskManager:
                                         self.line_detected = False
                                         self.t_flag = True
                                         task['performed'] = True
-                        # elif task['trigger'] == 'recognition/stop_line/line_trace':
-                        #     if self.line_detected:
-                        #         if self.line_info.center_point.x > 0.1:
-                        #             print "task is performed"
-                        #             self.interrupt_local_goal(True)
-                        #             rospy.sleep(0.1)
-                        #             rel_local_goal = np.array((self.line_info.center_point.x, self.line_info.center_point.y, 0))
-                        #             self.publish_local_goal(rel_local_goal[:2], abs(self.line_info.angle))
-                        #             self.line_detected = False
+                        elif task['trigger'] == 'recognition/stop_line/line_trace':
+                            if self.line_detected:
+                                if self.line_info.center_point.x > 0.1:
+                                    print "task is performed"
+                                    self.interrupt_local_goal(True)
+                                    rospy.sleep(0.1)
+                                    rel_local_goal = np.array((self.line_info.center_point.x, self.line_info.center_point.y, 0))
+                                    self.publish_local_goal(rel_local_goal[:2], abs(self.line_info.angle))
+                                    self.line_detected = False
 
             self.line_detected = False
             for file in os.listdir(dir_name):
