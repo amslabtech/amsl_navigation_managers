@@ -19,7 +19,7 @@ from tf.transformations import quaternion_from_euler, euler_from_quaternion, rot
 from std_msgs.msg import ColorRGBA, Int32MultiArray, Bool, Empty
 from std_srvs.srv import SetBool
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import Quaternion, Point, PoseStamped
+from geometry_msgs.msg import Quaternion, Point, PoseStamped, Twist
 from visualization_msgs.msg import Marker, MarkerArray
 
 from amsl_navigation_msgs.msg import Node, Edge, NodeEdgeMap, StopLine
@@ -57,6 +57,7 @@ class TaskManager:
         self.odom_sub = rospy.Subscriber('/odom/complement', Odometry, self.odom_callback)
         self.goal_flag_sub = rospy.Subscriber('/node_edge_navigator/goal_flag', Empty, self.goal_flag_callback)
 
+        self.target_velocity_pub = rospy.Publisher('/target_velocity', Twist, queue_size=1)
         self.stop_pub = rospy.Publisher('/task/stop', Bool, queue_size=1)
         self.ignore_pub = rospy.Publisher('/task/ignore_intensity', Bool, queue_size=1)
         self.grassy_pub = rospy.Publisher('/task/grassy', Bool, queue_size=1)
@@ -71,6 +72,7 @@ class TaskManager:
         self.process_terminated = False
         self.ignore_intensity_flag = False
         self.grassy_flag = False
+        self.is_line_trace = False
 
         self.subprocess1 = "road_closed_sign_detector"
         self.lock = threading.Lock()
@@ -143,6 +145,7 @@ class TaskManager:
                                                 self.line_detected = False
                                                 if self.t_flag:
                                                     self.interrupt_local_goal(False)
+                                                    self.publish_target_velocity(0.6)
                                                     self.t_flag = False
                                             else:
                                                pass
@@ -154,6 +157,7 @@ class TaskManager:
                                                     self.stop_pub.publish(Bool(self.line_detected))
                                                     self.line_detected = False
                                                     self.interrupt_local_goal(False)
+                                                    self.publish_target_velocity(0.8)
                                                     self.t_flag = False
                                                     task['performed'] = True
                                             else:
@@ -165,37 +169,43 @@ class TaskManager:
 
                         elif task['trigger'] == 'recognition/stop_line/T':
                             if self.line_detected:
-                                if self.line_info.is_t_shape:
-                                    if 'performed' in task:
-                                        pass
-                                    else:
-                                        print "task is performed"
-                                        abs_local_goal = np.array((task['local_goal']['x'], task['local_goal']['y'], 0))
-                                        line_angle = self.line_info.angle
-                                        if abs(line_angle) > math.pi*0.75:
-                                            line_angle += -np.sign(line_angle) * math.pi
-                                        Rz = rotation_matrix(-line_angle, (0,0,1))[:3,:3]
-                                        rel_local_goal = Rz.dot(abs_local_goal)
-                                        # print("line angle :{}".format(line_angle))
-                                        # print("absolute local goal :{}\nrelative local goal :{}".format(abs_local_goal, rel_local_goal))
-                                        rospy.sleep(self.REST_TIME)
-                                        self.stop_pub.publish(Bool(self.line_detected))
-                                        self.interrupt_local_goal(True)
-                                        rospy.sleep(0.1)
-                                        self.publish_local_goal(rel_local_goal[:2], line_angle)
-                                        self.line_detected_pose = self.odom
-                                        self.line_detected = False
-                                        self.t_flag = True
-                                        task['performed'] = True
-                        # elif task['trigger'] == 'recognition/stop_line/line_trace':
-                        #     if self.line_detected:
-                        #         if self.line_info.center_point.x > 0.1:
-                        #             print "task is performed"
-                        #             self.interrupt_local_goal(True)
-                        #             rospy.sleep(0.1)
-                        #             rel_local_goal = np.array((self.line_info.center_point.x, self.line_info.center_point.y, 0))
-                        #             self.publish_local_goal(rel_local_goal[:2], abs(self.line_info.angle))
-                        #             self.line_detected = False
+                                if self.is_line_trace is True:
+                                    line_angle = self.line_info.angle
+                                    line_direction = self.calc_line_direction(line_angle)
+                                    if (line_direction > math.pi*0.25 and line_direction < math.pi*0.75):
+                                        # if self.line_info.is_t_shape:
+                                        if 'performed' in task:
+                                            pass
+                                        else:
+                                            print "task is performed"
+                                            abs_local_goal = np.array((task['local_goal']['x'], task['local_goal']['y'], 0))
+                                            if abs(line_angle) > math.pi*0.75:
+                                                line_angle += -np.sign(line_angle) * math.pi
+                                            Rz = rotation_matrix(-line_angle, (0,0,1))[:3,:3]
+                                            rel_local_goal = Rz.dot(abs_local_goal)
+                                            # print("line angle :{}".format(line_angle))
+                                            # print("absolute local goal :{}\nrelative local goal :{}".format(abs_local_goal, rel_local_goal))
+                                            rospy.sleep(self.REST_TIME)
+                                            self.stop_pub.publish(Bool(self.line_detected))
+                                            self.interrupt_local_goal(True)
+                                            rospy.sleep(0.1)
+                                            self.publish_local_goal(rel_local_goal[:2], line_angle)
+                                            self.line_detected_pose = self.odom
+                                            self.publish_target_velocity(0.5)
+                                            self.line_detected = False
+                                            self.t_flag = True
+                                            self.is_line_trace = False
+                                            task['performed'] = True
+                        elif task['trigger'] == 'recognition/stop_line/line_trace':
+                            if self.line_detected and  not self.t_flag:
+                                if self.line_info.center_point.x > 0.1:
+                                    print "task is performed"
+                                    self.interrupt_local_goal(True)
+                                    rospy.sleep(0.1)
+                                    rel_local_goal = np.array((self.line_info.center_point.x, self.line_info.center_point.y, 0))
+                                    self.publish_local_goal(rel_local_goal[:2], abs(self.line_info.angle))
+                                    self.publish_target_velocity(0.1)
+                                    self.is_line_trace = True
 
             self.line_detected = False
             for file in os.listdir(dir_name):
@@ -313,6 +323,13 @@ class TaskManager:
         print("target angle :{}".format(line_direction))
         print("line angle :{}".format(self.line_info.angle))
         print(local_goal)
+
+    def publish_target_velocity(self, vel):
+        velocity = Twist()
+        velocity.linear.x = vel
+        self.target_velocity_pub.publish(velocity)
+        print("----- published target velocity -----")
+        print(velocity)
 
     def map_callback(self, node_edge_map):
         self.map = node_edge_map
