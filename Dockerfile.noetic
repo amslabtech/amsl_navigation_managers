@@ -1,11 +1,12 @@
-ARG ROS=melodic
+ARG ROS=noetic
 FROM ros:${ROS}-ros-base
 
 SHELL ["/bin/bash", "-xvc"]
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
     ros-${ROS_DISTRO}-tf* \
-    python-catkin-tools
+    python3-catkin-tools \
+    python3-osrf-pycommon
 
 WORKDIR /root
 
