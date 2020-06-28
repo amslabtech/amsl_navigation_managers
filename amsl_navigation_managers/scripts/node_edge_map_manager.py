@@ -54,7 +54,7 @@ class NodeEdgeMapManager:
 
         self.lock = threading.Lock()
 
-        print '=== node edge map manager ==='
+        print('=== node edge map manager ===')
 
     def process(self):
         r = rospy.Rate(self.HZ)
@@ -76,10 +76,10 @@ class NodeEdgeMapManager:
                         self.deleted_id_list = self.compare_id()
                         self.map_data = self.new_map_data
                         self.delete_invalid_edge()
-                        print 'map updated!'
+                        print('map updated!')
                     except Exception as e:
-                        print e
-                        print 'failed to update map'
+                        print(e)
+                        print('failed to update map')
             self.make_and_publish_map()
             r.sleep()
 
@@ -273,9 +273,9 @@ class NodeEdgeMapManager:
             for n_id in self.deleted_id_list:
                 if n_id in edge['node_id']:
                     self.map_data['EDGE'].remove(edge)
-                    #print edge
+                    #print(edge)
         if self.deleted_id_list != []:
-            print "deleted:", self.deleted_id_list
+            print("deleted:", self.deleted_id_list)
 
     def get_index_from_id(self, n_id):
         index = 0;
@@ -301,8 +301,8 @@ class NodeEdgeMapManager:
                 self.make_and_publish_map()
                 return UpdateNodeResponse(True)
             except Exception as e:
-                print e
-                print 'failed to update map'
+                print(e)
+                print('failed to update map')
                 return UpdateNodeResponse(False)
         elif request.operation == request.DELETE:
             try:
@@ -317,8 +317,8 @@ class NodeEdgeMapManager:
                 self.make_and_publish_map()
                 return UpdateNodeResponse(True)
             except Exception as e:
-                print e
-                print 'failed to update map'
+                print(e)
+                print('failed to update map')
                 return UpdateNodeResponse(False)
 
 
@@ -332,8 +332,8 @@ class NodeEdgeMapManager:
                     self.make_and_publish_map()
                 return UpdateEdgeResponse(True)
             except Exception as e:
-                print e
-                print 'failed to update map'
+                print(e)
+                print('failed to update map')
                 return UpdateEdgeResponse(False)
         elif request.operation == request.DELETE:
             try:
@@ -346,8 +346,8 @@ class NodeEdgeMapManager:
                 else:
                     return UpdateEdgeResponse(False)
             except Exception as e:
-                print e
-                print 'failed to update map'
+                print(e)
+                print('failed to update map')
                 return UpdateEdgeResponse(False)
 
 
