@@ -10,6 +10,7 @@ import os
 import time
 import datetime
 from stat import *
+import re
 
 import rospy
 import tf
@@ -86,6 +87,8 @@ class NodeEdgeMapManager:
     def load_map_from_yaml(self):
         with open(self.MAP_PATH) as file:
             map_data = yaml.load(file)
+            # remove first '/'
+            map_data["MAP_FRAME"] = re.sub("^/", "", map_data["MAP_FRAME"])
         return map_data
 
     def make_and_publish_map(self):
