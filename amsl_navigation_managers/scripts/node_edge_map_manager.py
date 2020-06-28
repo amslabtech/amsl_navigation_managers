@@ -77,10 +77,10 @@ class NodeEdgeMapManager:
                         self.map_data = self.new_map_data
                         self.delete_invalid_edge()
                         print('map updated!')
+                        self.make_and_publish_map()
                     except Exception as e:
                         print(e)
                         print('failed to update map')
-            self.make_and_publish_map()
             r.sleep()
 
     def load_map_from_yaml(self):
