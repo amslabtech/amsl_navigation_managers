@@ -8,7 +8,7 @@ jobs:
     - stage: melodic
       script:
         - docker build --build-arg ROS=melodic -f Dockerfile -t melodic_image .
-        - docker run --rm -it $PWD.:/root/catkin_ws/src/repo melodic_image /bin/bash -c "cd catkin_ws && catkin build && . devel/setup.bash && catkin run_tests && catkin_test_results"
+        - docker run --rm -it -v $PWD:/root/catkin_ws/src/repo melodic_image /bin/bash -c "cd catkin_ws && catkin build && . devel/setup.bash && catkin run_tests && catkin_test_results"
     - stage: noetic
       script:
         - docker build -f Dockerfile.noetic -t noetic_image .
