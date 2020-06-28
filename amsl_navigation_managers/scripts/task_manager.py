@@ -83,7 +83,7 @@ class TaskManager:
         timestamp = time.mktime(datetime.datetime.now().utctimetuple())
         dir_name = os.path.dirname(self.TASK_LIST_PATH)
         while not rospy.is_shutdown():
-            # print '=== task manager ==='
+            # print('=== task manager ===')
             if self.map is not None:
                 # print("node id :{}".format(self.map.nodes[self.estimated_edge.node0_id].id))
                 if (self.map.nodes[self.estimated_edge.node0_id].label == 'park'):
@@ -107,9 +107,9 @@ class TaskManager:
             for count, task in enumerate(self.task_data['task']):
                 # pprint(task)
                 if (task['edge']['node0_id'] == self.estimated_edge.node0_id) and (task['edge']['node1_id'] == self.estimated_edge.node1_id):
-                    # print "task ", count, " is related to this edge"
+                    # print("task ", count, " is related to this edge")
                     if (task['edge']['progress_min'] < self.estimated_edge.progress) and (self.estimated_edge.progress < task['edge']['progress_max']):
-                        # print "task ", count, " is enabled"
+                        # print("task ", count, " is enabled")
                         if task['trigger'] == 'enter/edge':
                             if task['task_type'] == "ignore_intensity" :
                                 if not self.ignore_intensity_flag:
@@ -139,7 +139,7 @@ class TaskManager:
                                         self.line_detected_pose = self.odom
                                         if 'performed' in task:
                                             if task['repeat']:
-                                                print "task is performed"
+                                                print("task is performed")
                                                 rospy.sleep(self.REST_TIME)
                                                 self.stop_pub.publish(Bool(self.line_detected))
                                                 self.line_detected = False
@@ -152,7 +152,7 @@ class TaskManager:
                                         else:
                                             if task['after_t']:
                                                 if self.t_flag:
-                                                    print "task is performed"
+                                                    print("task is performed")
                                                     rospy.sleep(self.REST_TIME)
                                                     self.stop_pub.publish(Bool(self.line_detected))
                                                     self.line_detected = False
@@ -161,7 +161,7 @@ class TaskManager:
                                                     self.t_flag = False
                                                     task['performed'] = True
                                             else:
-                                                print "task is performed"
+                                                print("task is performed")
                                                 rospy.sleep(self.REST_TIME)
                                                 self.stop_pub.publish(Bool(self.line_detected))
                                                 self.line_detected = False
@@ -177,7 +177,7 @@ class TaskManager:
                                         if 'performed' in task:
                                             pass
                                         else:
-                                            print "task is performed"
+                                            print("task is performed")
                                             abs_local_goal = np.array((task['local_goal']['x'], task['local_goal']['y'], 0))
                                             if abs(line_angle) > math.pi*0.75:
                                                 line_angle += -np.sign(line_angle) * math.pi
@@ -199,7 +199,7 @@ class TaskManager:
                         elif task['trigger'] == 'recognition/stop_line/line_trace':
                             if self.line_detected and  not self.t_flag:
                                 if self.line_info.center_point.x > 0.1:
-                                    print "task is performed"
+                                    print("task is performed")
                                     self.interrupt_local_goal(True)
                                     rospy.sleep(0.1)
                                     rel_local_goal = np.array((self.line_info.center_point.x, self.line_info.center_point.y, 0))
@@ -216,9 +216,9 @@ class TaskManager:
                     timestamp = file_timestamp
                     try:
                         self.task_data = self.load_task_from_yaml()
-                        print 'task updated!'
+                        print('task updated!')
                     except:
-                        print 'failed to update task'
+                        print('failed to update task')
             r.sleep()
 
     def get_yaw(self, orientation):
@@ -270,12 +270,12 @@ class TaskManager:
             res = client(req.data)
             if res.success:
                 if flag:
-                    print "success to stop local_goal_creator"
+                    print("success to stop local_goal_creator")
                 else:
-                    print "success to restart local_goal_creator"
+                    print("success to restart local_goal_creator")
 
         except rospy.ServiceException, e:
-            print "Service call failed: %s"%e
+            print("Service call failed: %s"%e)
 
     def set_impassable_edge(self, edge):
         rospy.wait_for_service('/node_edge_map/update_edge')
@@ -287,9 +287,9 @@ class TaskManager:
             req.operation = 0
             res = client(req.edge, req.operation)
             if res.succeeded:
-                print "success to update the edge"
+                print("success to update the edge")
         except rospy.ServiceException, e:
-            print "Service call failed: %s"%e
+            print("Service call failed: %s"%e)
 
     def request_replan(self):
         rospy.wait_for_service('/global_path/replan')
@@ -299,9 +299,9 @@ class TaskManager:
             req.edge = self.estimated_edge
             res = client(req.edge)
             if res.succeeded:
-                print "success to request replan"
+                print("success to request replan")
         except rospy.ServiceException, e:
-            print "Service call failed: %s"%e
+            print("Service call failed: %s"%e)
 
     def load_task_from_yaml(self):
         with open(self.TASK_LIST_PATH) as file:

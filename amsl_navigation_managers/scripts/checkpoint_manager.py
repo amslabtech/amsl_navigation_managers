@@ -54,7 +54,7 @@ class CheckpointManager:
 
         self.lock = threading.Lock()
 
-        print '=== checkpoint manager ==='
+        print('=== checkpoint manager ===')
 
     def process(self):
         r = rospy.Rate(self.HZ)
@@ -73,9 +73,9 @@ class CheckpointManager:
                     timestamp = file_timestamp
                     try:
                         self.cp_data = self.load_cp_from_yaml()
-                        print 'checkpoint updated!'
+                        print('checkpoint updated!')
                     except:
-                        print 'failed to update checkpoint'
+                        print('failed to update checkpoint')
             self.make_and_publish_checkpoint()
             r.sleep()
 
@@ -150,8 +150,8 @@ class CheckpointManager:
                 self.make_and_publish_checkpoint()
                 return UpdateCheckpointResponse(True)
             except Exception as e:
-                print e
-                print 'failed to update checkpoint'
+                print(e)
+                print('failed to update checkpoint')
                 return UpdateCheckpointResponse(False)
         elif request.operation == request.DELETE:
             try:
@@ -159,8 +159,8 @@ class CheckpointManager:
                 self.make_and_publish_checkpoint()
                 return UpdateCheckpointResponse(True)
             except Exception as e:
-                print e
-                print 'failed to update checkpoint'
+                print(e)
+                print('failed to update checkpoint')
                 return UpdateCheckpointResponse(False)
 
 if __name__ == '__main__':
