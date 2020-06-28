@@ -66,7 +66,7 @@ class NodeEdgeMapManager:
 
         while not rospy.is_shutdown():
             for file in os.listdir(dir_name):
-                if 0 is file.find('.'):
+                if file.find('.') == 0:
                     continue
                 file_timestamp = os.stat(dir_name+'/'+file)[ST_MTIME]
                 if timestamp < file_timestamp:
