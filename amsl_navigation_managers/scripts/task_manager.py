@@ -209,7 +209,7 @@ class TaskManager:
 
             self.line_detected = False
             for file in os.listdir(dir_name):
-                if 0 is file.find('.'):
+                if file.find('.') == 0:
                     continue
                 file_timestamp = os.stat(dir_name+'/'+file)[ST_MTIME]
                 if timestamp < file_timestamp:
@@ -274,7 +274,7 @@ class TaskManager:
                 else:
                     print("success to restart local_goal_creator")
 
-        except rospy.ServiceException, e:
+        except rospy.ServiceException as e:
             print("Service call failed: %s"%e)
 
     def set_impassable_edge(self, edge):
@@ -288,7 +288,7 @@ class TaskManager:
             res = client(req.edge, req.operation)
             if res.succeeded:
                 print("success to update the edge")
-        except rospy.ServiceException, e:
+        except rospy.ServiceException as e:
             print("Service call failed: %s"%e)
 
     def request_replan(self):
@@ -300,7 +300,7 @@ class TaskManager:
             res = client(req.edge)
             if res.succeeded:
                 print("success to request replan")
-        except rospy.ServiceException, e:
+        except rospy.ServiceException as e:
             print("Service call failed: %s"%e)
 
     def load_task_from_yaml(self):
