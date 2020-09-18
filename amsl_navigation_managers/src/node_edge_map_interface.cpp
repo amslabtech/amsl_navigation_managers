@@ -52,6 +52,7 @@ int NodeEdgeMapInterface::get_edge_index_from_node_id(int node0_id, int node1_id
         }
         index++;
     }
+    return -1;
 }
 
 int NodeEdgeMapInterface::get_node_index_from_id(int id)
