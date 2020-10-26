@@ -139,6 +139,7 @@ class NodeEdgeMapManager:
         self.edge_marker.action = Marker().ADD
         self.edge_marker.type = Marker().LINE_LIST
         self.edge_marker.lifetime = rospy.Duration()
+        self.edge_marker.pose.orientation = Quaternion(w = 1, x = 0, y = 0, z = 0)
         self.edge_marker.scale.x = 0.3
         self.edge_marker.ns = "edge"
         self.edge_marker.frame_locked = True
