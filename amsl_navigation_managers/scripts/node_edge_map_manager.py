@@ -61,6 +61,7 @@ class NodeEdgeMapManager:
         r = rospy.Rate(self.HZ)
 
         self.make_and_publish_map()
+        self.make_and_publish_map_markers()
 
         timestamp = time.mktime(datetime.datetime.now().utctimetuple())
         dir_name = os.path.dirname(self.MAP_PATH)
@@ -82,6 +83,7 @@ class NodeEdgeMapManager:
                     except Exception as e:
                         print(e)
                         print('failed to update map')
+            self.make_and_publish_map_markers()
             r.sleep()
 
     def load_map_from_yaml(self):
@@ -92,14 +94,16 @@ class NodeEdgeMapManager:
         return map_data
 
     def make_and_publish_map(self):
+        self.make_node_edge_map()
+        self.node_edge_map_pub.publish(self.node_edge_map)
+
+    def make_and_publish_map_markers(self):
         self.make_node_marker()
         self.make_edge_marker()
         self.make_id_marker()
-        self.make_node_edge_map()
         self.node_marker_pub.publish(self.node_marker)
         self.edge_marker_pub.publish(self.edge_marker)
         self.id_marker_pub.publish(self.id_marker)
-        self.node_edge_map_pub.publish(self.node_edge_map)
 
     def make_node_marker(self):
         self.node_marker = MarkerArray()
@@ -303,6 +307,7 @@ class NodeEdgeMapManager:
                     n = self.get_dict_from_node_msg(request.node)
                     self.map_data['NODE'][self.get_index_from_id(n['id'])] = n
                 self.make_and_publish_map()
+                self.make_and_publish_map_markers()
                 return UpdateNodeResponse(True)
             except Exception as e:
                 print(e)
@@ -319,6 +324,7 @@ class NodeEdgeMapManager:
                 self.deleted_id_list.append(n['id'])
                 self.delete_invalid_edge()
                 self.make_and_publish_map()
+                self.make_and_publish_map_markers()
                 return UpdateNodeResponse(True)
             except Exception as e:
                 print(e)
@@ -334,6 +340,7 @@ class NodeEdgeMapManager:
                 if index < 0:
                     self.map_data['EDGE'].append(edge)
                     self.make_and_publish_map()
+                    self.make_and_publish_map_markers()
                 return UpdateEdgeResponse(True)
             except Exception as e:
                 print(e)
@@ -346,6 +353,7 @@ class NodeEdgeMapManager:
                 if index >= 0:
                     del self.map_data['EDGE'][index]
                     self.make_and_publish_map()
+                    self.make_and_publish_map_markers()
                     return UpdateEdgeResponse(True)
                 else:
                     return UpdateEdgeResponse(False)
