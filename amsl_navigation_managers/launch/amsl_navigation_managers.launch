@@ -4,6 +4,7 @@
     <arg name="map_path" default="$(find amsl_navigation_managers)/sample/map/sample_map.yaml"/>
     <arg name="checkpoint_path" default="$(find amsl_navigation_managers)/sample/checkpoint/sample_checkpoint.yaml"/>
     <arg name="task_list_path" default="$(find amsl_navigation_managers)/sample/task/sample_task.yaml"/>
+    <arg name="enable_task" default="true"/>
     <arg name="hz" default="10"/>
 
     <node pkg="amsl_navigation_managers" type="node_edge_map_manager.py" name="node_edge_map_manager" ns="navigation_managers">
@@ -16,7 +17,7 @@
         <param name="HZ" value="$(arg hz)"/>
     </node>
 
-    <node pkg="amsl_navigation_managers" type="task_manager.py" name="task_manager" ns="navigation_managers">
+    <node pkg="amsl_navigation_managers" type="task_manager.py" name="task_manager" ns="navigation_managers" if="$(arg enable_task)">
         <param name="TASK_LIST_PATH" value="$(arg task_list_path)"/>
     </node>
 
