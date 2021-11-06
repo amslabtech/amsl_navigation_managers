@@ -1,0 +1,110 @@
+# sample node_edge map
+EDGE:
+    - node_id: [0, 1]
+    - node_id: [1, 2]
+    - node_id: [2, 3]
+    - node_id: [3, 4]
+    - node_id: [4, 5]
+    - node_id: [5, 6]
+    - node_id: [6, 7]
+    - node_id: [7, 0]
+    - node_id: [0, 8]
+    - node_id: [2, 8]
+    - node_id: [4, 8]
+    - node_id: [6, 8]
+MAP_FRAME: '/map'
+NODE:
+    - id: 0
+      type: "intersection"
+      point:
+           x: 1.5428
+           y: 7.0571
+      label: "start"
+    - id: 1
+      type: "intersection"
+      point:
+           x: -14.677
+           y: 8.1004 
+      label: ""
+    - id: 2
+      type: "intersection"
+      point:
+           x: -15.11
+           y: 1.1011 
+      label: ""
+    - id: 3
+      type: "intersection"
+      point:
+           x: -15.563
+           y: -5.9037
+      label: ""
+    - id: 4
+      type: "intersection"
+      point:
+           x: 0.69568
+           y: -6.8988 
+      label: ""
+    - id: 5
+      type: "intersection"
+      point:
+           x: 17.563
+           y: -7.87
+      label: ""
+    - id: 6
+      type: "intersection"
+      point:
+           x: 18.081
+           y: -0.91079 
+      label: ""
+    - id: 7
+      type: "intersection"
+      point:
+           x: 18.573
+           y: 6.1142 
+      label: ""
+    - id: 8
+      type: "intersection"
+      point:
+           x: 0.0
+           y: 0.0 
+      label: ""
+
+#     - id: 9
+#       type: "intersection"
+#       point:
+#            x: 3.0403 
+#            y: -7.3384 
+#       label: ""
+#     - id: 10
+#       type: "intersection"
+#       point:
+#            x: 0.36199 
+#            y: 7.79236 
+#       label: ""
+#     - id: 11
+#       type: "intersection"
+#       point:
+#            x: -17.8325 
+#            y: 9.23252 
+#       label: ""
+#     - id: 12
+#       type: "intersection"
+#       point:
+#            x: -27.0588 
+#            y: 10.0188 
+#       label: ""
+#     - id: 13
+#       type: "intersection"
+#       point:
+#            x: -31.6742 
+#            y: 2.00563 
+#       label: ""
+#     - id: 14
+#       type: "intersection"
+#       point:
+#            x: -27.0588 
+#            y: -5.5 
+#       label: ""
+
+    
+

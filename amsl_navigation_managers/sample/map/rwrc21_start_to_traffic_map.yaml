@@ -1,0 +1,327 @@
+#l MAP_FRAME: '/base_link'   #点群と重ねて確認する用
+EDGE:
+    - node_id: [0, 1]
+    - node_id: [1, 2]
+    - node_id: [2, 3]
+    - node_id: [3, 4]
+    - node_id: [4, 5]
+    - node_id: [5, 6]
+    - node_id: [5, 12]
+    - node_id: [6, 7]
+    - node_id: [7, 8]
+    - node_id: [8, 9]
+    - node_id: [9, 10]
+    - node_id: [10, 11]
+    - node_id: [11, 4]
+    - node_id: [12, 13]
+    - node_id: [14, 13]
+    - node_id: [13, 14]
+    - node_id: [14, 15]
+    - node_id: [15, 16]
+    - node_id: [16, 17]
+    - node_id: [17, 18]
+    - node_id: [18, 19]
+    - node_id: [19, 20]
+    - node_id: [20, 21]
+    - node_id: [21, 22]
+    - node_id: [22, 23]
+    - node_id: [23, 24]
+    - node_id: [24, 25]
+    - node_id: [25, 26]
+    - node_id: [26, 27]
+    - node_id: [27, 28]
+    - node_id: [28, 29]
+    - node_id: [29, 30]
+    - node_id: [30, 31]
+    - node_id: [31, 32]
+    - node_id: [32, 33]
+    - node_id: [33, 34]
+    - node_id: [34, 35]
+    - node_id: [35, 36]
+    - node_id: [36, 37]
+    - node_id: [37, 38]
+    - node_id: [38, 39]
+    - node_id: [39, 40]
+    - node_id: [40, 41]
+    - node_id: [41, 42]
+    - node_id: [42, 43]
+    - node_id: [43, 44]
+    - node_id: [44, 45]
+MAP_FRAME: '/map'
+NODE:
+    - id: 0
+      type: "intersection"
+      point:
+           x: 0
+           y: 0
+      label: "start"
+    - id: 1
+      type: "intersection"
+      point:
+           x: -9.9819
+           y: 5.4555
+      label: "traffic_sign_outbound"
+    - id: 2
+      type: "intersection"
+      point:
+           x: -18.547
+           y: 9.8227
+      label: "traffic_sign_outbound"
+    - id: 3
+      type: "intersection"
+      point:
+           x: -42.018
+           y: 22.825
+      label: ""
+    - id: 4
+      type: "intersection"
+      point:
+           x: -53.566
+           y: 32.17
+      label: "traffic_sign_inbound"
+    - id: 5
+      type: "intersection"
+      point:
+           x: -47.839
+           y: 43.194
+      label: "traffic_sign_inbound"
+    - id: 6
+      type: "intersection"
+      point:
+           x: -44.896
+           y: 48.738
+      label: ""
+    - id: 7
+      type: "intersection"
+      point:
+           x: -57.56
+           y: 55.096
+      label: ""
+    - id: 8
+      type: "intersection"
+      point:
+           x: -60.639
+           y: 57.065
+      label: ""
+    - id: 9
+      type: "intersection"
+      point:
+           x: -60.633
+           y: 60.306
+      label: "park"
+    - id: 10
+      type: "intersection"
+      point:
+           x: -66.081
+           y: 62.971
+      label: "park"
+    - id: 11
+      type: "intersection"
+      point:
+           x: -76.586
+           y: 43.625
+      label: ""
+    - id: 12
+      type: "intersection"
+      point:
+           x: -33.71
+           y: 35.44
+      label: ""
+    - id: 13
+      type: "intersection"
+      point:
+           x: -32.514
+           y: 36.514
+      label: ""
+    - id: 14
+      type: "intersection"
+      point:
+           x: -22.114
+           y: 30.751
+      label: ""
+    - id: 15
+      type: "intersection"
+      point:
+           x: -18.601
+           y: 37.125
+      label: ""
+    - id: 16
+      type: "intersection"
+      point:
+           x: -9.5388
+           y: 31.915
+      label: ""
+    - id: 17
+      type: "intersection"
+      point:
+           x: -8.5683
+           y: 30.617
+      label: ""
+    - id: 18
+      type: "intersection"
+      point:
+           x: 6.2253
+           y: 22.96
+      label: ""
+    - id: 19
+      type: "intersection"
+      point:
+           x: 10.162
+           y: 30.544
+      label: ""
+    - id: 20
+      type: "intersection"
+      point:
+           x: 34.722
+           y: 18.394
+      label: ""
+    - id: 21
+      type: "intersection"
+      point:
+           x: 49.756
+           y: 15.232
+      label: ""
+    - id: 22
+      type: "intersection"
+      point:
+           x: 56.893
+           y: 15.524
+      label: ""
+    - id: 23
+      type: "intersection"
+      point:
+           x: 131.93
+           y: -25.873
+      label: ""
+    - id: 24
+      type: "intersection"
+      point:
+           x: 219.84
+           y: -73.988
+      label: ""
+    - id: 25
+      type: "intersection"
+      point:
+           x: 199.62
+           y: -107.68
+      label: ""
+    - id: 26
+      type: "intersection"
+      point:
+           x: 184.22
+           y: -131.44
+      label: ""
+    - id: 27
+      type: "intersection"
+      point:
+           x: 178.35
+           y: -142.04
+      label: "traffic_sign"
+    - id: 28
+      type: "intersection"
+      point:
+           x: 175.08
+           y: -146.61
+      label: "traffic_sign"
+    - id: 29
+      type: "intersection"
+      point:
+           x: 191.51
+           y: -155.85
+      label: ""
+    - id: 30
+      type: "intersection"
+      point:
+           x: 196.92
+           y: -146.9
+      label: ""
+    - id: 31
+      type: "intersection"
+      point:
+           x: 229.57
+           y: -166.78
+      label: ""
+    - id: 32
+      type: "intersection"
+      point:
+           x: 262.15
+           y: -187.74
+      label: ""
+    - id: 33
+      type: "intersection"
+      point:
+           x: 304.61
+           y: -215.31
+      label: ""
+    - id: 34
+      type: "intersection"
+      point:
+           x: 307.15
+           y: -211.67
+      label: ""
+    - id: 35
+      type: "intersection"
+      point:
+           x: 363.07
+           y: -245.61
+      label: ""
+    - id: 36
+      type: "intersection"
+      point:
+           x: 430.91
+           y: -289.57
+      label: ""
+    - id: 37
+      type: "intersection"
+      point:
+           x: 424.45
+           y: -300.08
+      label: ""
+    - id: 38
+      type: "intersection"
+      point:
+           x: 417.00
+           y: -310.46
+      label: ""
+    - id: 39
+      type: "intersection"
+      point:
+           x: 417.00
+           y: -310.46
+      label: ""
+    - id: 40
+      type: "intersection"
+      point:
+           x: 348.89
+           y: -267.43
+      label: ""
+    - id: 41
+      type: "intersection"
+      point:
+           x: 292.09
+           y: -233.02
+      label: ""
+    - id: 42
+      type: "intersection"
+      point:
+           x: 283.18
+           y: -244.5
+      label: "park"
+    - id: 43
+      type: "intersection"
+      point:
+           x: 244.7
+           y: -305.23
+      label: "park"
+    - id: 44
+      type: "intersection"
+      point:
+           x: 423.95
+           y: -423.36
+      label: "park"
+    - id: 45
+      type: "intersection"
+      point:
+           x: 348.87
+           y: -543.28
+      label: "park"

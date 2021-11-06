@@ -1,0 +1,30 @@
+task:
+    - trigger: "recognition/stop_line"
+      task_type: "stop"
+      edge:
+        node0_id: 0 
+        node1_id: 1
+        progress_min: 0.0
+        progress_max: 1.2
+      repeat: False
+      after_t: False
+    - trigger: "recognition/stop_line"
+      task_type: "stop"
+      edge:
+        node0_id: 0
+        node1_id: 1
+        progress_min: 0.0
+        progress_max: 1.2
+      repeat: True
+      after_t: True
+    - trigger: "recognition/stop_line/T"
+      task_type: "stop"
+      edge:
+        node0_id: 0
+        node1_id: 1
+        progress_min: 0.0
+        progress_max: 1.2
+      repeat: False
+      local_goal:
+          x: 3.0
+          y: 0.5
