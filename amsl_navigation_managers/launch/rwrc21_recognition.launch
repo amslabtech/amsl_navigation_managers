@@ -2,45 +2,26 @@
 <launch>
     <!-- 実行する環境に合わせてコメントアウトしてね -->
     <!-- rwrc21_managers -->
+    <include file="$(find amsl_navigation_managers)/launch/rwrc21_d_kan_recogni_manager.launch"/>
+    <!-- <include file="$(find amsl_navigation_managers)/launch/rwrc21_ikuta_recogni_manager.launch"/> -->
+    <!-- <include file="$(find amsl_navigation_managers)/launch/rwrc21_tsukuba_recogni_manager.launch"/> -->
     <!-- <include file="$(find amsl_navigation_managers)/launch/rwrc21_tsukuba_kakunin_recogni_manager.launch"/> -->
-    <include file="$(find amsl_navigation_managers)/launch/rwrc21_tsukuba_start_to_traffic_recogni_manager.launch"/>
-    <!-- <include file="$(find amsl_navigation_managers)/launch/rwrc21_d_kan_recogni_manager.launch"/> -->
-    
-    <!-- hdl-32e -->
-    <!-- <include file="$(find velodyne_pointcloud)/launch/32e_points.launch"/> -->
-
-    <!-- height_map -->
-    <!-- <include file="$(find velodyne_height_map)/launch/amsl_velodyne_heightmap.launch"/> -->
-    
-    <!-- point_cloud map  map_launcher で管理-->
-    <!-- <node pkg="pcl_ros" type="pcd_to_pointcloud" name="pcd_to_pointcloud" output="screen">
-        <param name="file_name" value="/home/amsl/pcd_data/ikuta_d_start.pcd" /> -->
-        <!-- <param name="file_name" value="/home/amsl/pcd_data/tsukuba_autoware_v2.pcd" /> -->
-        <!-- <param name="frame_id" value="map" />
-        <param name="interval" value="3" />
-    </node> -->
-
-    <!-- complement -->
-     <!-- <node pkg="complement" type="complement" name="complement" /> -->
-    
-    <!-- road_recognizer -->
-    <!-- <include file="$(find road_recognizer)/launch/road_recognizer.launch"/> -->
-   
+     
     <!-- dijkstra -->
     <include file="$(find dijkstra_global_planner)/launch/global_planner.launch"/>
-    
     <!--  global_path_creator -->
     <include file="$(find dijkstra_global_planner)/launch/global_path_creator.launch"/>
-    
     <!-- local_goal_creator -->
     <include file="$(find dijkstra_global_planner)/launch/local_goal.launch"/>
 
+    <!-- 実行する環境に合わせてコメントアウトしてね -->
    <!-- localizer  -->
-    <include file="$(find rwrc21_recogni_localizer)/launch/rwrc21_tsukuba_kakunin.launch"/>
-    <!-- <include file="$(find rwrc21_recogni_localizer)/launch/rwrc21_d_kan.launch"/> -->
+    <include file="$(find rwrc21_recogni_localizer)/launch/rwrc21_d_kan.launch"/>
+    <!-- <include file="$(find rwrc21_recogni_localizer)/launch/rwrc21_ikuta.launch"/> -->
+    <!-- <include file="$(find rwrc21_recogni_localizer)/launch/rwrc21_tsukuba.launch"/> -->
+    <!-- <include file="$(find rwrc21_recogni_localizer)/launch/rwrc21_tsukuba_kakunin.launch"/> -->
+   
     <!-- <node pkg="dummy_localizer" type="dummy_locali" name="dummy_locali" output="screen"> -->
         <!-- <param name="w" value="$(arg w)"/> -->
     <!-- </node> -->
-    
-
 </launch>
