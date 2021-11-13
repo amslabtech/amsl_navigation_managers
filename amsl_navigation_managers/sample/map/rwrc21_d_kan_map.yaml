@@ -14,13 +14,13 @@ EDGE:
     - node_id: [6, 8]
 MAP_FRAME: '/map'
 NODE:
-    - id: 4
+    - id: 0 # 研究室前
       type: "intersection"
       point:
            x: 1.5428
            y: 7.0571
       label: ""
-    - id: 3
+    - id: 1
       type: "intersection"
       point:
            x: -14.677
@@ -32,31 +32,31 @@ NODE:
            x: -15.11
            y: 1.1011 
       label: ""
-    - id: 1
+    - id: 3
       type: "intersection"
       point:
            x: -15.563
            y: -5.9037
       label: ""
-    - id: 0
+    - id: 4
       type: "intersection"
       point:
            x: 0.69568
            y: -6.8988 
       label: "start"
-    - id: 7
+    - id: 5
       type: "intersection"
       point:
            x: 17.563
            y: -7.87
       label: ""
-    - id: 6
+    - id: 6 # 広い出口
       type: "intersection"
       point:
            x: 18.081
            y: -0.91079 
       label: ""
-    - id: 5
+    - id: 7
       type: "intersection"
       point:
            x: 18.573
