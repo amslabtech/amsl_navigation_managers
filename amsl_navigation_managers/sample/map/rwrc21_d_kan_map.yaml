@@ -25,7 +25,7 @@ NODE:
       point:
            x: -14.677
            y: 8.1004 
-      label: ""
+      label: "traffic_sign_outbound"
     - id: 2
       type: "intersection"
       point:
@@ -43,7 +43,7 @@ NODE:
       point:
            x: 0.69568
            y: -6.8988 
-      label: "start"
+      label: "traffic_sign_inbound"
     - id: 5
       type: "intersection"
       point:
@@ -55,13 +55,13 @@ NODE:
       point:
            x: 18.081
            y: -0.91079 
-      label: ""
+      label: "park"
     - id: 7
       type: "intersection"
       point:
            x: 18.573
            y: 6.1142 
-      label: ""
+      label: "park"
     - id: 8
       type: "intersection"
       point:
