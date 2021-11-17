@@ -1,10 +1,9 @@
 task:
     - trigger: "bool/measurement_update"
       edge:
-        node0_id: 1
-        node1_id: 2
-
+        node0_id: 9
+        node1_id: 10
     - trigger: "bool/measurement_update"
       edge:
-        node0_id: 3
-        node1_id: 4
+        node0_id: 10
+        node1_id: 11

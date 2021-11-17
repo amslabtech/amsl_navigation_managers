@@ -57,18 +57,21 @@ class TaskManager:
         self.edge_sub = rospy.Subscriber('/estimated_pose/edge', Edge, self.edge_callback) # node_edge_localizerの”get_edge_from_estimated_pose”で算出できそう
         self.goal_flag_sub = rospy.Subscriber('/node_edge_navigator/goal_flag', Empty, self.goal_flag_callback) # どこからpubされるかまだ謎
         self.closed_sign_sub = rospy.Subscriber('/recognition/closed_sign', Bool, self.closed_sign_callback) # 通行止め看板を見つけたら飛んでくる情報
-        self.traffic_sign_sub = rospy.Subscriber('/recognition/traffic_sign', Bool, self.traffic_sign_callback) # 通行止め看板を見つけたら飛んでくる情報
+        self.traffic_sign_sub = rospy.Subscriber('/recognition/traffic_light', Bool, self.traffic_sign_callback) # 通行止め看板を見つけたら飛んでくる情報
         # self.stop_line_sub = rospy.Subscriber('/recognition/stop_line', StopLine, self.stop_line_callback) # 白線を見つけたら飛んでくる情報
         
         # self.odom_sub = rospy.Subscriber('/odom/complement', Odometry, self.odom_callback) # なくしたい
 
         # publisher
         self.stop_pub = rospy.Publisher('/task/stop', Bool, queue_size=1) # とまれ指示 bool 
-        self.ignore_pub = rospy.Publisher('/task/ignore_intensity', Bool, queue_size=1) # intensity使う領域かどうか bool
-        self.grassy_pub = rospy.Publisher('/task/grassy', Bool, queue_size=1) # 芝生だよ bool
+        self.traffic_launch_pub = rospy.Publisher('/task/traffic_light', Bool, queue_size=1)
+        self.measurement_pub = rospy.Publisher('/task/measurement_update', Bool, queue_size=1)
+        
+        # self.ignore_pub = rospy.Publisher('/task/ignore_intensity', Bool, queue_size=1) # intensity使う領域かどうか bool
+        # self.grassy_pub = rospy.Publisher('/task/grassy', Bool, queue_size=1) # 芝生だよ bool
 
-        self.target_velocity_pub = rospy.Publisher('/target_velocity', Twist, queue_size=1) # いる？
-        self.local_goal_pub = rospy.Publisher('/local_goal', PoseStamped, queue_size=1) # いる？
+        # self.target_velocity_pub = rospy.Publisher('/target_velocity', Twist, queue_size=1) # いる？
+        # self.local_goal_pub = rospy.Publisher('/local_goal', PoseStamped, queue_size=1) # いる？
         
         self.road_closed = False
        
@@ -76,7 +79,6 @@ class TaskManager:
         self.first_traffic_flag = True
         self.first_traffic_flag_2 = True
         
-        self.t_flag = False
 
         self.process_terminated = False
         self.process_terminated_2 = False
@@ -88,6 +90,7 @@ class TaskManager:
 
         self.subprocess1 = "road_closed_sign_detector"
         self.subprocess2 = "darknet_ros"
+        self.subprocess2_1 = "old"
         self.lock = threading.Lock()
         self.task_data = self.load_task_from_yaml()
 
@@ -99,45 +102,48 @@ class TaskManager:
         while not rospy.is_shutdown():
             if self.map is not None: # map情報がある
                # ----------------信号認識＋通行止め看板認識------------------------------ 
-               # 往路
-                if (self.map.nodes[self.estimated_edge.node0_id].label == 'traffic_sign_outbound'): # 信号認識範囲内なら
-                    # print("traffic_sign area!!!")
-                    if self.first_traffic_flag:
-                        print("----- booting %s -----" % self.subprocess2)
-                        cmd2 = "roslaunch %s %s.launch" % (self.subprocess2, self.subprocess2) # launch起動
-                        p2 = subprocess.Popen(cmd2.split())
-                        self.first_traffic_flag = False
-                    if not self.process_terminated_2:
-                        if self.traffic_flag: # 赤信号
-                            # print("stop ccv!!!!!!")
-                            self.stop_pub.publish(True) # stop sign
-                            self.traffic_flag = False
-                # elif(self.map.nodes[self.estimated_edge.node0_id].label == '' or self.map.nodes[self.estimated_edge.node0_id].label == 'park' ): # 信号認識範囲外
-                elif(self.map.nodes[self.estimated_edge.node0_id].label != 'traffic_sign_outbound' ): # 信号認識範囲外
-                    if (not self.first_traffic_flag and not self.process_terminated_2): 
-                        print("killing %s" % self.subprocess2) # darknet_ros kill
-                        node2 = "/navigation_managers/%s" % (self.subprocess2)
-                        self.kill_node_2(node2)
-                # 復路 
-                if (self.map.nodes[self.estimated_edge.node0_id].label == 'traffic_sign_inbound'): # 信号認識範囲内なら
-                    # print("traffic_sign area!!!")
-                    if self.first_traffic_flag_2:
-                        print("----- booting %s -----" % self.subprocess2)
-                        cmd2 = "roslaunch %s %s.launch" % (self.subprocess2, self.subprocess2) # launch起動
-                        p2 = subprocess.Popen(cmd2.split())
-                        self.first_traffic_flag_2 = False
-                    if not self.process_terminated_3:
-                        if self.traffic_flag: # 赤信号
-                            print("stop ccv!!!!!!")
-                            # self.stop_pub.publish(True) # stop sign
-                            self.traffic_flag = False
-                # elif(self.map.nodes[self.estimated_edge.node0_id].label == '' or self.map.nodes[self.estimated_edge.node0_id].label == 'park' ): # 信号認識範囲外
-                elif(self.map.nodes[self.estimated_edge.node0_id].label != 'traffic_sign_inbound' ): # 信号認識範囲外
-                    if (not self.first_traffic_flag_2 and not self.process_terminated_3): 
-                        print("killing %s" % self.subprocess2) # darknet_ros kill
-                        node2 = "/navigation_managers/%s" % (self.subprocess2)
-                        self.kill_node(node2)
-                        self.process_terminated_3 = True
+                if (self.map.nodes[self.estimated_edge.node0_id].label == 'traffic_detector_launch'): # 信号認識範囲内なら
+                    # print("----- see traffic!!! -----")
+                    self.traffic_launch_pub.publish(True) # launch darknet
+               
+                # if (self.map.nodes[self.estimated_edge.node0_id].label == 'traffic_sign_outbound'): # 信号認識範囲内なら
+                #     # print("traffic_sign area!!!")
+                #     if self.first_traffic_flag:
+                #         print("----- booting %s -----" % self.subprocess2)
+                #         cmd2 = "roslaunch %s %s.launch" % (self.subprocess2, self.subprocess2_1) # launch起動
+                #         p2 = subprocess.Popen(cmd2.split())
+                #         self.first_traffic_flag = False
+                #     if not self.process_terminated_2:
+                #         if self.traffic_flag: # 赤信号
+                #             # print("stop ccv!!!!!!")
+                #             self.stop_pub.publish(True) # stop sign
+                #             self.traffic_flag = False
+                # # elif(self.map.nodes[self.estimated_edge.node0_id].label == '' or self.map.nodes[self.estimated_edge.node0_id].label == 'park' ): # 信号認識範囲外
+                # elif(self.map.nodes[self.estimated_edge.node0_id].label != 'traffic_sign_outbound' ): # 信号認識範囲外
+                #     if (not self.first_traffic_flag and not self.process_terminated_2): 
+                #         print("killing %s" % self.subprocess2) # darknet_ros kill
+                #         node2 = "/navigation_managers/%s" % (self.subprocess2)
+                #         self.kill_node_2(node2)
+                # # 復路 
+                # if (self.map.nodes[self.estimated_edge.node0_id].label == 'traffic_sign_inbound'): # 信号認識範囲内なら
+                #     # print("traffic_sign area!!!")
+                #     if self.first_traffic_flag_2:
+                #         print("----- booting %s -----" % self.subprocess2)
+                #         cmd2 = "roslaunch %s %s.launch" % (self.subprocess2, self.subprocess2) # launch起動
+                #         p2 = subprocess.Popen(cmd2.split())
+                #         self.first_traffic_flag_2 = False
+                #     if not self.process_terminated_3:
+                #         if self.traffic_flag: # 赤信号
+                #             print("stop ccv!!!!!!")
+                #             # self.stop_pub.publish(True) # stop sign
+                #             self.traffic_flag = False
+                # # elif(self.map.nodes[self.estimated_edge.node0_id].label == '' or self.map.nodes[self.estimated_edge.node0_id].label == 'park' ): # 信号認識範囲外
+                # elif(self.map.nodes[self.estimated_edge.node0_id].label != 'traffic_sign_inbound' ): # 信号認識範囲外
+                #     if (not self.first_traffic_flag_2 and not self.process_terminated_3): 
+                #         print("killing %s" % self.subprocess2) # darknet_ros kill
+                #         node2 = "/navigation_managers/%s" % (self.subprocess2)
+                #         self.kill_node(node2)
+                #         self.process_terminated_3 = True
                 
                 if (self.map.nodes[self.estimated_edge.node0_id].label == 'park'): # 公園内なら
                     # print("in the park!!!")
@@ -162,6 +168,10 @@ class TaskManager:
                         self.kill_node(node1)
                         self.process_terminated = True
             # ------------------------------------------------------------------------
+            for count, task in enumerate(self.task_data['task']):
+                 if (task['edge']['node0_id'] == self.estimated_edge.node0_id) and (task['edge']['node1_id'] == self.estimated_edge.node1_id):
+                     if task['trigger'] == 'bool/measurement_update':
+                        self.measurement_pub.publish(True) # 
 
             # road_recognizerとの連携
             # いろいろとintensityの傾向をさぐれたら入れる予定
