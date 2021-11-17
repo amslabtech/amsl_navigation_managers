@@ -15,49 +15,54 @@ EDGE:
 MAP_FRAME: '/map'
 NODE:
     - id: 0 # 研究室前
-      type: "intersection"
+     #  type: "intersection"
+      type: ""
       point:
            x: 1.5428
            y: 7.0571
       label: ""
     - id: 1
-      type: "intersection"
+      type: "respawn"
       point:
            x: -14.677
            y: 8.1004 
-      label: "traffic_sign_outbound"
+      label: "traffic_detector_launch"
     - id: 2
       type: "intersection"
       point:
            x: -15.11
            y: 1.1011 
-      label: ""
+      label: "traffic_detector_launch"
     - id: 3
-      type: "intersection"
+     #  type: "intersection"
+      type: "respawn"
       point:
            x: -15.563
            y: -5.9037
-      label: ""
+      label: "traffic_detector_launch"
     - id: 4
-      type: "intersection"
+      type: "respawn"
+     #  type: "intersection"
       point:
            x: 0.69568
            y: -6.8988 
-      label: "traffic_sign_inbound"
+      label: ""
     - id: 5
-      type: "intersection"
+     #  type: "intersection"
+      type: "respawn"
       point:
            x: 17.563
            y: -7.87
-      label: ""
+      label: "traffic_detector_launch"
     - id: 6 # 広い出口
       type: "intersection"
       point:
            x: 18.081
            y: -0.91079 
-      label: "park"
+      label: "traffic_detector_launch"
     - id: 7
-      type: "intersection"
+     #  type: "intersection"
+      type: "respawn"
       point:
            x: 18.573
            y: 6.1142 

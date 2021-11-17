@@ -46,11 +46,12 @@ class TaskManager:
         self.REST_TIME = rospy.get_param('REST_TIME', 0.0)
 
         self.map = None
-        # self.odom = Odometry()
-        # self.estimated_pose = Odometry()
         self.estimated_edge = Edge()
         self.current_edge = Edge()
         self.goal_flag = Empty()
+        self.respawn_position = PoseStamped()
+        # self.odom = Odometry()
+        # self.estimated_pose = Odometry()
 
         # subscriber
         self.map_sub = rospy.Subscriber('/node_edge_map/map', NodeEdgeMap, self.map_callback) # from node_edge_manager
@@ -59,13 +60,12 @@ class TaskManager:
         self.closed_sign_sub = rospy.Subscriber('/recognition/closed_sign', Bool, self.closed_sign_callback) # 通行止め看板を見つけたら飛んでくる情報
         self.traffic_sign_sub = rospy.Subscriber('/recognition/traffic_light', Bool, self.traffic_sign_callback) # 通行止め看板を見つけたら飛んでくる情報
         # self.stop_line_sub = rospy.Subscriber('/recognition/stop_line', StopLine, self.stop_line_callback) # 白線を見つけたら飛んでくる情報
-        
-        # self.odom_sub = rospy.Subscriber('/odom/complement', Odometry, self.odom_callback) # なくしたい
 
         # publisher
         self.stop_pub = rospy.Publisher('/task/stop', Bool, queue_size=1) # とまれ指示 bool 
         self.traffic_launch_pub = rospy.Publisher('/task/traffic_light', Bool, queue_size=1)
         self.measurement_pub = rospy.Publisher('/task/measurement_update', Bool, queue_size=1)
+        self.respawn_pub = rospy.Publisher('/position/respawn', PoseStamped, queue_size=1) # いる？
         
         # self.ignore_pub = rospy.Publisher('/task/ignore_intensity', Bool, queue_size=1) # intensity使う領域かどうか bool
         # self.grassy_pub = rospy.Publisher('/task/grassy', Bool, queue_size=1) # 芝生だよ bool
@@ -78,6 +78,7 @@ class TaskManager:
         self.first_park_flag = True
         self.first_traffic_flag = True
         self.first_traffic_flag_2 = True
+        self.respawn_flag = False
         
 
         self.process_terminated = False
@@ -167,14 +168,27 @@ class TaskManager:
                         node1 = "/navigation_managers/%s/%s" % (self.subprocess1, self.subprocess1)
                         self.kill_node(node1)
                         self.process_terminated = True
+                
+                if (self.map.nodes[self.estimated_edge.node0_id].type == 'respawn' and self.respawn_flag == False): # respawn
+                    self.respawn_position.pose.position.x = self.map.nodes[self.estimated_edge.node0_id].point.x
+                    self.respawn_position.pose.position.y = self.map.nodes[self.estimated_edge.node0_id].point.y
+                    self.respawn_position.header.frame_id = 'map'
+                    self.respawn_pub.publish(self.respawn_position)
+                    print("publish respawn position")
+                    self.respawn_flag = True
+                elif (self.map.nodes[self.estimated_edge.node0_id].type != 'respawn' and self.respawn_flag == True): # respawn
+                    self.respawn_flag = False
+
             # ------------------------------------------------------------------------
             for count, task in enumerate(self.task_data['task']):
                  if (task['edge']['node0_id'] == self.estimated_edge.node0_id) and (task['edge']['node1_id'] == self.estimated_edge.node1_id):
-                     if task['trigger'] == 'bool/measurement_update':
-                        self.measurement_pub.publish(True) # 
+                     if (task['trigger'] == 'bool/measurement_update' and respawn_flag):
+                        self.measurement_pub.publish(True)
+                        respawn_flag = True 
+                 elif (task['edge']['node0_id'] != self.estimated_edge.node0_id) and (task['edge']['node1_id'] != self.estimated_edge.node1_id):
+                        respawn_flag = False 
 
             # road_recognizerとの連携
-            # いろいろとintensityの傾向をさぐれたら入れる予定
             # for count, task in enumerate(self.task_data['task']):
             #     if (task['edge']['node0_id'] == self.estimated_edge.node0_id) and (task['edge']['node1_id'] == self.estimated_edge.node1_id):
             #         # if (task['edge']['progress_min'] < self.estimated_edge.progress) and (self.estimated_edge.progress < task['edge']['progress_max']): # もし今いるedgeのお仕事領域に達したら  廃止？
@@ -183,11 +197,11 @@ class TaskManager:
             #                 if not self.ignore_intensity_flag:
             #                     self.ignore_intensity_flag = True
             #                     self.ignore_pub.publish(Bool(self.ignore_intensity_flag))
-            #             elif task['task_type'] == "use_intensity" : # intensityを使う場所
+            #             elif task['task_type'] == "use_intensity" :
             #                 if self.ignore_intensity_flag:
             #                     self.ignore_intensity_flag = False
             #                     self.ignore_pub.publish(Bool(self.ignore_intensity_flag))
-            #             if task['task_type'] == "grassy_area" : # 芝生エリア
+            #             if task['task_type'] == "grassy_area" :
             #                 if not self.grassy_flag:
             #                     self.grassy_flag = True
             #                     self.grassy_pub.publish(Bool(self.grassy_flag))

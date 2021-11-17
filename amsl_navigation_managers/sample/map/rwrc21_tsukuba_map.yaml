@@ -103,7 +103,7 @@ NODE:
       point:
            x: -17.506
            y: -1.4455
-     #  label: "traffic_sign_outbound"
+      label: "traffic_detector_launch"
       label: ""
     - id: 2
       type: "intersection"
@@ -112,7 +112,7 @@ NODE:
            y: -2.4969
       label: ""
     - id: 3
-      type: "intersection"
+      type: "traffic_detector_launch"
       point:
            x: -53.744
            y: -2.2823
@@ -128,7 +128,6 @@ NODE:
       point:
            x: -54.378
            y: 17.217
-     #  label: "traffic_sign_inbound"
       label: ""
     - id: 6
       type: "intersection"
@@ -213,7 +212,7 @@ NODE:
            y: 28.566
       label: ""
     - id: 17
-      type: "intersection"
+      type: "respawn"
       point:
            x: 28.634
            y: 29.4
@@ -279,13 +278,13 @@ NODE:
       point:
            x: 261.89
            y: -26.1088
-      label: "traffic_sign"
+      label: ""
     - id: 28
       type: "intersection"
       point:
            x: 323.603
            y: -25.4644
-      label: "traffic_sign"
+      label: ""
     - id: 29
       type: "intersection"
       point:
