@@ -32,23 +32,20 @@ NODE:
       point:
            x: -15.11
            y: 1.1011 
-      label: "traffic_detector_launch"
+      label: ""
     - id: 3
-     #  type: "intersection"
-      type: "respawn"
+      type: ""
       point:
            x: -15.563
            y: -5.9037
       label: "traffic_detector_launch"
     - id: 4
-      type: "respawn"
-     #  type: "intersection"
+      type: ""
       point:
            x: 0.69568
            y: -6.8988 
-      label: ""
+      label: "park"
     - id: 5
-     #  type: "intersection"
       type: "respawn"
       point:
            x: 17.563
@@ -59,10 +56,10 @@ NODE:
       point:
            x: 18.081
            y: -0.91079 
-      label: "traffic_detector_launch"
+      label: "park"
     - id: 7
-     #  type: "intersection"
-      type: "respawn"
+      type: "intersection"
+     #  type: "respawn"
       point:
            x: 18.573
            y: 6.1142 
