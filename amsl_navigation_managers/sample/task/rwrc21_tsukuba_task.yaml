@@ -1,9 +1,9 @@
 task:
-    - trigger: "bool/measurement_update"
+    - trigger: "not_measurement_update"
       edge:
         node0_id: 9
         node1_id: 10
-    - trigger: "bool/measurement_update"
+    - trigger: "not_measurement_update"
       edge:
         node0_id: 10
         node1_id: 11

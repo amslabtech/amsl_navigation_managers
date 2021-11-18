@@ -79,6 +79,7 @@ class TaskManager:
         self.first_traffic_flag = True
         self.first_traffic_flag_2 = True
         self.respawn_flag = False
+        self.respawn_position_flag = False
         
 
         self.process_terminated = False
@@ -169,24 +170,26 @@ class TaskManager:
                         self.kill_node(node1)
                         self.process_terminated = True
                 
-                if (self.map.nodes[self.estimated_edge.node0_id].type == 'respawn' and self.respawn_flag == False): # respawn
+                if (self.map.nodes[self.estimated_edge.node0_id].type == 'respawn' and self.respawn_position_flag == False): # respawn
                     self.respawn_position.pose.position.x = self.map.nodes[self.estimated_edge.node0_id].point.x
                     self.respawn_position.pose.position.y = self.map.nodes[self.estimated_edge.node0_id].point.y
                     self.respawn_position.header.frame_id = 'map'
                     self.respawn_pub.publish(self.respawn_position)
                     print("publish respawn position")
-                    self.respawn_flag = True
-                elif (self.map.nodes[self.estimated_edge.node0_id].type != 'respawn' and self.respawn_flag == True): # respawn
-                    self.respawn_flag = False
+                    self.respawn_position_flag = True
+                elif (self.map.nodes[self.estimated_edge.node0_id].type != 'respawn' and self.respawn_position_flag == True): # respawn
+                    self.respawn_position_flag = False
 
             # ------------------------------------------------------------------------
             for count, task in enumerate(self.task_data['task']):
                  if (task['edge']['node0_id'] == self.estimated_edge.node0_id) and (task['edge']['node1_id'] == self.estimated_edge.node1_id):
-                     if (task['trigger'] == 'bool/measurement_update' and respawn_flag):
+                     if (task['trigger'] == 'not_measurement_update' ):
                         self.measurement_pub.publish(True)
-                        respawn_flag = True 
-                 elif (task['edge']['node0_id'] != self.estimated_edge.node0_id) and (task['edge']['node1_id'] != self.estimated_edge.node1_id):
-                        respawn_flag = False 
+                        print("not measurement_update")
+                        self.respawn_flag = True 
+                    # elif (task['edge']['node0_id'] != self.estimated_edge.node0_id) and (task['edge']['node1_id'] != self.estimated_edge.node1_id):
+                     elif (task['trigger'] != 'not_measurement_update' ):
+                        self.respawn_flag = False 
 
             # road_recognizerとの連携
             # for count, task in enumerate(self.task_data['task']):
@@ -214,8 +217,6 @@ class TaskManager:
                     # elif task['trigger'] == 'recognition/must_stop':
                     #     self.stop_pub.publish(True)
 
-                    #白線検知やるなら
-
             for file in os.listdir(dir_name):
                 if file.find('.') == 0:
                     continue
@@ -228,12 +229,6 @@ class TaskManager:
                     except:
                         print('failed to update task')
             r.sleep()
-
-    # def get_yaw(self, orientation):
-    #     quaternion = [orientation.x, orientation.y, orientation.z, orientation.w]
-    #     _, _, yaw = euler_from_quaternion(quaternion)
-    #     return yaw
-
     
     def create_quaternion_from_yaw(self, yaw):
         q = quaternion_from_euler(0.0, 0.0, yaw)
@@ -328,62 +323,3 @@ if __name__ == '__main__':
     task_manager = TaskManager()
     task_manager.process()
     
-    
-    # def interrupt_local_goal(self, flag):
-    #     rospy.wait_for_service('/local_goal/interruption')
-    #     try:
-    #         client = rospy.ServiceProxy('/local_goal/interruption', SetBool)
-    #         req = SetBool()
-    #         req.data = flag
-    #         res = client(req.data)
-    #         if res.success:
-    #             if flag:
-    #                 print("success to stop local_goal_creator")
-    #             else:
-    #                 print("success to restart local_goal_creator")
-
-    #     except rospy.ServiceException as e:
-    #         print("Service call failed: %s"%e)
-
-    # def publish_local_goal(self, pose, line_angle):
-    #     local_goal = PoseStamped()
-    #     local_goal.header.stamp = rospy.get_rostime()
-    #     local_goal.header.frame_id = self.ROBOT_FRAME
-    #     local_goal.pose.position.x = pose[0]
-    #     local_goal.pose.position.y = pose[1]
-    #     local_goal.pose.position.z = 0.0
-    #     line_direction = math.pi*0.5 - line_angle
-    #     local_goal.pose.orientation = self.create_quaternion_from_yaw(line_direction)
-    #     # self.local_goal_pub.publish(local_goal)
-    #     print("----- published local goal -----")
-    #     print("target angle :{}".format(line_direction))
-    #     print("line angle :{}".format(self.line_info.angle))
-    #     print(local_goal)
-
-    # def publish_target_velocity(self, vel):
-    #     velocity = Twist()
-    #     velocity.linear.x = vel
-    #     self.target_velocity_pub.publish(velocity)
-    #     print("----- published target velocity -----")
-    #     print(velocity)
-
-
-    # def pose_callback(self, pose):
-    #     self.estimated_pose = pose
-        # ---------------------------------------------
-        # 〜poseから今いるcurrent_edgeを算出する〜
-        # ---------------------------------------------
-        # self.current_edge = estimated_edge
-
-        # if self.line_detected_pose == None:
-        #     self.line_detected_pose = pose
-        # print("line detected pose x:{}, y:{}".format(self.line_detected_pose.pose.pose.position.x, self.line_detected_pose.pose.pose.position.y))
-
-    # def odom_callback(self, odom):
-    #     self.odom = odom
-    #     if self.line_detected_pose == None:
-    #         self.line_detected_pose = odom
-        
-
-        # self.estimated_edge = ~~~~~
-        # print("pose x:{}, y:{}".format(odom.pose.pose.position.x, odom.pose.pose.position.y))
