@@ -2,9 +2,9 @@
 <launch>
     <!-- 実行する環境に合わせてコメントアウトしてね -->
     <!-- rwrc21_managers -->
-    <!-- <include file="$(find amsl_navigation_managers)/launch/rwrc21_d_kan_recogni_manager.launch"/> -->
+    <include file="$(find amsl_navigation_managers)/launch/rwrc21_d_kan_recogni_manager.launch"/>
     <!-- <include file="$(find amsl_navigation_managers)/launch/rwrc21_ikuta_recogni_manager.launch"/> -->
-    <include file="$(find amsl_navigation_managers)/launch/rwrc21_tsukuba_recogni_manager.launch"/>
+    <!-- <include file="$(find amsl_navigation_managers)/launch/rwrc21_tsukuba_recogni_manager.launch"/> -->
     <!-- <include file="$(find amsl_navigation_managers)/launch/rwrc21_tsukuba_kakunin_recogni_manager.launch"/> -->
 
     <!-- dijkstra -->
@@ -14,11 +14,14 @@
     <!-- local_goal_creator -->
     <include file="$(find dijkstra_global_planner)/launch/local_goal.launch"/>
 
+    <!-- darknet -->
+    <!-- <include file="$(find darknet_ros)/launch/old.launch"/> -->
+
     <!-- 実行する環境に合わせてコメントアウトしてね -->
    <!-- localizer  -->
-    <!-- <include file="$(find rwrc21_recogni_localizer)/launch/rwrc21_d_kan.launch"/> -->
+    <include file="$(find rwrc21_recogni_localizer)/launch/rwrc21_d_kan.launch"/>
     <!-- <include file="$(find rwrc21_recogni_localizer)/launch/rwrc21_ikuta.launch"/> -->
-    <include file="$(find rwrc21_recogni_localizer)/launch/rwrc21_tsukuba.launch"/>
+    <!-- <include file="$(find rwrc21_recogni_localizer)/launch/rwrc21_tsukuba.launch"/> -->
     <!-- <include file="$(find rwrc21_recogni_localizer)/launch/rwrc21_tsukuba_kakunin.launch"/> -->
 
     <!-- <node pkg="dummy_localizer" type="dummy_locali" name="dummy_locali" output="screen"> -->
