@@ -15,7 +15,7 @@
     <include file="$(find dijkstra_global_planner)/launch/local_goal.launch"/>
 
     <!-- darknet -->
-    <!-- <include file="$(find darknet_ros)/launch/old.launch"/> -->
+    <include file="$(find darknet_ros)/launch/old.launch"/>
 
     <!-- 実行する環境に合わせてコメントアウトしてね -->
    <!-- localizer  -->

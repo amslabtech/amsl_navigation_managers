@@ -99,20 +99,22 @@ NODE:
            y: -1.45202
       label: "start"
     - id: 1
-      type: "intersection"
+      # type: "intersection"
+      type: ""
       point:
            x: -17.506
            y: -1.4455
-      label: "traffic_detector_launch"
       label: ""
+      # label: ""
     - id: 2
-      type: "intersection"
+      # type: "intersection"
+      type: ""
       point:
            x: -30.628
            y: -2.4969
       label: ""
     - id: 3
-      type: "traffic_detector_launch"
+      type: ""
       point:
            x: -53.744
            y: -2.2823
@@ -124,7 +126,8 @@ NODE:
            y: 11.092
       label: ""
     - id: 5
-      type: "intersection"
+      # type: "intersection"
+      type: ""
       point:
            x: -54.378
            y: 17.217
@@ -156,13 +159,13 @@ NODE:
       point:
            x: -81.995
            y: 19.887
-      label: "park"
+      label: ""
     - id: 10
       type: "intersection"
       point:
            x: -80.728
            y: -3.1554
-      label: "park"
+      label: ""
     - id: 11
       type: "intersection"
       point:
@@ -266,13 +269,13 @@ NODE:
            # y: -41.868
            x: 238.358
            y: -42.8776
-      label: ""
+      label: "traffic_detector_launch"
     - id: 26
       type: "intersection"
       point:
            x: 261.922
            y: -42.24
-      label: ""
+      label: "traffic_detector_launch"
     - id: 27
       type: "intersection"
       point:
@@ -340,7 +343,7 @@ NODE:
            y: -43.9128
       label: ""
     - id: 38
-      type: "intersection"
+      type: "respawn"
       point:
            x: 384.834
            y: -46.4175
