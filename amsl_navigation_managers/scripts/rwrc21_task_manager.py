@@ -104,9 +104,11 @@ class TaskManager:
         while not rospy.is_shutdown():
             if self.map is not None: # map情報がある
                # ----------------信号認識＋通行止め看板認識------------------------------ 
-                if (self.map.nodes[self.estimated_edge.node0_id].label == 'traffic_detector_launch'): # 信号認識範囲内なら
+                if (self.map.nodes[self.estimated_edge.node0_id].label == 'traffic_detector_launch'):
                     # print("----- see traffic!!! -----")
-                    self.traffic_launch_pub.publish(True) # launch darknet
+                    self.traffic_launch_pub.publish(True) 
+                elif (self.map.nodes[self.estimated_edge.node0_id].label != 'traffic_detector_launch'):
+                    self.traffic_launch_pub.publish(False)
                
                 # if (self.map.nodes[self.estimated_edge.node0_id].label == 'traffic_sign_outbound'): # 信号認識範囲内なら
                 #     # print("traffic_sign area!!!")
@@ -185,10 +187,10 @@ class TaskManager:
                  if (task['edge']['node0_id'] == self.estimated_edge.node0_id) and (task['edge']['node1_id'] == self.estimated_edge.node1_id):
                      if (task['trigger'] == 'not_measurement_update' ):
                         self.measurement_pub.publish(True)
-                        print("not measurement_update")
                         self.respawn_flag = True 
                     # elif (task['edge']['node0_id'] != self.estimated_edge.node0_id) and (task['edge']['node1_id'] != self.estimated_edge.node1_id):
                      elif (task['trigger'] != 'not_measurement_update' ):
+                        self.measurement_pub.publish(False)
                         self.respawn_flag = False 
 
             # road_recognizerとの連携
@@ -230,9 +232,6 @@ class TaskManager:
                         print('failed to update task')
             r.sleep()
     
-    def create_quaternion_from_yaw(self, yaw):
-        q = quaternion_from_euler(0.0, 0.0, yaw)
-        return Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
 
     # 白線検知系関数は消しました
 
@@ -318,6 +317,10 @@ class TaskManager:
     
     def traffic_sign_callback(self, line_info):
         self.traffic_flag = True
+    
+    # def create_quaternion_from_yaw(self, yaw):
+    #     q = quaternion_from_euler(0.0, 0.0, yaw)
+    #     return Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
 
 if __name__ == '__main__':
     task_manager = TaskManager()
