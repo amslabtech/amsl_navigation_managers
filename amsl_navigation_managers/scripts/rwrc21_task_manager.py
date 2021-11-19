@@ -13,6 +13,8 @@ import copy
 from pprint import pprint
 import subprocess
 
+from yaml import nodes
+
 import rospy
 import tf
 from tf.transformations import quaternion_from_euler, euler_from_quaternion, rotation_matrix
@@ -104,11 +106,13 @@ class TaskManager:
         while not rospy.is_shutdown():
             if self.map is not None: # map情報がある
                # ----------------信号認識＋通行止め看板認識------------------------------ 
-                if (self.map.nodes[self.estimated_edge.node0_id].label == 'traffic_detector_launch'):
-                    # print("----- see traffic!!! -----")
-                    self.traffic_launch_pub.publish(True) 
-                elif (self.map.nodes[self.estimated_edge.node0_id].label != 'traffic_detector_launch'):
-                    self.traffic_launch_pub.publish(False)
+                # print(self.estimated_edge.node0_id)
+                if(self.estimated_edge.node0_id != 135): # 応急処置
+                    if (self.map.nodes[self.estimated_edge.node0_id].label == 'traffic_detector_launch'):
+                        # print("----- see traffic!!! -----")
+                        self.traffic_launch_pub.publish(True) 
+                    elif (self.map.nodes[self.estimated_edge.node0_id].label != 'traffic_detector_launch'):
+                        self.traffic_launch_pub.publish(False)
                
                 # if (self.map.nodes[self.estimated_edge.node0_id].label == 'traffic_sign_outbound'): # 信号認識範囲内なら
                 #     # print("traffic_sign area!!!")
@@ -149,38 +153,38 @@ class TaskManager:
                 #         self.kill_node(node2)
                 #         self.process_terminated_3 = True
                 
-                if (self.map.nodes[self.estimated_edge.node0_id].label == 'park'): # 公園内なら
-                    # print("in the park!!!")
-                    if self.first_park_flag:
-                        print("----- booting %s -----" % self.subprocess1)
-                        cmd = "roslaunch %s %s.launch" % (self.subprocess1, self.subprocess1) # launch起動
-                        p1 = subprocess.Popen(cmd.split())
-                        self.first_park_flag = False # 重複launch防止
-                    if not self.process_terminated:
-                        if self.road_closed:
-                            print("closed sign detect!!!!")
-                            # self.set_impassable_edge(self.estimated_edge)
-                            # rospy.sleep(0.1)
-                            # self.request_replan() # replan要請
-                            self.road_closed = False
-                # else: # 公園外
-                # elif(self.map.nodes[self.estimated_edge.node0_id].label == '' or self.map.nodes[self.estimated_edge.node0_id].label == 'traffic_sign' ):
-                elif(self.map.nodes[self.estimated_edge.node0_id].label != 'park' ):
-                    if (not self.first_park_flag and not self.process_terminated): # node切る
-                        print("killing %s" % self.subprocess1)
-                        node1 = "/navigation_managers/%s/%s" % (self.subprocess1, self.subprocess1)
-                        self.kill_node(node1)
-                        self.process_terminated = True
-                
-                if (self.map.nodes[self.estimated_edge.node0_id].type == 'respawn' and self.respawn_position_flag == False): # respawn
-                    self.respawn_position.pose.position.x = self.map.nodes[self.estimated_edge.node0_id].point.x
-                    self.respawn_position.pose.position.y = self.map.nodes[self.estimated_edge.node0_id].point.y
-                    self.respawn_position.header.frame_id = 'map'
-                    self.respawn_pub.publish(self.respawn_position)
-                    print("publish respawn position")
-                    self.respawn_position_flag = True
-                elif (self.map.nodes[self.estimated_edge.node0_id].type != 'respawn' and self.respawn_position_flag == True): # respawn
-                    self.respawn_position_flag = False
+                    if (self.map.nodes[self.estimated_edge.node0_id].label == 'park'): # 公園内なら
+                        # print("in the park!!!")
+                        if self.first_park_flag:
+                            print("----- booting %s -----" % self.subprocess1)
+                            cmd = "roslaunch %s %s.launch" % (self.subprocess1, self.subprocess1) # launch起動
+                            p1 = subprocess.Popen(cmd.split())
+                            self.first_park_flag = False # 重複launch防止
+                        if not self.process_terminated:
+                            if self.road_closed:
+                                print("closed sign detect!!!!")
+                                # self.set_impassable_edge(self.estimated_edge)
+                                # rospy.sleep(0.1)
+                                # self.request_replan() # replan要請
+                                self.road_closed = False
+                    # else: # 公園外
+                    # elif(self.map.nodes[self.estimated_edge.node0_id].label == '' or self.map.nodes[self.estimated_edge.node0_id].label == 'traffic_sign' ):
+                    elif(self.map.nodes[self.estimated_edge.node0_id].label != 'park' ):
+                        if (not self.first_park_flag and not self.process_terminated): # node切る
+                            print("killing %s" % self.subprocess1)
+                            node1 = "/navigation_managers/%s/%s" % (self.subprocess1, self.subprocess1)
+                            self.kill_node(node1)
+                            self.process_terminated = True
+                    
+                    if (self.map.nodes[self.estimated_edge.node0_id].type == 'respawn' and self.respawn_position_flag == False): # respawn
+                        self.respawn_position.pose.position.x = self.map.nodes[self.estimated_edge.node0_id].point.x
+                        self.respawn_position.pose.position.y = self.map.nodes[self.estimated_edge.node0_id].point.y
+                        self.respawn_position.header.frame_id = 'map'
+                        self.respawn_pub.publish(self.respawn_position)
+                        print("publish respawn position")
+                        self.respawn_position_flag = True
+                    elif (self.map.nodes[self.estimated_edge.node0_id].type != 'respawn' and self.respawn_position_flag == True): # respawn
+                        self.respawn_position_flag = False
 
             # ------------------------------------------------------------------------
             for count, task in enumerate(self.task_data['task']):
@@ -269,7 +273,6 @@ class TaskManager:
                 return
         print("failed to kill the process")
 
-
     def set_impassable_edge(self, edge):
         rospy.wait_for_service('/node_edge_map/update_edge')
         try:
@@ -304,6 +307,7 @@ class TaskManager:
     
     def map_callback(self, node_edge_map):
         self.map = node_edge_map
+        # print(self.map,nodes)
 
     def edge_callback(self, edge):
         self.estimated_edge = edge
