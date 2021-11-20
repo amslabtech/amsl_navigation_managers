@@ -214,9 +214,10 @@ NODE:
            y: 28.566
       label: ""
     - id: 17
-      type: "respawn"
+      # type: "respawn"
+      type: ""
       point:
-           x: 28.634
+           x: 30.649
            y: 29.4
       label: ""
     - id: 18
@@ -342,7 +343,8 @@ NODE:
            y: -48.34
       label: ""
     - id: 38
-      type: "respawn"
+      # type: "respawn"
+      type: ""
       point:
            x: 384.834
            y: -52.146
@@ -352,19 +354,19 @@ NODE:
       point:
            x: 384.547
            y: -79.313
-      label: ""
+      label: "park"
     - id: 40
       type: "intersection"
       point:
            x: 384.547
            y: -98.9704
-      label: ""
+      label: "park"
     - id: 41
       type: "intersection"
       point:
            x: 383.898
            y: -138.17
-      label: ""
+      label: "park"
     - id: 42
       type: "intersection"
       point:
@@ -490,13 +492,13 @@ NODE:
       point:
            x: 325.34
            y: -51.409
-      label: "park"
+      label: ""
     - id: 63
       type: "intersection"
       point:
            x: 271.656
            y: -52.993
-      label: "park"
+      label: ""
     - id: 64
       type: "intersection"
       point:
