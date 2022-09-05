@@ -1,0 +1,31 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/amsl/catkin_ws/devel/include/**",
+        "/opt/ros/noetic/include/**",
+        "/home/amsl/catkin_ws/src/amsl_navigation_managers/amsl_navigation_managers/include/**",
+        "/home/amsl/catkin_ws/src/chibi21_a/include/**",
+        "/home/amsl/catkin_ws/src/floormap_navigator/floormap_navigator/include/**",
+        "/home/amsl/catkin_ws/src/point_cloud_storer/include/**",
+        "/home/amsl/catkin_ws/src/road_recognizer/include/**",
+        "/home/amsl/catkin_ws/src/Roomba/roomba_500driver_meiji/include/**",
+        "/home/amsl/catkin_ws/src/rwrc21_recogni_localizer/include/**",
+        "/home/amsl/catkin_ws/src/turtlebot3_simulations/turtlebot3_fake/include/**",
+        "/home/amsl/catkin_ws/src/turtlebot3_simulations/turtlebot3_gazebo/include/**",
+        "/home/amsl/catkin_ws/src/turtlebot3/turtlebot3_slam/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}

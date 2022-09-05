@@ -212,3 +212,7 @@ NODE:
 #   label: ''
 #   point: {x: -69.0367, y: -226.591}
 #   type: intersection
+# - id: 39
+#   label: ''
+#   point: {x: -0.14698, y: -0.220841}
+#   type: intersection
