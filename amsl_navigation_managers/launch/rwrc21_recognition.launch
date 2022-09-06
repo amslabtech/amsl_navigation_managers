@@ -19,7 +19,7 @@
 
     <!-- 実行する環境に合わせてコメントアウトしてね -->
    <!-- localizer  -->
-    <include file="$(find rwrc21_recogni_localizer)/launch/rwrc21_d_kan.launch"/>
+    <!-- <include file="$(find rwrc21_recogni_localizer)/launch/rwrc21_d_kan.launch"/> -->
     <!-- <include file="$(find rwrc21_recogni_localizer)/launch/rwrc21_ikuta.launch"/> -->
     <!-- <include file="$(find rwrc21_recogni_localizer)/launch/rwrc21_tsukuba.launch"/> -->
     <!-- <include file="$(find rwrc21_recogni_localizer)/launch/rwrc21_tsukuba_kakunin.launch"/> -->

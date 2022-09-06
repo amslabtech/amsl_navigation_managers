@@ -49,6 +49,8 @@ EDGE:
 - node_id: [15, 9]
 - node_id: [7, 17]
 - node_id: [20, 3]
+- node_id: [2, 39]
+- node_id: [39, 21]
 MAP_FRAME: /map
 NODE:
 - id: 0
@@ -212,3 +214,7 @@ NODE:
 #   label: ''
 #   point: {x: -69.0367, y: -226.591}
 #   type: intersection
+- id: 39
+  label: ''
+  point: {x: -0.14698, y: -0.220841}
+  type: intersection
