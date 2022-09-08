@@ -2,17 +2,17 @@
 <launch>
     <!-- 実行する環境に合わせてコメントアウトしてね -->
     <!-- rwrc22_managers -->
-    <include file="$(find amsl_navigation_managers)/launch/rwrc22_ikuta_recogni_manager.launch"/>
-    <!-- <include file="$(find amsl_navigation_managers)/launch/rwrc22_node_edge_map_check.launch"/> -->
+    <!-- <include file="$(find amsl_navigation_managers)/launch/rwrc22_ikuta_recogni_manager.launch"/> -->
+    <include file="$(find amsl_navigation_managers)/launch/rwrc22_node_edge_map_check.launch"/>
     <!-- <include file="$(find amsl_navigation_managers)/launch/rwrc21_ikuta_recogni_manager.launch"/> -->
     <!-- <include file="$(find amsl_navigation_managers)/launch/rwrc21_tsukuba_recogni_manager.launch"/> -->
     <!-- <include file="$(find amsl_navigation_managers)/launch/rwrc21_tsukuba_kakunin_recogni_manager.launch"/> -->
 
     <!-- dijkstra やらない-->
-    <!-- <include file="$(find dijkstra_global_planner)/launch/global_planner.launch"> -->
-        <!-- <arg name="init_node0_id" default="0"/> -->
-        <!-- <arg name="init_node1_id" default="1"/> -->
-    <!-- </include> -->
+    <include file="$(find dijkstra_global_planner)/launch/global_planner.launch">
+        <arg name="init_node0_id" default="39"/>
+        <arg name="init_node1_id" default="2"/>
+    </include>
     <!--  global_path_creator -->
     <include file="$(find dijkstra_global_planner)/launch/global_path_creator.launch"/>
     <!-- local_goal_creator -->

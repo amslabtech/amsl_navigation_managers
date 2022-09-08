@@ -2,8 +2,8 @@
 <launch>
     <!-- 実行する環境に合わせてコメントアウトしてね -->
     <!-- rwrc21_managers -->
-    <include file="$(find amsl_navigation_managers)/launch/rwrc21_d_kan_recogni_manager.launch"/>
-    <!-- <include file="$(find amsl_navigation_managers)/launch/rwrc21_ikuta_recogni_manager.launch"/> -->
+    <!-- <include file="$(find amsl_navigation_managers)/launch/rwrc21_d_kan_recogni_manager.launch"/> -->
+    <include file="$(find amsl_navigation_managers)/launch/rwrc21_ikuta_recogni_manager.launch"/>
     <!-- <include file="$(find amsl_navigation_managers)/launch/rwrc21_tsukuba_recogni_manager.launch"/> -->
     <!-- <include file="$(find amsl_navigation_managers)/launch/rwrc21_tsukuba_kakunin_recogni_manager.launch"/> -->
 
