@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- yaml --><!-- rwrc22-->
+    <!-- node_edge_map -->
+    <arg name="map_path" default="$(find amsl_navigation_managers)/sample/map/rwrc22_ikuta_map.yaml"/>
+    <arg name="checkpoint_path" default="$(find amsl_navigation_managers)/sample/checkpoint/rwrc22_ikuta_checkpoint.yaml"/>
+    <!-- <arg name="task_list_path" default="$(find amsl_navigation_managers)/sample/task/rwrc22_ikuta_task.yaml"/>  -->
+
+    <!-- <arg name="enable_task" default="true"/> -->
+    <arg name="hz" default="10"/>
+
+    <!-- node -->
+    <node pkg="amsl_navigation_managers" type="rwrc21_node_edge_map_manager.py" name="rwrc21_node_edge_map_manager" ns="navigation_managers" output="screen">
+        <param name="MAP_PATH" value="$(arg map_path)"/>
+        <param name="HZ" value="$(arg hz)"/>
+    </node>
+
+    <!--   dijkstra_nodeを飛ばすためcheckpointをそのままglobal_pathとする   -->
+    <node pkg="amsl_navigation_managers" type="rwrc21_checkpoint_manager.py" name="rwrc21_checkpoint_manager" ns="navigation_managers" output="screen">
+        <param name="CHECKPOINT_PATH" value="$(arg checkpoint_path)"/>
+        <param name="HZ" value="$(arg hz)"/>
+        <remap from="/node_edge_map/checkpoint" to="/global_path/path"/>
+    </node>
+
+    <!-- <node pkg="amsl_navigation_managers" type="rwrc21_task_manager.py" name="rwrc21_task_manager" ns="navigation_managers" output="screen" if="$(arg enable_task)">
+        <param name="TASK_LIST_PATH" value="$(arg task_list_path)"/>
+    </node> -->
+  
+    <!-- <node pkg="amsl_navigation_managers" type="rwrc21_map_manager.py" name="rwrc21_map_manager" ns="navigation_managers" output="screen" if="$(arg enable_task)">
+        <param name="TASK_LIST_PATH" value="$(arg task_list_path)"/>
+    </node> -->
+   
+    <node pkg="rviz" type="rviz" name="rviz30" args="-d $(find amsl_navigation_managers)/config/node_edge_map_check.rviz"/>
+</launch>

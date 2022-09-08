@@ -29,7 +29,7 @@ Panels:
   - Class: rviz/Time
     Name: Time
     SyncMode: 0
-    SyncSource: PointCloud2
+    SyncSource: ""
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -56,13 +56,13 @@ Visualization Manager:
       Reference Frame: <Fixed Frame>
       Value: false
     - Class: rviz/Marker
-      Enabled: true
+      Enabled: false
       Marker Topic: /node_edge_map/viz/edge
       Name: Marker
       Namespaces:
-        edge: true
+        {}
       Queue Size: 100
-      Value: true
+      Value: false
     - Class: rviz/MarkerArray
       Enabled: true
       Marker Topic: /node_edge_map/viz/id
@@ -84,7 +84,7 @@ Visualization Manager:
       Marker Topic: /node_edge_map/viz/node/checkpoint
       Name: MarkerArray
       Namespaces:
-        {}
+        node: true
       Queue Size: 100
       Value: true
     - Alpha: 1
