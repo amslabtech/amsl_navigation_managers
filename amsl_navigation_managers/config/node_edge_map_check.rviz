@@ -56,13 +56,13 @@ Visualization Manager:
       Reference Frame: <Fixed Frame>
       Value: false
     - Class: rviz/Marker
-      Enabled: false
+      Enabled: true
       Marker Topic: /node_edge_map/viz/edge
       Name: Marker
       Namespaces:
-        {}
+        edge: true
       Queue Size: 100
-      Value: false
+      Value: true
     - Class: rviz/MarkerArray
       Enabled: true
       Marker Topic: /node_edge_map/viz/id
