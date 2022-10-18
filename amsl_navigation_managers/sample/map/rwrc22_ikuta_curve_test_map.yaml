@@ -1,0 +1,220 @@
+EDGE:
+- node_id: [0, 1]
+- node_id: [1, 2]
+- node_id: [2, 3]
+- node_id: [3, 4]
+- node_id: [4, 5]
+- node_id: [5, 6]
+- node_id: [6, 7]
+- node_id: [7, 8]
+- node_id: [8, 9]
+- node_id: [9, 10]
+- node_id: [10, 11]
+- node_id: [11, 12]
+- node_id: [12, 13]
+- node_id: [13, 14]
+- node_id: [14, 15]
+# - node_id: [15, 16]
+- node_id: [17, 18]
+- node_id: [18, 19]
+- node_id: [19, 20]
+- node_id: [20, 23]
+- node_id: [23, 21]
+- node_id: [21, 22]
+- node_id: [27, 10]
+- node_id: [27, 37]
+- node_id: [37, 8]
+# - node_id: [23, 24]
+# - node_id: [25, 26]
+# - node_id: [27, 28]
+# - node_id: [28, 29]
+# - node_id: [29, 11]
+# - node_id: [30, 36]
+# - node_id: [13, 30]
+# - node_id: [15, 31]
+# - node_id: [9, 32]
+# - node_id: [33, 34]
+# - node_id: [33, 0]
+# - node_id: [1, 35]
+# - node_id: [14, 36]
+# - node_id: [2, 21]
+- node_id: [22, 0]
+# - node_id: [18, 25]
+# - node_id: [26, 5]
+- node_id: [6, 27]
+# - node_id: [27, 37]
+# - node_id: [37, 8]
+# - node_id: [37, 38]
+# - node_id: [28, 10]
+- node_id: [15, 9]
+- node_id: [7, 17]
+- node_id: [20, 3]
+- node_id: [2, 39]
+- node_id: [39, 21]
+MAP_FRAME: /map
+NODE:
+- id: 0
+  label: 'change_map_1'
+  # label: 'park'
+  # action: 'change_map'
+  point: {x: -33.095, y: 28.748}
+  type: intersection,position
+- id: 1
+  label: ''
+  point: {x: -33.384, y: 11.494}
+  type: intersection
+- id: 2
+  # label: 'change_map_2'
+  label: ''
+  point: {x: -32.686, y: -1.251}
+  type: intersection
+- id: 3
+  # label: 'traffic_sign'
+  # label: 'change_map_3'
+  label: ''
+  point: {x: -31.791, y: -24.863}
+  type: intersection
+- id: 4
+  label: ''
+  point: {x: -114.08, y: -28.007}
+  type: intersection
+- id: 5
+  label: ''
+  point: {x: -110.86, y: -145.44}
+  type: intersection
+- id: 6
+  label: ''
+  point: {x: -110.67, y: -161.32}
+  type: intersection
+- id: 7
+  label: ''
+  point: {x: -44.246, y: -158.61}
+  type: intersection
+- id: 8
+  label: ''
+  point: {x: -42.053, y: -236.16}
+  type: intersection
+- id: 9
+  label: ''
+  point: {x: -41.119, y: -285.44}
+  type: intersection
+- id: 10
+  label: ''
+  point: {x: -108.64, y: -286.8}
+  type: intersection
+- id: 11
+  label: ''
+  point: {x: -181.96, y: -291.62}
+  type: intersection
+- id: 12
+  label: ''
+  point: {x: -190.37, y: -299.88}
+  type: intersection
+- id: 13
+  label: ''
+  point: {x: -189.61, y: -322.38}
+  type: intersection
+- id: 14
+  label: ''
+  point: {x: -132.71, y: -320.0}
+  type: intersection
+- id: 15
+  label: ''
+  point: {x: -39.04, y: -315.11}
+  type: intersection
+# - id: 16
+#   label: ''
+#   point: {x: -45.521, y: -357.67}
+#   type: intersection
+- id: 17
+  label: ''
+  point: {x: 58.98, y: -154.5}
+  type: intersection
+- id: 18
+  label: ''
+  point: {x: 54.088, y: -112.96}
+  type: intersection
+- id: 19
+  label: ''
+  point: {x: 49.767, y: -21.097}
+  type: intersection
+- id: 20
+  label: ''
+  point: {x: 31.465, y: -20.824}
+  type: intersection
+- id: 21
+  label: ''
+  point: {x: 30.573, y: 0.8437}
+  type: intersection
+- id: 22
+  label: ''
+  point: {x: 29.66, y: 31.496}
+  type: intersection
+- id: 23
+  label: ''
+  point: {x: 31.63, y: -10.727}
+  type: intersection
+# - id: 24
+#   label: ''
+#   point: {x: 99.5473, y: -52.3202}
+#   type: intersection
+# - id: 25
+#   label: ''
+#   point: {x: 48.5068, y: -94.065}
+#   type: intersection
+# - id: 26
+#   label: ''
+#   point: {x: 37.6471, y: -99.5196}
+#   type: intersection
+- id: 27
+  label: ''
+  point: {x: -109.74, y: -238.11}
+  type: intersection
+# - id: 28
+#   label: ''
+#   point: {x: -108.689, y: -262.603}
+#   type: intersection
+# - id: 29
+#   label: ''
+#   point: {x: -162.807, y: -258.595}
+#   type: intersection
+# - id: 30
+#   label: ''
+#   point: {x: -198.917, y: -370.249}
+#   type: intersection
+# - id: 31
+#   label: ''
+#   point: {x: 20.1813, y: -346.538}
+#   type: intersection
+# - id: 32
+#   label: ''
+#   point: {x: 26.7877, y: -317.928}
+#   type: intersection
+# - id: 33
+#   label: ''
+#   point: {x: 0.271492, y: 5.00938}
+#   type: intersection
+# - id: 34
+#   label: ''
+#   point: {x: -81.538, y: 12.5791}
+#   type: intersection
+# - id: 35
+#   label: ''
+#   point: {x: -90.5878, y: -12.9056}
+#   type: intersection
+# - id: 36
+#   label: ''
+#   point: {x: -140.907, y: -375.258}
+#   type: intersection
+- id: 37
+  label: ''
+  point: {x: -78.256, y: -236.81}
+  type: intersection
+# - id: 38
+#   label: ''
+#   point: {x: -69.0367, y: -226.591}
+#   type: intersection
+- id: 39
+  label: ''
+  point: {x: -0.14698, y: -0.220841}
+  type: intersection

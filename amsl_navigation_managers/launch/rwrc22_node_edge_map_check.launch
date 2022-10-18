@@ -2,10 +2,10 @@
 <launch>
     <!-- yaml --><!-- rwrc22-->
     <!-- node_edge_map -->
-    <!-- <arg name="map_path" default="$(find amsl_navigation_managers)/sample/map/rwrc22_ikuta_map.yaml"/> -->
-    <arg name="map_path" default="$(find amsl_navigation_managers)/sample/map/rwrc22_tsukuba_map.yaml"/>
-    <!-- <arg name="checkpoint_path" default="$(find amsl_navigation_managers)/sample/checkpoint/rwrc22_ikuta_checkpoint.yaml"/> -->
-    <arg name="checkpoint_path" default="$(find amsl_navigation_managers)/sample/checkpoint/rwrc21_tsukuba_checkpoint.yaml"/>
+    <arg name="map_path" default="$(find amsl_navigation_managers)/sample/map/rwrc22_ikuta_map.yaml"/>
+    <!-- <arg name="map_path" default="$(find amsl_navigation_managers)/sample/map/rwrc22_tsukuba_map.yaml"/> -->
+    <arg name="checkpoint_path" default="$(find amsl_navigation_managers)/sample/checkpoint/rwrc22_ikuta_checkpoint.yaml"/>
+    <!-- <arg name="checkpoint_path" default="$(find amsl_navigation_managers)/sample/checkpoint/rwrc21_tsukuba_checkpoint.yaml"/> -->
     <!-- <arg name="task_list_path" default="$(find amsl_navigation_managers)/sample/task/rwrc22_ikuta_task.yaml"/>  -->
 
     <!-- <arg name="enable_task" default="true"/> -->
