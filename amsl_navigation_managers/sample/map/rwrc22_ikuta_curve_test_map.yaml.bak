@@ -1,4 +1,4 @@
-timestamp: 2022-10-18 09:31:23.363621
+timestamp: 2022-10-18 11:15:09.127121
 EDGE:
 - node_id:
   - 0
@@ -72,9 +72,6 @@ EDGE:
 - node_id:
   - 37
   - 8
-- node_id:
-  - 22
-  - 0
 - node_id:
   - 6
   - 27
@@ -251,7 +248,61 @@ NODE:
     x: -0.14698
     y: -0.220841
   type: intersection
-timestamp: 2022-10-18 09:33:24.658580
+- id: 100
+  type: intersection
+  point:
+    x: 24.41
+    y: 28.596
+  label: ''
+- id: 101
+  type: intersection
+  point:
+    x: null
+    y: null
+  label: ''
+- id: 102
+  type: intersection
+  point:
+    x: 12.09
+    y: 33.973
+  label: ''
+- id: 103
+  type: intersection
+  point:
+    x: 6.143
+    y: 31.323
+  label: ''
+- id: 104
+  type: intersection
+  point:
+    x: 0.021
+    y: 28.229
+  label: ''
+- id: 105
+  type: intersection
+  point:
+    x: -4.664
+    y: 28.563
+  label: ''
+- id: 106
+  type: intersection
+  point:
+    x: -7.119
+    y: 30.332
+  label: ''
+- id: 107
+  type: intersection
+  point:
+    x: -10.035
+    y: 32.192
+  label: ''
+- id: 108
+  type: intersection
+  point:
+    x: -13.087
+    y: 33.391
+  label: ''
+timestamp: 2022-10-18 11:17:10.809954
 EDGE:
 - node_id:
   - 0
@@ -325,9 +376,6 @@ EDGE:
 - node_id:
   - 37
   - 8
-- node_id:
-  - 22
-  - 0
 - node_id:
   - 6
   - 27
@@ -504,7 +552,55 @@ NODE:
     x: -0.14698
     y: -0.220841
   type: intersection
-timestamp: 2022-10-18 09:38:24.754320
+- id: 100
+  type: intersection
+  point:
+    x: 24.41
+    y: 28.596
+  label: ''
+- id: 102
+  type: intersection
+  point:
+    x: 12.09
+    y: 33.973
+  label: ''
+- id: 103
+  type: intersection
+  point:
+    x: 6.143
+    y: 31.323
+  label: ''
+- id: 104
+  type: intersection
+  point:
+    x: 0.021
+    y: 28.229
+  label: ''
+- id: 105
+  type: intersection
+  point:
+    x: -4.664
+    y: 28.563
+  label: ''
+- id: 106
+  type: intersection
+  point:
+    x: -7.119
+    y: 30.332
+  label: ''
+- id: 107
+  type: intersection
+  point:
+    x: -10.035
+    y: 32.192
+  label: ''
+- id: 108
+  type: intersection
+  point:
+    x: -13.087
+    y: 33.391
+  label: ''
+timestamp: 2022-10-18 11:26:27.987228
 EDGE:
 - node_id:
   - 0
@@ -578,9 +674,6 @@ EDGE:
 - node_id:
   - 37
   - 8
-- node_id:
-  - 22
-  - 0
 - node_id:
   - 6
   - 27
@@ -757,3 +850,81 @@ NODE:
     x: -0.14698
     y: -0.220841
   type: intersection
+- id: 100
+  type: intersection
+  point:
+    x: 24.41
+    y: 28.596
+  label: ''
+- id: 102
+  type: intersection
+  point:
+    x: 12.09
+    y: 33.973
+  label: ''
+- id: 103
+  type: intersection
+  point:
+    x: 6.143
+    y: 31.323
+  label: ''
+- id: 104
+  type: intersection
+  point:
+    x: 0.021
+    y: 28.229
+  label: ''
+- id: 105
+  type: intersection
+  point:
+    x: -4.664
+    y: 28.563
+  label: ''
+- id: 106
+  type: intersection
+  point:
+    x: -7.119
+    y: 30.332
+  label: ''
+- id: 107
+  type: intersection
+  point:
+    x: -9.925
+    y: 32.721
+  label: ''
+- id: 108
+  type: intersection
+  point:
+    x: -13.087
+    y: 33.391
+  label: ''
+- id: 101
+  type: intersection
+  point:
+    x: 18.164
+    y: 31.118
+  label: ''
+- id: 109
+  type: intersection
+  point:
+    x: -16.168
+    y: 32.297
+  label: ''
+- id: 110
+  type: intersection
+  point:
+    x: -19.018
+    y: 30.139
+  label: ''
+- id: 111
+  type: intersection
+  point:
+    x: -21.949
+    y: 27.91
+  label: ''
+- id: 112
+  type: intersection
+  point:
+    x: -24.869
+    y: 26.754
+  label: ''
