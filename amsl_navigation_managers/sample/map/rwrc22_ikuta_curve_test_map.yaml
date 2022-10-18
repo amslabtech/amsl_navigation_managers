@@ -298,8 +298,8 @@ NODE:
 - id: 102
   type: intersection
   point:
-    x: 12.09
-    y: 33.973
+    x: 11.936
+    y: 32.715
   label: ''
 - id: 103
   type: intersection
@@ -310,32 +310,32 @@ NODE:
 - id: 104
   type: intersection
   point:
-    x: 0.021
-    y: 28.229
+    x: -0.099
+    y: 27.369
   label: ''
 - id: 105
   type: intersection
   point:
-    x: -4.664
-    y: 28.563
+    x: -5.588
+    y: 27.81
   label: ''
 - id: 106
   type: intersection
   point:
-    x: -7.119
-    y: 30.332
+    x: -7.789
+    y: 29.366
   label: ''
 - id: 107
   type: intersection
   point:
-    x: -9.925
-    y: 32.721
+    x: -9.997
+    y: 31.195
   label: ''
 - id: 108
   type: intersection
   point:
-    x: -13.087
-    y: 33.391
+    x: -13.099
+    y: 32.001
   label: ''
 - id: 101
   type: intersection
@@ -346,20 +346,20 @@ NODE:
 - id: 109
   type: intersection
   point:
-    x: -16.168
-    y: 32.297
+    x: -16.194
+    y: 31.177
   label: ''
 - id: 110
   type: intersection
   point:
-    x: -19.018
-    y: 30.139
+    x: -18.616
+    y: 29.283
   label: ''
 - id: 111
   type: intersection
   point:
-    x: -21.648
-    y: 27.77
+    x: -20.818
+    y: 27.714
   label: ''
 - id: 112
   type: intersection
