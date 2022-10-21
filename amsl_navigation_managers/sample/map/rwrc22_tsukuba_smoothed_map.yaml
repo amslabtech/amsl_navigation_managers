@@ -337,26 +337,26 @@ NODE:
 - id: 13
   type: intersection
   point:
-    x: 34.899
-    y: -12.228
+    x: 35.709
+    y: -12.297
   label: ''
 - id: 135
   type: intersection
   point:
-    x: 33.133
-    y: -19.486
+    x: 33.8077
+    y: -18.3016
   label: ''
 - id: 14
   type: intersection
   point:
-    x: 24.578
-    y: -19.049
+    x: 26.407
+    y: -18.6857
   label: ''
 - id: 15
   type: intersection
   point:
-    x: 7.177
-    y: -18.346
+    x: 7.0544
+    y: -19.137
   label: ''
 - id: 16
   type: intersection
