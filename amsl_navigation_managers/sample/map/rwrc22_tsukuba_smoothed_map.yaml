@@ -94,9 +94,18 @@ EDGE:
   - 24
 - node_id:
   - 24
+  - 300
+- node_id:
+  - 300
   - 25
 - node_id:
   - 25
+  - 301
+- node_id:
+  - 301
+  - 302
+- node_id:
+  - 302
   - 26
 - node_id:
   - 26
@@ -136,6 +145,9 @@ EDGE:
   - 38
 - node_id:
   - 38
+  - 312
+- node_id:
+  - 312
   - 235
 - node_id:
   - 235
@@ -306,9 +318,6 @@ EDGE:
   - 62
   - 38
 - node_id:
-  - 63
-  - 26
-- node_id:
   - 50
   - 64
 - node_id:
@@ -362,6 +371,36 @@ EDGE:
 - node_id:
   - 78
   - 58
+- node_id:
+  - 25
+  - 303
+- node_id:
+  - 303
+  - 304
+- node_id:
+  - 304
+  - 305
+- node_id:
+  - 305
+  - 306
+- node_id:
+  - 306
+  - 307
+- node_id:
+  - 307
+  - 308
+- node_id:
+  - 308
+  - 309
+- node_id:
+  - 309
+  - 310
+- node_id:
+  - 63
+  - 311
+- node_id:
+  - 311
+  - 26
 MAP_FRAME: /map
 NODE:
 - id: 0
@@ -397,20 +436,20 @@ NODE:
 - id: 5
   type: ''
   point:
-    x: 64.378
-    y: -16.217
+    x: 64.382
+    y: -16.995
   label: ''
 - id: 6
   type: intersection
   point:
-    x: 80.612
-    y: -16.226
+    x: 81.159
+    y: -16.294
   label: ''
 - id: 7
   type: intersection
   point:
-    x: 81.8056
-    y: -18.4878
+    x: 82.197
+    y: -18.188
   label: ''
 - id: 8
   type: intersection
@@ -475,56 +514,56 @@ NODE:
 - id: 17
   type: ''
   point:
-    x: -20.649
-    y: -27.4
+    x: -22.987
+    y: -27.626
   label: ''
 - id: 18
   type: intersection
   point:
-    x: -36.596
-    y: -32.4
+    x: -37.402
+    y: -34.715
   label: ''
 - id: 19
   type: intersection
   point:
-    x: -47.854
-    y: -37.934
+    x: -47.657
+    y: -34.65
   label: ''
 - id: 20
   type: intersection
   point:
-    x: -102.143
-    y: -38.962
+    x: -102.003
+    y: -35.517
   label: ''
 - id: 21
   type: intersection
   point:
-    x: -181.6
-    y: -39.665
+    x: -181.451
+    y: -36.722
   label: ''
 - id: 22
   type: intersection
   point:
-    x: -228.129
-    y: -39.563
+    x: -229.333
+    y: -37.725
   label: ''
 - id: 23
   type: intersection
   point:
-    x: -228.685
-    y: -0.446
+    x: -230.378
+    y: -0.723
   label: ''
 - id: 24
   type: intersection
   point:
-    x: -229.671
-    y: 32.796
+    x: -230.934
+    y: 32.751
   label: ''
 - id: 25
   type: intersection
   point:
-    x: -229.665
-    y: 44.735
+    x: -230.779
+    y: 44.7
   label: traffic_detector_launch
 - id: 26
   type: intersection
@@ -859,20 +898,20 @@ NODE:
 - id: 202
   type: intersection
   point:
-    x: -57.613
-    y: -38.206
+    x: -58.542
+    y: -34.778
   label: ''
 - id: 203
   type: intersection
   point:
-    x: -134.583
-    y: -39.199
+    x: -135.923
+    y: -35.914
   label: ''
 - id: 204
   type: intersection
   point:
-    x: -143.244
-    y: -39.234
+    x: -141.609
+    y: -35.986
   label: ''
 - id: 205
   type: intersection
@@ -1057,6 +1096,84 @@ NODE:
 - id: 235
   type: intersection
   point:
-    x: -375.572
-    y: 64.282
+    x: -375.469
+    y: 62.53
+  label: ''
+- id: 300
+  type: intersection
+  point:
+    x: -230.834
+    y: 42.412
+  label: ''
+- id: 301
+  type: intersection
+  point:
+    x: -232.238
+    y: 44.703
+  label: ''
+- id: 302
+  type: intersection
+  point:
+    x: -245.825
+    y: 44.464
+  label: ''
+- id: 303
+  type: intersection
+  point:
+    x: -228.919
+    y: 44.726
+  label: ''
+- id: 304
+  type: intersection
+  point:
+    x: -228.868
+    y: 41.005
+  label: ''
+- id: 305
+  type: intersection
+  point:
+    x: -228.772
+    y: 32.778
+  label: ''
+- id: 306
+  type: intersection
+  point:
+    x: -228.144
+    y: -0.709
+  label: ''
+- id: 307
+  type: intersection
+  point:
+    x: -227.627
+    y: -42.38
+  label: ''
+- id: 308
+  type: intersection
+  point:
+    x: -181.448
+    y: -41.745
+  label: ''
+- id: 309
+  type: intersection
+  point:
+    x: -141.655
+    y: -40.672
+  label: ''
+- id: 310
+  type: intersection
+  point:
+    x: -79.639
+    y: -40.926
+  label: ''
+- id: 311
+  type: intersection
+  point:
+    x: -252.646
+    y: 47.596
+  label: ''
+- id: 312
+  type: intersection
+  point:
+    x: -375.483
+    y: 54.343
   label: ''
