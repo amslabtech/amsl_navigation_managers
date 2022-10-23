@@ -397,6 +397,9 @@ EDGE:
   - 310
 - node_id:
   - 63
+  - 313
+- node_id:
+  - 313
   - 311
 - node_id:
   - 311
@@ -556,14 +559,14 @@ NODE:
 - id: 24
   type: intersection
   point:
-    x: -230.934
-    y: 32.751
+    x: -231.118
+    y: 32.71
   label: ''
 - id: 25
   type: intersection
   point:
-    x: -230.779
-    y: 44.7
+    x: -231.121
+    y: 44.599
   label: traffic_detector_launch
 - id: 26
   type: intersection
@@ -790,8 +793,8 @@ NODE:
 - id: 63
   type: intersection
   point:
-    x: -260.687
-    y: 53.426
+    x: -265.048
+    y: 53.388
   label: ''
 - id: 64
   type: intersection
@@ -1102,14 +1105,14 @@ NODE:
 - id: 300
   type: intersection
   point:
-    x: -230.834
-    y: 42.412
+    x: -231.194
+    y: 42.309
   label: ''
 - id: 301
   type: intersection
   point:
-    x: -232.238
-    y: 44.703
+    x: -232.604
+    y: 44.648
   label: ''
 - id: 302
   type: intersection
@@ -1168,12 +1171,18 @@ NODE:
 - id: 311
   type: intersection
   point:
-    x: -252.646
-    y: 47.596
+    x: -253.289
+    y: 46.104
   label: ''
 - id: 312
   type: intersection
   point:
     x: -375.483
     y: 54.343
+  label: ''
+- id: 313
+  type: intersection
+  point:
+    x: -257.186
+    y: 45.974
   label: ''
