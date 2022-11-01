@@ -46,8 +46,9 @@ class TaskManager:
         return task_data
 
     def checkpoint_id_callback(self, checkpoint_id):
-        self.last_checkpoint_id = self.current_checkpoint_id
-        self.current_checkpoint_id = int(checkpoint_id.data)
+        if self.current_checkpoint_id != int(checkpoint_id.data):
+            self.last_checkpoint_id = self.current_checkpoint_id
+            self.current_checkpoint_id = int(checkpoint_id.data)
 
     def search_task_from_node_id(self, node0_id, node1_id):
         if self.get_task == True:
