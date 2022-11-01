@@ -54,3 +54,7 @@ class TaskManager:
                 return ""
         else:
             return ""
+
+if __name__ == '__main__':
+    task_manager = TaskManager()
+    task_manager.process()
