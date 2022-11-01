@@ -27,10 +27,10 @@ class TaskManager:
     def process(self):
         r = rospy.Rate(10)
         while not rospy.is_shutdown():
-            print(self.get_task)
+            # print(self.get_task)
             task_type = self.search_task_from_node_id(self.last_checkpoint_id, self.current_checkpoint_id)
             # print('node0_id =', self.last_checkpoint_id, 'node1_id = ', self.current_checkpoint_id)
-            print('task_type = %s' % task_type)
+            # print('task_type = %s' % task_type)
             if task_type == 'detect_line':
                 self.detect_line_flag = True
             else:
@@ -42,7 +42,7 @@ class TaskManager:
         with open(self.TASK_LIST_PATH) as file:
             task_data = yaml.safe_load(file)
             self.get_task = True
-            print('get task')
+            # print('get task')
         return task_data
 
     def checkpoint_id_callback(self, checkpoint_id):
