@@ -12,7 +12,7 @@ class TaskManager:
         rospy.init_node('task_manager')
         print('=== task manager ===')
 
-        self.TASK_LIST_PATH = rospy.get_param('TASK_LIST_PATH')
+        self.TASK_LIST_PATH = rospy.get_param('~TASK_LIST_PATH')
 
         self.current_checkpoint_id_sub = rospy.Subscriber('/current_checkpoint', Int32MultiArray, self.checkpoint_id_callback)
 
