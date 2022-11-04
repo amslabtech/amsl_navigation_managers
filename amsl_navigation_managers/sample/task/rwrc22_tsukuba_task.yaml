@@ -4,3 +4,6 @@ task:
       node0_id: 23
       node1_id: 24
   - task_type: "detect_line"
+    edge:
+      node0_id: 63
+      node1_id: 313

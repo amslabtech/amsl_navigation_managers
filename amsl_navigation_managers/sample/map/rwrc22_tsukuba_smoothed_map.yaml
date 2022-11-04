@@ -403,6 +403,9 @@ EDGE:
   - 311
 - node_id:
   - 311
+  - 314
+- node_id:
+  - 314
   - 26
 MAP_FRAME: /map
 NODE:
@@ -1185,4 +1188,10 @@ NODE:
   point:
     x: -257.186
     y: 45.974
+  label: ''
+- id: 314
+  type: intersection
+  point:
+    x: -250.597
+    y: 46.086
   label: ''
