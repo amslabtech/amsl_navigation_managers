@@ -15,7 +15,7 @@ class TaskManager:
         self.TASK_LIST_PATH = rospy.get_param('~TASK_LIST_PATH')
 
         self.current_checkpoint_id_sub = rospy.Subscriber('/current_checkpoint', Int32, self.checkpoint_id_callback)
-        self.is_detected_sub = rospy.Subscriber('/hoge', Bool, self.detected_line_callback)
+        self.stop_line_flag_sub = rospy.Subscriber('/stop_line_flag', Bool, self.stop_line_flag_callback)
 
         self.detect_line_flag_pub = rospy.Publisher('/detect_line', Bool, queue_size=1)
         self.task_stop_flag_pub = rospy.Publisher('/task/stop' , Bool, queue_size=1)
@@ -54,7 +54,7 @@ class TaskManager:
             self.last_checkpoint_id = self.current_checkpoint_id
             self.current_checkpoint_id = int(checkpoint_id.data)
 
-    def detected_line_callback(self, flag):
+    def stop_line_flag_callback(self, flag):
         # print('current flag = ', flag.data, 'last flag = ', self.last_line_flag)
         if self.last_line_flag == True and flag.data == False:
             self.task_stop_flag_pub.publish(False)
