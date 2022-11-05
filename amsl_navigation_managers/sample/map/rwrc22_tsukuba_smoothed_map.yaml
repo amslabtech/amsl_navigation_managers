@@ -102,12 +102,6 @@ EDGE:
   - 25
   - 301
 - node_id:
-  - 301
-  - 302
-- node_id:
-  - 302
-  - 26
-- node_id:
   - 26
   - 27
 - node_id:
@@ -371,9 +365,6 @@ EDGE:
 - node_id:
   - 78
   - 58
-- node_id:
-  - 25
-  - 303
 - node_id:
   - 303
   - 304
@@ -406,6 +397,12 @@ EDGE:
   - 314
 - node_id:
   - 314
+  - 302
+- node_id:
+  - 302
+  - 303
+- node_id:
+  - 301
   - 26
 MAP_FRAME: /map
 NODE:
@@ -1120,14 +1117,14 @@ NODE:
 - id: 302
   type: intersection
   point:
-    x: -245.825
-    y: 44.464
+    x: -245.865
+    y: 46.167
   label: ''
 - id: 303
   type: intersection
   point:
-    x: -228.919
-    y: 44.726
+    x: -228.953
+    y: 46.356
   label: ''
 - id: 304
   type: intersection
@@ -1194,4 +1191,10 @@ NODE:
   point:
     x: -250.597
     y: 46.086
+  label: ''
+- id: 315
+  type: intersection
+  point:
+    x: -231.155
+    y: 37.122
   label: ''
