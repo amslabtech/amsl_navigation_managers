@@ -5,5 +5,5 @@ task:
       node1_id: 1
   - task_type: "detect_line"
     edge:
-      node0_id: 21
-      node1_id: 39
+      node0_id: 22
+      node1_id: 21
