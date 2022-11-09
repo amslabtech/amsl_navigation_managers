@@ -18,6 +18,7 @@ class TaskManager:
 
         self.TASK_LIST_PATH = rospy.get_param('~TASK_LIST_PATH')
         # self.STOP_LIST_PATH = rospy.get_param('~STOP_LIST_PATH')
+        self.turn_rate = rospy.set_param('~turn_rate', 0.5)
 
         # ros
         self.current_checkpoint_id_sub = rospy.Subscriber('/current_checkpoint', Int32, self.checkpoint_id_callback)
@@ -110,13 +111,15 @@ class TaskManager:
             r.sleep()
 
     def get_turn_cmd_vel(self, goal, local_planner_cmd_vel):
-        goal_yaw = math.atan2(goal.pose.position.y, goal.pose.position.x)
-        goal_yaw = abs(goal_yaw)
-        if(goal_yaw < 0.2):
+        goal_yaw = math.atan2(goal.pose.position.y, goal.pose.position.x) # base_link to goal
+        if(abs(goal_yaw) < 0.2):
             return local_planner_cmd_vel, False
         cmd_vel = Twist()
         cmd_vel.linear.x = 0.0
-        cmd_vel.angular.z = local_planner_cmd_vel.angular.z
+        if local_planner_cmd_vel.angular.z != 0.0:
+            cmd_vel.angular.z = (local_planner_cmd_vel.angular.z / abs(local_planner_cmd_vel.angular.z)) * self.turn_rate
+        else:
+            cmd_vel.angular.z = 0.0
         return cmd_vel, True
 
     def load_task_from_yaml(self):
