@@ -43,6 +43,13 @@ class TaskManager:
         self.task_data = self.load_task_from_yaml()
         self.last_line_flag = False
 
+        # msg update flags
+        current_checkpoint_updated = False
+        local_planner_cmd_vel_updated = False
+        local_goal_updated = False
+        amcl_pose_updated = False
+
+
     def process(self):
         print('=== process started ===')
         if self.get_task == False:
@@ -51,34 +58,40 @@ class TaskManager:
 
         r = rospy.Rate(10)
         while not rospy.is_shutdown():
-            rospy.loginfo('================================================================')
-            task_type = self.search_task_from_node_id(self.last_checkpoint_id, self.current_checkpoint_id)
+            if(self.current_checkpoint_updated and self.local_planner_cmd_vel_updated and self.local_goal_updated and self.amcl_pose_updated):
+                rospy.loginfo('================================================================')
+                task_type = self.search_task_from_node_id(self.last_checkpoint_id, self.current_checkpoint_id)
 
-            ##### white line detector & stop behind robot #####
-            enable_detect_line = Bool()
-            if task_type == 'detect_line':
-                enable_detect_line.data = True
-            else:
-                enable_detect_line.data = False
-            self.detect_line_flag_pub.publish(enable_detect_line)
-            rospy.loginfo('detect_line_flag_pub = %s' % enable_detect_line.data)
-            ##### white line detector & stop behind robot #####
+                ##### white line detector & stop behind robot #####
+                enable_detect_line = Bool()
+                if task_type == 'detect_line':
+                    enable_detect_line.data = True
+                else:
+                    enable_detect_line.data = False
+                self.detect_line_flag_pub.publish(enable_detect_line)
+                rospy.loginfo('detect_line_flag_pub = %s' % enable_detect_line.data)
+                ##### white line detector & stop behind robot #####
 
-            cmd_vel = Twist()
-            cmd_vel.linear.x = self.local_planner_cmd_vel.linear.x
-            cmd_vel.angular.z = self.local_planner_cmd_vel.angular.z
+                cmd_vel = Twist()
+                cmd_vel.linear.x = self.local_planner_cmd_vel.linear.x
+                cmd_vel.angular.z = self.local_planner_cmd_vel.angular.z
 
-            ##### turn at node #####
-            if(self.current_checkpoint_id != self.last_checkpoint_id):
-                cmd_vel = self.get_turn_around_cmd_vel(self.local_goal, self.local_planner_cmd_vel)
-            ##### turn at node #####
+                ##### turn at node #####
+                if(self.current_checkpoint_id != self.last_checkpoint_id):
+                    cmd_vel = self.get_turn_cmd_vel(self.local_goal, self.local_planner_cmd_vel)
+                ##### turn at node #####
 
-            self.cmd_vel_pub.publish(cmd_vel)
+                self.cmd_vel_pub.publish(cmd_vel)
+
+                self.current_checkpoint_updated = False
+                self.local_planner_cmd_vel_updated = False
+                self.local_goal_updated = False
+                self.amcl_pose_updated = False
 
             rospy.spin()
             r.sleep()
 
-    def get_turn_around_cmd_vel(self, goal, local_planner_cmd_vel):
+    def get_turn_cmd_vel(self, goal, local_planner_cmd_vel):
         goal_yaw = math.atan2(goal.pose.position.y, goal.pose.position.x)
         if(goal_yaw < 0.2):
             return local_planner_cmd_vel
@@ -98,21 +111,25 @@ class TaskManager:
         if self.current_checkpoint_id != int(checkpoint_id.data):
             self.last_checkpoint_id = self.current_checkpoint_id
             self.current_checkpoint_id = int(checkpoint_id.data)
+            self.current_checkpoint_updated = True
 
     def stop_line_flag_callback(self, flag):
         self.stop_line_flag = flag.data
 
     def local_planner_cmd_vel_callback(self, msg):
         self.local_planner_cmd_vel = msg
+        self.local_planner_cmd_vel_updated = True
 
     def local_goal_callback(self, msg):
         self.local_goal = msg
+        self.local_goal_updated = True
 
     def joy_callback(self, msg):
         self.joy = msg
 
     def amcl_pose_callback(self, msg):
         self.amcl_pose = msg
+        self.amcl_pose_updated = True
 
     def search_task_from_node_id(self, node0_id, node1_id):
         if self.get_task == True:
