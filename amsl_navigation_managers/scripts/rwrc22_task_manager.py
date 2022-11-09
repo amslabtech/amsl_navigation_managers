@@ -44,10 +44,9 @@ class TaskManager:
         self.last_line_flag = False
 
         # msg update flags
-        current_checkpoint_updated = False
-        local_planner_cmd_vel_updated = False
-        local_goal_updated = False
-        amcl_pose_updated = False
+        self.local_planner_cmd_vel_updated = False
+        self.local_goal_updated = False
+        self.amcl_pose_updated = False
 
 
     def process(self):
@@ -58,7 +57,7 @@ class TaskManager:
 
         r = rospy.Rate(10)
         while not rospy.is_shutdown():
-            if(self.current_checkpoint_updated and self.local_planner_cmd_vel_updated and self.local_goal_updated and self.amcl_pose_updated):
+            if(self.local_planner_cmd_vel_updated and self.local_goal_updated and self.amcl_pose_updated):
                 rospy.loginfo('================================================================')
                 task_type = self.search_task_from_node_id(self.last_checkpoint_id, self.current_checkpoint_id)
 
@@ -83,16 +82,21 @@ class TaskManager:
 
                 self.cmd_vel_pub.publish(cmd_vel)
 
-                self.current_checkpoint_updated = False
                 self.local_planner_cmd_vel_updated = False
                 self.local_goal_updated = False
                 self.amcl_pose_updated = False
-
-            rospy.spin()
+            else:
+                if self.local_planner_cmd_vel_updated == False:
+                    rospy.logwarn('local_planner_cmd_vel is not updated')
+                if self.local_goal_updated == False:
+                    rospy.logwarn('local_goal is not updated')
+                if self.amcl_pose_updated == False:
+                    rospy.logwarn('amcl_pose is not updated')
             r.sleep()
 
     def get_turn_cmd_vel(self, goal, local_planner_cmd_vel):
         goal_yaw = math.atan2(goal.pose.position.y, goal.pose.position.x)
+        goal_yaw = abs(goal_yaw)
         if(goal_yaw < 0.2):
             return local_planner_cmd_vel
         cmd_vel = Twist()
@@ -111,7 +115,6 @@ class TaskManager:
         if self.current_checkpoint_id != int(checkpoint_id.data):
             self.last_checkpoint_id = self.current_checkpoint_id
             self.current_checkpoint_id = int(checkpoint_id.data)
-            self.current_checkpoint_updated = True
 
     def stop_line_flag_callback(self, flag):
         self.stop_line_flag = flag.data
