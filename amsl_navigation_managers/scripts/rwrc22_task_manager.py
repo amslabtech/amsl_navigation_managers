@@ -17,7 +17,7 @@ class TaskManager:
         print('=== task manager ===')
 
         self.TASK_LIST_PATH = rospy.get_param('~TASK_LIST_PATH')
-        # self.STOP_LIST_PATH = rospy.get_param('~STOP_LIST_PATH')
+        self.STOP_LIST_PATH = rospy.get_param('~STOP_LIST_PATH')
         self.turn_rate = rospy.set_param('~turn_rate', 0.5)
 
         # ros
@@ -29,7 +29,6 @@ class TaskManager:
         self.amcl_pose_sub = rospy.Subscriber('/amcl_pose', PoseWithCovarianceStamped, self.amcl_pose_callback)
 
         self.detect_line_flag_pub = rospy.Publisher('/detect_line', Bool, queue_size=1)
-        # self.task_stop_flag_pub = rospy.Publisher('/task/stop' , Bool, queue_size=1)
         self.cmd_vel_pub = rospy.Publisher('/local_path/cmd_vel', Twist, queue_size=1)
 
         # params in callback function
@@ -44,8 +43,8 @@ class TaskManager:
         self.get_task = False
         self.task_data = self.load_task_from_yaml()
         self.reached_checkpoint = False
-        # self.get_stop_list = False
-        # self.stop_list = self.load_stop_list_from_yaml()
+        self.get_stop_list = False
+        self.stop_list = self.load_stop_list_from_yaml()
 
         # msg update flags
         self.local_planner_cmd_vel_updated = False
@@ -54,13 +53,9 @@ class TaskManager:
 
 
     def process(self):
-        print('=== process started ===')
-        if self.get_task == False:
-            rospy.logerr('task is not get')
+        if self.get_task == False or self.get_stop_list == False:
+            rospy.logerr('task or stop list is not loaded')
             exit(-1)
-        # if self.get_task == False or self.get_stop_list == False:
-        #     rospy.logerr('task or stop list is not loaded')
-        #     exit(-1)
 
         r = rospy.Rate(10)
         while not rospy.is_shutdown():
@@ -129,12 +124,12 @@ class TaskManager:
             # print('get task')
         return task_data
 
-    # def load_stop_list_from_yaml(self):
-    #     with open(self.STOP_LIST_PATH) as file:
-    #         stop_list = yaml.safe_load(file)
-    #         self.get_stop_list = True
-    #         # print('get stop list')
-    #     return stop_list
+    def load_stop_list_from_yaml(self):
+        with open(self.STOP_LIST_PATH) as file:
+            stop_list = yaml.safe_load(file)
+            self.get_stop_list = True
+            # print('get stop list')
+        return stop_list
 
     def checkpoint_id_callback(self, checkpoint_id):
         if self.current_checkpoint_id != int(checkpoint_id.data):
