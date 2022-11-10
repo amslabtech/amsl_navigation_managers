@@ -45,11 +45,13 @@ class TaskManager:
         self.reached_checkpoint = False
         self.get_stop_list = False
         self.stop_list = self.load_stop_list_from_yaml()
+        self.stop_node_flag = False
 
         # msg update flags
         self.local_planner_cmd_vel_updated = False
         self.local_goal_updated = False
         self.amcl_pose_updated = False
+        self.joy_updated = False
 
 
     def process(self):
@@ -82,9 +84,16 @@ class TaskManager:
                     cmd_vel, self.reached_checkpoint = self.get_turn_cmd_vel(self.local_goal, self.local_planner_cmd_vel)
                 ##### turn at node #####
 
-                    ##### stop at designated node #####
-                    # if(task_type == 'stop'):
-                    ##### stop at designated node #####
+                ##### stop at designated node #####
+                self.stop_node_flag = self.is_stop_node(self.stop_list, self.current_checkpoint_id)
+                if(self.stop_node_flag):
+                    cmd_vel, is_not_toward = self.get_turn_cmd_vel(self.local_goal, self.local_planner_cmd_vel)
+                    if is_not_toward == False: # toward goal
+                        cmd_vel.linear.x = 0.0
+                        cmd_vel.angular.z = 0.0
+                    if self.get_go_signal(self.joy):
+                        del self.stop_list[0]
+                ##### stop at designated node #####
 
                 ##### stop at white line #####
                 # if(self.stop_line_flag):
@@ -126,9 +135,11 @@ class TaskManager:
 
     def load_stop_list_from_yaml(self):
         with open(self.STOP_LIST_PATH) as file:
-            stop_list = yaml.safe_load(file)
+            stop_list_from_yaml = yaml.safe_load(file)
             self.get_stop_list = True
-            # print('get stop list')
+        stop_list = []
+        for count, stop in enumerate(stop_list_from_yaml['stop_list']):
+            stop_list.append(stop['node_id'])
         return stop_list
 
     def checkpoint_id_callback(self, checkpoint_id):
@@ -150,6 +161,7 @@ class TaskManager:
 
     def joy_callback(self, msg):
         self.joy = msg
+        self.joy_updated = True
 
     def amcl_pose_callback(self, msg):
         self.amcl_pose = msg
@@ -164,6 +176,24 @@ class TaskManager:
                     return task['task_type']
         else:
             return ''
+
+    def is_stop_node(self, stop_list, current_checkpoint_id):
+        if self.get_stop_list == False:
+            return False
+        if len(stop_list) == 0:
+            return False
+        if stop_list[0] == current_checkpoint_id:
+            return True
+        return True
+
+    def get_go_signal(self, joy):
+        if self.joy_updated == True:
+            self.joy_updated = False
+            if joy.buttons[11] == 1 and joy.buttons[12] == 1:
+                return True
+            return False
+        else:
+            return False
 
 if __name__ == '__main__':
     task_manager = TaskManager()
