@@ -17,7 +17,8 @@ class TaskManager:
         print('=== task manager ===')
 
         self.TASK_LIST_PATH = rospy.get_param('~TASK_LIST_PATH')
-        # self.STOP_LIST_PATH = rospy.get_param('~STOP_LIST_PATH')
+        self.STOP_LIST_PATH = rospy.get_param('~STOP_LIST_PATH')
+        self.turn_rate = rospy.get_param('~turn_rate', 0.5)
 
         # ros
         self.current_checkpoint_id_sub = rospy.Subscriber('/current_checkpoint', Int32, self.checkpoint_id_callback)
@@ -28,7 +29,6 @@ class TaskManager:
         self.amcl_pose_sub = rospy.Subscriber('/amcl_pose', PoseWithCovarianceStamped, self.amcl_pose_callback)
 
         self.detect_line_flag_pub = rospy.Publisher('/detect_line', Bool, queue_size=1)
-        # self.task_stop_flag_pub = rospy.Publisher('/task/stop' , Bool, queue_size=1)
         self.cmd_vel_pub = rospy.Publisher('/local_path/cmd_vel', Twist, queue_size=1)
 
         # params in callback function
@@ -43,23 +43,21 @@ class TaskManager:
         self.get_task = False
         self.task_data = self.load_task_from_yaml()
         self.reached_checkpoint = False
-        # self.get_stop_list = False
-        # self.stop_list = self.load_stop_list_from_yaml()
+        self.get_stop_list = False
+        self.stop_list = self.load_stop_list_from_yaml()
+        self.stop_node_flag = False
 
         # msg update flags
         self.local_planner_cmd_vel_updated = False
         self.local_goal_updated = False
         self.amcl_pose_updated = False
+        self.joy_updated = False
 
 
     def process(self):
-        print('=== process started ===')
-        if self.get_task == False:
-            rospy.logerr('task is not get')
+        if self.get_task == False or self.get_stop_list == False:
+            rospy.logerr('task or stop list is not loaded')
             exit(-1)
-        # if self.get_task == False or self.get_stop_list == False:
-        #     rospy.logerr('task or stop list is not loaded')
-        #     exit(-1)
 
         r = rospy.Rate(10)
         while not rospy.is_shutdown():
@@ -86,9 +84,16 @@ class TaskManager:
                     cmd_vel, self.reached_checkpoint = self.get_turn_cmd_vel(self.local_goal, self.local_planner_cmd_vel)
                 ##### turn at node #####
 
-                    ##### stop at designated node #####
-                    # if(task_type == 'stop'):
-                    ##### stop at designated node #####
+                ##### stop at designated node #####
+                self.stop_node_flag = self.is_stop_node(self.stop_list, self.current_checkpoint_id)
+                if(self.stop_node_flag):
+                    cmd_vel, is_not_toward = self.get_turn_cmd_vel(self.local_goal, self.local_planner_cmd_vel)
+                    if is_not_toward == False: # toward goal
+                        cmd_vel.linear.x = 0.0
+                        cmd_vel.angular.z = 0.0
+                    if self.get_go_signal(self.joy):
+                        del self.stop_list[0]
+                ##### stop at designated node #####
 
                 ##### stop at white line #####
                 # if(self.stop_line_flag):
@@ -110,13 +115,15 @@ class TaskManager:
             r.sleep()
 
     def get_turn_cmd_vel(self, goal, local_planner_cmd_vel):
-        goal_yaw = math.atan2(goal.pose.position.y, goal.pose.position.x)
-        goal_yaw = abs(goal_yaw)
-        if(goal_yaw < 0.2):
+        goal_yaw = math.atan2(goal.pose.position.y, goal.pose.position.x) # base_link to goal
+        if(abs(goal_yaw) < 0.2):
             return local_planner_cmd_vel, False
         cmd_vel = Twist()
         cmd_vel.linear.x = 0.0
-        cmd_vel.angular.z = local_planner_cmd_vel.angular.z
+        if local_planner_cmd_vel.angular.z != 0.0:
+            cmd_vel.angular.z = (local_planner_cmd_vel.angular.z / abs(local_planner_cmd_vel.angular.z)) * float(self.turn_rate)
+        else:
+            cmd_vel.angular.z = 0.0
         return cmd_vel, True
 
     def load_task_from_yaml(self):
@@ -126,12 +133,14 @@ class TaskManager:
             # print('get task')
         return task_data
 
-    # def load_stop_list_from_yaml(self):
-    #     with open(self.STOP_LIST_PATH) as file:
-    #         stop_list = yaml.safe_load(file)
-    #         self.get_stop_list = True
-    #         # print('get stop list')
-    #     return stop_list
+    def load_stop_list_from_yaml(self):
+        with open(self.STOP_LIST_PATH) as file:
+            stop_list_from_yaml = yaml.safe_load(file)
+            self.get_stop_list = True
+        stop_list = []
+        for count, stop in enumerate(stop_list_from_yaml['stop_list']):
+            stop_list.append(stop['node_id'])
+        return stop_list
 
     def checkpoint_id_callback(self, checkpoint_id):
         if self.current_checkpoint_id != int(checkpoint_id.data):
@@ -152,6 +161,7 @@ class TaskManager:
 
     def joy_callback(self, msg):
         self.joy = msg
+        self.joy_updated = True
 
     def amcl_pose_callback(self, msg):
         self.amcl_pose = msg
@@ -166,6 +176,24 @@ class TaskManager:
                     return task['task_type']
         else:
             return ''
+
+    def is_stop_node(self, stop_list, current_checkpoint_id):
+        if self.get_stop_list == False:
+            return False
+        if len(stop_list) == 0:
+            return False
+        if stop_list[0] == current_checkpoint_id:
+            return True
+        return False
+
+    def get_go_signal(self, joy):
+        if self.joy_updated == True:
+            self.joy_updated = False
+            if joy.buttons[11] == 1 and joy.buttons[12] == 1:
+                return True
+            return False
+        else:
+            return False
 
 if __name__ == '__main__':
     task_manager = TaskManager()

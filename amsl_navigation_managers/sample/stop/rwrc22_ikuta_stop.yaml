@@ -1,0 +1,5 @@
+stop_list:
+  - node_id: 10
+  - node_id: 11
+  - node_id: 12
+  - node_id: 13
