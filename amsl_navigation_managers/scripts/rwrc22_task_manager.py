@@ -18,7 +18,7 @@ class TaskManager:
 
         self.TASK_LIST_PATH = rospy.get_param('~TASK_LIST_PATH')
         self.STOP_LIST_PATH = rospy.get_param('~STOP_LIST_PATH')
-        self.turn_rate = rospy.set_param('~turn_rate', 0.5)
+        self.turn_rate = rospy.get_param('~turn_rate', 0.5)
 
         # ros
         self.current_checkpoint_id_sub = rospy.Subscriber('/current_checkpoint', Int32, self.checkpoint_id_callback)
@@ -121,7 +121,7 @@ class TaskManager:
         cmd_vel = Twist()
         cmd_vel.linear.x = 0.0
         if local_planner_cmd_vel.angular.z != 0.0:
-            cmd_vel.angular.z = (local_planner_cmd_vel.angular.z / abs(local_planner_cmd_vel.angular.z)) * self.turn_rate
+            cmd_vel.angular.z = (local_planner_cmd_vel.angular.z / abs(local_planner_cmd_vel.angular.z)) * float(self.turn_rate)
         else:
             cmd_vel.angular.z = 0.0
         return cmd_vel, True
@@ -184,7 +184,7 @@ class TaskManager:
             return False
         if stop_list[0] == current_checkpoint_id:
             return True
-        return True
+        return False
 
     def get_go_signal(self, joy):
         if self.joy_updated == True:
