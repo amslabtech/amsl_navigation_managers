@@ -29,8 +29,8 @@ class RoadPublisher:
         self.make_width_list()
 
         ## check array size
-        if len(self.checkpoint_list.data) != len(self.width_list.data):
-            print('!!width_yaml and checkpoint_yaml size is not same!!')
+        if len(self.checkpoint_list) != len(self.width_list):
+            print('!==width_yaml and checkpoint_yaml size is not same==!')
             exit()
 
         self.node_edge_map = NodeEdgeMap()
@@ -79,24 +79,24 @@ class RoadPublisher:
         return checkpoint_yaml
 
     def make_checkpoint_list(self):
-        self.checkpoint_list = Int32MultiArray()
+        self.checkpoint_list = []
         for i in self.checkpoint_yaml['checkpoints']:
-            self.checkpoint_list.data.append(i)
+            self.checkpoint_list.append(i)
 
     def make_width_list(self):
-        self.width_list = Int32MultiArray()
+        self.width_list = []
         for i in self.width_yaml['widths']:
-            self.width_list.data.append(i)
+            self.width_list.append(i)
 
 
     def get_next_checkpoint(self):
-        for i in range(self.closed_checkpoint_num,len(self.checkpoint_list.data)):
-            if i == len(self.checkpoint_list.data)-1:
+        for i in range(self.closed_checkpoint_num,len(self.checkpoint_list)):
+            if i == len(self.checkpoint_list)-1:
                 break
 
-            if self.checkpoint_list.data[i] == self.current_checkpoint:
-                self.current_width = self.width_list.data[i]
-                self.next_checkpoint = self.checkpoint_list.data[i+1]
+            if self.checkpoint_list[i] == self.current_checkpoint:
+                self.current_width = self.width_list[i]
+                self.next_checkpoint = self.checkpoint_list[i+1]
                 print('current_width', self.current_width)
                 return 1
         return 0
