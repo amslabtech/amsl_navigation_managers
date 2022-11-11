@@ -23,6 +23,7 @@ class TaskManager:
         # ros
         self.current_checkpoint_id_sub = rospy.Subscriber('/current_checkpoint', Int32, self.checkpoint_id_callback)
         self.stop_line_flag_sub = rospy.Subscriber('/stop_line_flag', Bool, self.stop_line_flag_callback)
+        self.stop_behind_robot_flag_sub = rospy.Subscriber('/stop_behind_robot_flag', Bool, self.stop_behind_robot_flag_callback)
         self.local_planner_cmd_vel_sub = rospy.Subscriber('/local_planner/cmd_vel', Twist, self.local_planner_cmd_vel_callback)
         self.local_goal_sub = rospy.Subscriber('/local_goal', PoseStamped, self.local_goal_callback)
         self.joy_sub = rospy.Subscriber('/joy', Joy, self.joy_callback)
@@ -34,6 +35,7 @@ class TaskManager:
         # params in callback function
         self.current_checkpoint_id = self.last_checkpoint_id = -1
         self.stop_line_flag = False
+        self.stop_behind_robot_flag = False
         self.local_planner_cmd_vel = Twist()
         self.local_goal = PoseStamped()
         self.joy = Joy()
@@ -65,7 +67,7 @@ class TaskManager:
                 rospy.loginfo('================================================================')
                 task_type = self.search_task_from_node_id(self.last_checkpoint_id, self.current_checkpoint_id)
 
-                ##### white line detector & stop behind robot #####
+                ##### enable white line detector & stop behind robot #####
                 enable_detect_line = Bool()
                 if task_type == 'detect_line':
                     enable_detect_line.data = True
@@ -73,7 +75,7 @@ class TaskManager:
                     enable_detect_line.data = False
                 self.detect_line_flag_pub.publish(enable_detect_line)
                 rospy.loginfo('detect_line_flag_pub = %s' % enable_detect_line.data)
-                ##### white line detector & stop behind robot #####
+                ##### enable white line detector & stop behind robot #####
 
                 cmd_vel = Twist()
                 cmd_vel.linear.x = self.local_planner_cmd_vel.linear.x
@@ -100,6 +102,12 @@ class TaskManager:
                 #     cmd_vel.linear.x = 0.0
                 #     cmd_vel.angular.z = 0.0
                 ##### stop at white line #####
+
+                ##### stop behind robot #####
+                if(self.stop_behind_robot_flag):
+                    cmd_vel.linear.x = 0.0
+                    cmd_vel.angular.z = 0.0
+                ##### stop behind robot #####
 
                 self.cmd_vel_pub.publish(cmd_vel)
                 self.local_planner_cmd_vel_updated = False
@@ -150,6 +158,9 @@ class TaskManager:
 
     def stop_line_flag_callback(self, flag):
         self.stop_line_flag = flag.data
+
+    def stop_behind_robot_flag_callback(self, flag):
+        self.stop_behind_robot_flag = flag.data
 
     def local_planner_cmd_vel_callback(self, msg):
         self.local_planner_cmd_vel = msg
