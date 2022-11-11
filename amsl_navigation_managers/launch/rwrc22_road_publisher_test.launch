@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+
+<launch>
+    <node pkg="amsl_navigation_managers" type="rwrc22_road_publisher.py" name="road_pub" ns="navigation_managers" output="screen">
+        <param name="HZ" value="10"/>
+        <param name="WIDTH_YAML" value="$(find amsl_navigation_managers)/sample/road_width/rwrc22_ikuta_road_width.yaml"/>
+        <param name="CHECKPOINT_YAML" value="$(find amsl_navigation_managers)/sample/checkpoint/road_pub_test.yaml"/>
+    </node>
+    <node pkg="amsl_navigation_managers" type="rwrc21_node_edge_map_manager.py" name="node_edge_map_manager" ns="navigation_managers">
+        <param name="HZ" value="10"/>
+        <param name="MAP_PATH" value="$(find amsl_navigation_managers)/sample/map/rwrc22_ikuta_map.yaml"/>
+    </node>
+    <!-- <node pkg="amsl_navigation_managers" type="checkpoint_manager.py" name="cp_manager" ns="navigation_managers"> -->
+    <!--     <param name="HZ" value="10"/> -->
+    <!--     <param name="CHECKPOINT_PATH" value="$(find amsl_navigation_managers)/sample/checkpoint/rwrc22_ikuta_checkpoint.yaml"/> -->
+    <!-- </node> -->
+</launch>
