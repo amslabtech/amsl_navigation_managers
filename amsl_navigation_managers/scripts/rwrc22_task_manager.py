@@ -181,8 +181,11 @@ class TaskManager:
         self.amcl_pose_updated = True
 
     def checkpoint_array_callback(self, msg):
-        for id in msg.data:
-            self.checkpoint_array.append(id)
+        if self.get_checkpoint_array == False:
+            self.checkpoint_array.clear()
+            for id in msg.data:
+                self.checkpoint_array.append(id)
+            self.get_checkpoint_array = True
 
     def search_task_from_node_id(self, node0_id, node1_id):
         if self.get_task == True:
