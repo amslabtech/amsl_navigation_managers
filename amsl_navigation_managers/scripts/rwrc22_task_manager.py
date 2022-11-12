@@ -28,7 +28,7 @@ class TaskManager:
         self.local_goal_sub = rospy.Subscriber('/local_goal', PoseStamped, self.local_goal_callback)
         self.joy_sub = rospy.Subscriber('/joy', Joy, self.joy_callback)
         self.amcl_pose_sub = rospy.Subscriber('/amcl_pose', PoseWithCovarianceStamped, self.amcl_pose_callback)
-        self.checkpoint_array_sub = rospy.Subscriber('/checkpoint', Int32MultiArray, self.checkpoint_array_callback)
+        self.checkpoint_array_sub = rospy.Subscriber('/node_edge_map/checkpoint', Int32MultiArray, self.checkpoint_array_callback)
 
         self.detect_line_flag_pub = rospy.Publisher('/detect_line', Bool, queue_size=1)
         self.cmd_vel_pub = rospy.Publisher('/local_path/cmd_vel', Twist, queue_size=1)
@@ -101,9 +101,9 @@ class TaskManager:
                 ##### stop at designated node #####
 
                 ##### stop at white line #####
-                # if(self.stop_line_flag):
-                #     cmd_vel.linear.x = 0.0
-                #     cmd_vel.angular.z = 0.0
+                if(self.stop_line_flag):
+                    cmd_vel.linear.x = 0.0
+                    cmd_vel.angular.z = 0.0
                 ##### stop at white line #####
 
                 ##### stop behind robot #####
@@ -155,7 +155,7 @@ class TaskManager:
 
     def checkpoint_id_callback(self, msg):
         if self.current_checkpoint_id != int(msg.data):
-            self.current_checkpoint_id, self.next_checkpoint_id = self.seach_current_edge(self.check, int(msg.data))
+            self.current_checkpoint_id, self.next_checkpoint_id = self.seach_current_edge(int(msg.data))
             self.reached_checkpoint = True
 
     def stop_line_flag_callback(self, flag):
@@ -194,6 +194,7 @@ class TaskManager:
                 # print(task)
                 if (task['edge']['node0_id'] == node0_id) and (task['edge']['node1_id'] == node1_id):
                     return task['task_type']
+            return ''
         else:
             return ''
 
@@ -215,14 +216,14 @@ class TaskManager:
         else:
             return False
 
-    def seach_current_edge(self, checkpoint_array, current_checkpoint_id):
-        if len(checkpoint_array) == 0:
+    def seach_current_edge(self, current_checkpoint_id):
+        if len(self.checkpoint_array) == 0:
             return -1, -1
-        while checkpoint_array[0] == current_checkpoint_id:
-            del checkpoint_array[0]
-            if len(checkpoint_array) < 1:
+        while self.checkpoint_array[0] == current_checkpoint_id:
+            del self.checkpoint_array[0]
+            if len(self.checkpoint_array) < 1:
                 return -1, -1
-        return checkpoint_array[0], checkpoint_array[1]
+        return self.checkpoint_array[0], self.checkpoint_array[1]
 
 if __name__ == '__main__':
     task_manager = TaskManager()
