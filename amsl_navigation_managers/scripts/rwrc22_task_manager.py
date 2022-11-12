@@ -6,7 +6,7 @@ import yaml
 import math
 
 import rospy
-from std_msgs.msg import Bool, Int32
+from std_msgs.msg import Bool, Int32, Int32MultiArray
 from geometry_msgs.msg import Twist, PoseStamped, PoseWithCovarianceStamped
 from sensor_msgs.msg import Joy
 import tf2_ros
@@ -28,18 +28,20 @@ class TaskManager:
         self.local_goal_sub = rospy.Subscriber('/local_goal', PoseStamped, self.local_goal_callback)
         self.joy_sub = rospy.Subscriber('/joy', Joy, self.joy_callback)
         self.amcl_pose_sub = rospy.Subscriber('/amcl_pose', PoseWithCovarianceStamped, self.amcl_pose_callback)
+        self.checkpoint_array_sub = rospy.Subscriber('/checkpoint', Int32MultiArray, self.checkpoint_array_callback)
 
         self.detect_line_flag_pub = rospy.Publisher('/detect_line', Bool, queue_size=1)
         self.cmd_vel_pub = rospy.Publisher('/local_path/cmd_vel', Twist, queue_size=1)
 
         # params in callback function
-        self.current_checkpoint_id = self.last_checkpoint_id = -1
+        self.current_checkpoint_id = self.next_checkpoint_id = -1
         self.stop_line_flag = False
         self.stop_behind_robot_flag = False
         self.local_planner_cmd_vel = Twist()
         self.local_goal = PoseStamped()
         self.joy = Joy()
         self.amcl_pose = PoseWithCovarianceStamped()
+        self.checkpoint_array = []
 
         # params
         self.get_task = False
@@ -48,6 +50,7 @@ class TaskManager:
         self.get_stop_list = False
         self.stop_list = self.load_stop_list_from_yaml()
         self.stop_node_flag = False
+        self.get_checkpoint_array = False
 
         # msg update flags
         self.local_planner_cmd_vel_updated = False
@@ -65,7 +68,7 @@ class TaskManager:
         while not rospy.is_shutdown():
             if(self.local_planner_cmd_vel_updated and self.local_goal_updated and self.amcl_pose_updated):
                 rospy.loginfo('================================================================')
-                task_type = self.search_task_from_node_id(self.last_checkpoint_id, self.current_checkpoint_id)
+                task_type = self.search_task_from_node_id(self.current_checkpoint_id, self.next_checkpoint_id)
 
                 ##### enable white line detector & stop behind robot #####
                 enable_detect_line = Bool()
@@ -150,10 +153,9 @@ class TaskManager:
             stop_list.append(stop['node_id'])
         return stop_list
 
-    def checkpoint_id_callback(self, checkpoint_id):
-        if self.current_checkpoint_id != int(checkpoint_id.data):
-            self.last_checkpoint_id = self.current_checkpoint_id
-            self.current_checkpoint_id = int(checkpoint_id.data)
+    def checkpoint_id_callback(self, msg):
+        if self.current_checkpoint_id != int(msg.data):
+            self.current_checkpoint_id, self.next_checkpoint_id = self.seach_current_edge(self.check, int(msg.data))
             self.reached_checkpoint = True
 
     def stop_line_flag_callback(self, flag):
@@ -177,6 +179,10 @@ class TaskManager:
     def amcl_pose_callback(self, msg):
         self.amcl_pose = msg
         self.amcl_pose_updated = True
+
+    def checkpoint_array_callback(self, msg):
+        for id in msg.data:
+            self.checkpoint_array.append(id)
 
     def search_task_from_node_id(self, node0_id, node1_id):
         if self.get_task == True:
@@ -205,6 +211,15 @@ class TaskManager:
             return False
         else:
             return False
+
+    def seach_current_edge(self, checkpoint_array, current_checkpoint_id):
+        if len(checkpoint_array) == 0:
+            return -1, -1
+        while checkpoint_array[0] == current_checkpoint_id:
+            del checkpoint_array[0]
+            if len(checkpoint_array) < 1:
+                return -1, -1
+        return checkpoint_array[0], checkpoint_array[1]
 
 if __name__ == '__main__':
     task_manager = TaskManager()
