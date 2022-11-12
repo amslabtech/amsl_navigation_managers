@@ -155,7 +155,7 @@ class TaskManager:
 
     def checkpoint_id_callback(self, msg):
         if self.current_checkpoint_id != int(msg.data):
-            self.current_checkpoint_id, self.next_checkpoint_id = self.seach_current_edge(int(msg.data))
+            self.current_checkpoint_id, self.next_checkpoint_id = self.search_current_edge(int(msg.data))
             self.reached_checkpoint = True
 
     def stop_line_flag_callback(self, flag):
@@ -216,14 +216,18 @@ class TaskManager:
         else:
             return False
 
-    def seach_current_edge(self, current_checkpoint_id):
+    def search_current_edge(self, current_checkpoint_id):
         if len(self.checkpoint_array) == 0:
             return -1, -1
+        current_id = self.checkpoint_array[0]
+        next_id = self.checkpoint_array[1]
         while self.checkpoint_array[0] == current_checkpoint_id:
+            current_id = self.checkpoint_array[0]
+            next_id = self.checkpoint_array[1]
             del self.checkpoint_array[0]
             if len(self.checkpoint_array) < 1:
                 return -1, -1
-        return self.checkpoint_array[0], self.checkpoint_array[1]
+        return current_id, next_id
 
 if __name__ == '__main__':
     task_manager = TaskManager()
