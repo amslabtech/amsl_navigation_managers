@@ -18,6 +18,7 @@ class TaskManager:
 
         self.TASK_LIST_PATH = rospy.get_param('~TASK_LIST_PATH')
         self.STOP_LIST_PATH = rospy.get_param('~STOP_LIST_PATH')
+        self.USE_DETECT_WHITE_LINE = rospy.get_param('~USE_DETECT_WHITE_LINE')
         self.turn_rate = rospy.get_param('~turn_rate', 0.5)
 
         # ros
@@ -101,9 +102,12 @@ class TaskManager:
                 ##### stop at designated node #####
 
                 ##### stop at white line #####
-                if(self.stop_line_flag):
-                    cmd_vel.linear.x = 0.0
-                    cmd_vel.angular.z = 0.0
+                if(self.USE_DETECT_WHITE_LINE):
+                    if(self.detect_line):
+                        if(self.stop_line_flag or self.stop_node_flag):
+                            cmd_vel.linear.x = 0.0
+                            cmd_vel.angular.z = 0.0
+
                 ##### stop at white line #####
 
                 ##### stop behind robot #####
