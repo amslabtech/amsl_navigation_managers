@@ -52,6 +52,7 @@ class TaskManager:
         self.stop_list = self.load_stop_list_from_yaml()
         self.stop_node_flag = False
         self.get_checkpoint_array = False
+        self.past_stop_line_flag = 0
 
         # msg update flags
         self.local_planner_cmd_vel_updated = False
@@ -91,22 +92,44 @@ class TaskManager:
                 ##### turn at node #####
 
                 ##### stop at designated node #####
-                self.stop_node_flag = self.is_stop_node(self.stop_list, self.current_checkpoint_id)
-                if(self.stop_node_flag):
-                    cmd_vel, is_not_toward = self.get_turn_cmd_vel(self.local_goal, self.local_planner_cmd_vel)
-                    if is_not_toward == False: # toward goal
-                        cmd_vel.linear.x = 0.0
-                        cmd_vel.angular.z = 0.0
-                    if self.get_go_signal(self.joy):
-                        del self.stop_list[0]
+                # self.stop_node_flag = self.is_stop_node(self.stop_list, self.current_checkpoint_id)
+                # if(self.stop_node_flag):
+                #     cmd_vel, is_not_toward = self.get_turn_cmd_vel(self.local_goal, self.local_planner_cmd_vel)
+                #     if is_not_toward == False: # toward goal
+                #         cmd_vel.linear.x = 0.0
+                #         cmd_vel.angular.z = 0.0
+                #     if self.get_go_signal(self.joy):
+                #         del self.stop_list[0]
                 ##### stop at designated node #####
 
                 ##### stop at white line #####
-                if(self.USE_DETECT_WHITE_LINE):
-                    if(self.detect_line):
-                        if(self.stop_line_flag or self.stop_node_flag):
+
+                if self.USE_DETECT_WHITE_LINE:
+                    if self.stop_line_flag:
+                        self.pile_stop_line_flag += 1
+                    else:
+                        self.pile_stop_line_flag = 0
+
+                    if self.pile_stop_line_flag > STOP_LINE_THRESHOLD:
+                        self.past_stop_line_flag = True
+
+                    self.stop_node_flag = self.is_stop_node(self.stop_list, self.current_checkpoint_id)
+                    if self.stop_node_flag or self.past_stop_line_flag:
+                        cmd_vel, is_not_toward = self.get_turn_cmd_vel(self.local_goal, self.local_planner_cmd_vel)
+                        if is_not_toward == False: # toward goal
                             cmd_vel.linear.x = 0.0
                             cmd_vel.angular.z = 0.0
+                        if self.get_go_signal(self.joy):
+                            self.past_stop_line_flag = False
+                            del self.stop_list[0]
+                else:
+                    self.stop_node_flag = self.is_stop_node(self.stop_list, self.current_checkpoint_id)
+                    if(self.stop_node_flag):
+                        cmd_vel, is_not_toward = self.get_turn_cmd_vel(self.local_goal, self.local_planner_cmd_vel)
+                        if is_not_toward == False: # toward goal
+                            cmd_vel.linear.x = 0.0
+                            cmd_vel.angular.z = 0.0
+                        if self.get_go_signal(self.joy):
 
                 ##### stop at white line #####
 
