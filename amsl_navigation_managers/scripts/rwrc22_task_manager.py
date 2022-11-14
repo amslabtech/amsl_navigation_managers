@@ -32,6 +32,7 @@ class TaskManager:
 
         self.detect_line_flag_pub = rospy.Publisher('/detect_line', Bool, queue_size=1)
         self.cmd_vel_pub = rospy.Publisher('/local_path/cmd_vel', Twist, queue_size=1)
+        self.is_stop_node_pub = rospy.Publisher('/is_stop_node_flag', Bool, queue_size=1)
 
         # params in callback function
         self.current_checkpoint_id = self.next_checkpoint_id = -1
@@ -116,6 +117,8 @@ class TaskManager:
                 self.local_planner_cmd_vel_updated = False
                 self.local_goal_updated = False
                 self.amcl_pose_updated = False
+
+                self.is_stop_node_flag_publish(self.next_checkpoint_id, self.stop_list)
             else:
                 if self.local_planner_cmd_vel_updated == False:
                     rospy.logwarn('local_planner_cmd_vel is not updated')
@@ -228,6 +231,16 @@ class TaskManager:
             if len(self.checkpoint_array) < 1:
                 return -1, -1
         return current_id, next_id
+
+    def is_stop_node_flag_publish(self, next_node_id, stop_list):
+        is_stop_node_flag = Bool()
+        if(len(stop_list) == 0) or self.get_stop_list == False:
+            is_stop_node_flag.data = False
+        elif next_node_id == stop_list[0]:
+            is_stop_node_flag.data = True
+        else:
+            is_stop_node_flag.data = False
+        self.is_stop_node_pub.publish(is_stop_node_flag)
 
 if __name__ == '__main__':
     task_manager = TaskManager()
