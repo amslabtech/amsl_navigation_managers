@@ -57,6 +57,7 @@ class TaskManager:
         self.ignore_count = 0
         self.ignore_flag = False
         self.has_stoped = False
+        self.switch_detect_line = False
 
         # msg update flags
         self.local_planner_cmd_vel_updated = False
@@ -107,6 +108,10 @@ class TaskManager:
                 ##### stop at designated node #####
 
                 ##### stop at white line #####
+                if self.switch_detect_line != enable_detect_line.data:
+                    self.switch_detect_line = enable_detect_line.data
+                    self.ignore_flag = False
+
                 if enable_detect_line.data:
                     if self.USE_DETECT_WHITE_LINE:
 
@@ -138,12 +143,10 @@ class TaskManager:
                             # self.pile_stop_line_flag = 0
                             self.has_stoped = False
 
-                            if self.stop_node_flag:
-                                del self.stop_list[0]
-
-                            if (self.pile_stop_line_flag > self.STOP_LINE_THRESHOLD and self.ignore_flag == False):
-                                self.ignore_flag = True
-                                self.pile_stop_line_flag = 1
+                            del self.stop_list[0]
+                            self.ignore_flag = True
+                            # if self.stop_node_flag:
+                            #     del self.stop_list[0]
 
                     else:
                         self.stop_node_flag = self.is_stop_node(self.stop_list, self.current_checkpoint_id)
