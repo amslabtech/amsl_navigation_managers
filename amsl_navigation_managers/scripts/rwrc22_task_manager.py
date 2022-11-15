@@ -115,7 +115,7 @@ class TaskManager:
 
                 ##### linear.x limit #####
                 if(enable_detect_line.data == True):
-                    cmd_vel.linear.x = max(cmd_vel.linear.x, 0.3)
+                    cmd_vel.linear.x = min(cmd_vel.linear.x, 0.3)
                 ##### linear.x limit #####
 
                 self.cmd_vel_pub.publish(cmd_vel)
