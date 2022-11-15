@@ -41,6 +41,7 @@ class RoadPublisher:
         self.current_node_point = Point()
         self.next_node_point = Point()
         self.current_width = 0
+        self.current_right_width = 0
         self.closed_checkpoint_num = -1
         self.old_checkpoint = 0
 
@@ -95,9 +96,11 @@ class RoadPublisher:
                 break
 
             if self.checkpoint_list[i] == self.current_checkpoint:
-                self.current_width = self.width_list[i]
+                self.current_width = self.width_list[i][0]
+                self.current_right_width = self.width_list[i][1]
                 self.next_checkpoint = self.checkpoint_list[i+1]
                 print('current_width', self.current_width)
+                print('current_right_width', self.current_right_width)
                 return 1
         return 0
 
@@ -134,6 +137,7 @@ class RoadPublisher:
             self.road.point0 = self.current_node_point
             self.road.point1 = self.next_node_point
             self.road.width = self.current_width
+            self.road.distance_to_right = self.current_right_width
             self.road.direction = self.current_edge.direction
             self.road_pub.publish(self.road)
         elif is_get_current_edge == 0:
