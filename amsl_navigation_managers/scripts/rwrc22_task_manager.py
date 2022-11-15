@@ -19,6 +19,7 @@ class TaskManager:
         self.TASK_LIST_PATH = rospy.get_param('~TASK_LIST_PATH')
         self.STOP_LIST_PATH = rospy.get_param('~STOP_LIST_PATH')
         self.USE_DETECT_WHITE_LINE = rospy.get_param('~USE_DETECT_WHITE_LINE')
+        self.STOP_LINE_THRESHOLD = rospy.get_param('~STOP_LINE_THRESHOLD')
         self.turn_rate = rospy.get_param('~turn_rate', 0.5)
 
         # ros
@@ -110,7 +111,7 @@ class TaskManager:
                     else:
                         self.pile_stop_line_flag = 0
 
-                    if self.pile_stop_line_flag > STOP_LINE_THRESHOLD:
+                    if self.pile_stop_line_flag > self.STOP_LINE_THRESHOLD:
                         self.past_stop_line_flag = True
 
                     self.stop_node_flag = self.is_stop_node(self.stop_list, self.current_checkpoint_id)
@@ -130,7 +131,7 @@ class TaskManager:
                             cmd_vel.linear.x = 0.0
                             cmd_vel.angular.z = 0.0
                         if self.get_go_signal(self.joy):
-
+                            del self.stop_list[0]
                 ##### stop at white line #####
 
                 ##### stop behind robot #####
