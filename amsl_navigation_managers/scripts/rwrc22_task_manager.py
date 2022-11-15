@@ -113,6 +113,11 @@ class TaskManager:
                     cmd_vel.angular.z = 0.0
                 ##### stop behind robot #####
 
+                ##### linear.x limit #####
+                if(enable_detect_line.data == True):
+                    cmd_vel.linear.x = max(cmd_vel.linear.x, 0.3)
+                ##### linear.x limit #####
+
                 self.cmd_vel_pub.publish(cmd_vel)
                 self.local_planner_cmd_vel_updated = False
                 self.local_goal_updated = False
