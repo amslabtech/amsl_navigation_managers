@@ -55,6 +55,7 @@ class TaskManager:
         self.get_checkpoint_array = False
         self.pile_stop_line_flag = 1
         self.ignore_count = 0
+        self.ignore_flag = False
         self.has_stoped = False
 
         # msg update flags
@@ -109,9 +110,9 @@ class TaskManager:
                 if enable_detect_line.data:
                     if self.USE_DETECT_WHITE_LINE:
 
-                        self.ignore_count += 1
-                        if self.ignore_count > 100:
-                            self.ignore_count = 100
+                        # self.ignore_count += 1
+                        # if self.ignore_count > 100:
+                            # self.ignore_count = 100
 
                         if self.stop_line_flag:
                             self.pile_stop_line_flag += 1
@@ -122,7 +123,8 @@ class TaskManager:
                         # rospy.loginfo("=======================")
                         # rospy.loginfo(f"{self.ignore_count} {self.pile_stop_line_flag} {self.stop_node_flag}")
 
-                        if self.stop_node_flag or (self.pile_stop_line_flag > self.STOP_LINE_THRESHOLD and self.ignore_count > 30):
+                        # if self.stop_node_flag or (self.pile_stop_line_flag > self.STOP_LINE_THRESHOLD and self.ignore_count > 30):
+                        if self.stop_node_flag or (self.pile_stop_line_flag > self.STOP_LINE_THRESHOLD and self.ignore_flag == False):
                             self.has_stoped = True
 
                         if self.has_stoped:
@@ -132,11 +134,17 @@ class TaskManager:
                                 cmd_vel.angular.z = 0.0
 
                         if cmd_vel.linear.x < 0.01 and cmd_vel.angular.z < 0.01 and self.get_go_signal(self.joy):
-                            self.ignore_count = 0
-                            self.pile_stop_line_flag = 0
+                            # self.ignore_count = 0
+                            # self.pile_stop_line_flag = 0
                             self.has_stoped = False
+
                             if self.stop_node_flag:
                                 del self.stop_list[0]
+
+                            if (self.pile_stop_line_flag > self.STOP_LINE_THRESHOLD and self.ignore_flag == False):
+                                self.ignore_flag = True
+                                self.pile_stop_line_flag = 1
+
                     else:
                         self.stop_node_flag = self.is_stop_node(self.stop_list, self.current_checkpoint_id)
                         if(self.stop_node_flag):
