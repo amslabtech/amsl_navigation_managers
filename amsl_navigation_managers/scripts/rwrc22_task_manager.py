@@ -18,6 +18,8 @@ class TaskManager:
 
         self.TASK_LIST_PATH = rospy.get_param('~TASK_LIST_PATH')
         self.STOP_LIST_PATH = rospy.get_param('~STOP_LIST_PATH')
+        self.USE_DETECT_WHITE_LINE = rospy.get_param('~USE_DETECT_WHITE_LINE')
+        self.STOP_LINE_THRESHOLD = rospy.get_param('~STOP_LINE_THRESHOLD')
         self.turn_rate = rospy.get_param('~turn_rate', 0.5)
 
         # params in callback function
@@ -38,6 +40,11 @@ class TaskManager:
         self.stop_list = self.load_stop_list_from_yaml()
         self.stop_node_flag = False
         self.get_checkpoint_array = False
+        self.pile_stop_line_flag = 1
+        self.ignore_count = 0
+        self.ignore_flag = False
+        self.has_stoped = False
+        self.switch_detect_line = False
 
         # msg update flags
         self.local_planner_cmd_vel_updated = False
@@ -91,20 +98,66 @@ class TaskManager:
                 ##### turn at node #####
 
                 ##### stop at designated node #####
-                self.stop_node_flag = self.is_stop_node(self.stop_list, self.current_checkpoint_id)
-                if(self.stop_node_flag):
-                    cmd_vel, is_not_toward = self.get_turn_cmd_vel(self.local_goal, self.local_planner_cmd_vel)
-                    if is_not_toward == False: # toward goal
-                        cmd_vel.linear.x = 0.0
-                        cmd_vel.angular.z = 0.0
-                    if self.get_go_signal(self.joy):
-                        del self.stop_list[0]
+                # self.stop_node_flag = self.is_stop_node(self.stop_list, self.current_checkpoint_id)
+                # if(self.stop_node_flag):
+                #     cmd_vel, is_not_toward = self.get_turn_cmd_vel(self.local_goal, self.local_planner_cmd_vel)
+                #     if is_not_toward == False: # toward goal
+                #         cmd_vel.linear.x = 0.0
+                #         cmd_vel.angular.z = 0.0
+                #     if self.get_go_signal(self.joy):
+                #         del self.stop_list[0]
                 ##### stop at designated node #####
 
                 ##### stop at white line #####
-                if(self.stop_line_flag):
-                    cmd_vel.linear.x = 0.0
-                    cmd_vel.angular.z = 0.0
+                if self.switch_detect_line != enable_detect_line.data:
+                    self.switch_detect_line = enable_detect_line.data
+                    self.ignore_flag = False
+
+                if enable_detect_line.data:
+                    if self.USE_DETECT_WHITE_LINE:
+
+                        # self.ignore_count += 1
+                        # if self.ignore_count > 100:
+                            # self.ignore_count = 100
+
+                        if self.stop_line_flag:
+                            self.pile_stop_line_flag += 1
+                        else:
+                            self.pile_stop_line_flag = 1
+
+                        self.stop_node_flag = self.is_stop_node(self.stop_list, self.current_checkpoint_id)
+                        # rospy.loginfo("=======================")
+                        # rospy.loginfo(f"{self.ignore_count} {self.pile_stop_line_flag} {self.stop_node_flag}")
+
+                        # if self.stop_node_flag or (self.pile_stop_line_flag > self.STOP_LINE_THRESHOLD and self.ignore_count > 30):
+                        if self.stop_node_flag or (self.pile_stop_line_flag > self.STOP_LINE_THRESHOLD and self.ignore_flag == False):
+                            self.has_stoped = True
+
+                        if self.has_stoped:
+                            cmd_vel, is_not_toward = self.get_turn_cmd_vel(self.local_goal, self.local_planner_cmd_vel)
+                            if is_not_toward == False: # toward goal
+                                cmd_vel.linear.x = 0.0
+                                cmd_vel.angular.z = 0.0
+
+                        if cmd_vel.linear.x < 0.01 and cmd_vel.angular.z < 0.01 and self.get_go_signal(self.joy):
+                            # self.ignore_count = 0
+                            # self.pile_stop_line_flag = 0
+                            self.has_stoped = False
+
+                            del self.stop_list[0]
+                            self.ignore_flag = True
+                            # if self.stop_node_flag:
+                            #     del self.stop_list[0]
+
+                    else:
+                        self.stop_node_flag = self.is_stop_node(self.stop_list, self.current_checkpoint_id)
+                        if(self.stop_node_flag):
+                            cmd_vel, is_not_toward = self.get_turn_cmd_vel(self.local_goal, self.local_planner_cmd_vel)
+                            if is_not_toward == False: # toward goal
+                                cmd_vel.linear.x = 0.0
+                                cmd_vel.angular.z = 0.0
+                            if self.get_go_signal(self.joy):
+                                del self.stop_list[0]
                 ##### stop at white line #####
 
                 ##### stop behind robot #####
