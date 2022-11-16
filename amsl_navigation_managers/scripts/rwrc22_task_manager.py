@@ -85,7 +85,7 @@ class TaskManager:
                 else:
                     enable_detect_line.data = False
                 self.detect_line_flag_pub.publish(enable_detect_line)
-                rospy.loginfo('detect_line_flag_pub = %s' % enable_detect_line.data)
+                # rospy.loginfo('detect_line_flag_pub = %s' % enable_detect_line.data)
                 ##### enable white line detector & stop behind robot #####
 
                 cmd_vel = Twist()
@@ -127,7 +127,7 @@ class TaskManager:
 
                         self.stop_node_flag = self.is_stop_node(self.stop_list, self.current_checkpoint_id)
                         # rospy.loginfo("=======================")
-                        # rospy.loginfo(f"{self.ignore_count} {self.pile_stop_line_flag} {self.stop_node_flag}")
+                        rospy.loginfo('self.stop_node_flag = %s' % self.stop_node_flag)
 
                         # if self.stop_node_flag or (self.pile_stop_line_flag > self.STOP_LINE_THRESHOLD and self.ignore_count > 30):
                         if self.stop_node_flag or (self.pile_stop_line_flag > self.STOP_LINE_THRESHOLD and self.ignore_flag == False):
@@ -139,7 +139,7 @@ class TaskManager:
                                 cmd_vel.linear.x = 0.0
                                 cmd_vel.angular.z = 0.0
 
-                        if cmd_vel.linear.x < 0.01 and cmd_vel.angular.z < 0.01 and self.get_go_signal(self.joy):
+                        if cmd_vel.linear.x < 0.01 and cmd_vel.angular.z < 0.01 and self.get_go_signal(self.joy) and self.stop_node_flag:
                             # self.ignore_count = 0
                             # self.pile_stop_line_flag = 0
                             self.has_stoped = False
@@ -158,6 +158,10 @@ class TaskManager:
                                 cmd_vel.angular.z = 0.0
                             if self.get_go_signal(self.joy):
                                 del self.stop_list[0]
+
+                    # rospy.loginfo("=======================")
+                    # rospy.loginfo(f"{self.ignore_flag} {self.pile_stop_line_flag} {self.stop_node_flag}")
+                # rospy.loginfo('ignore_flag = %s' % self.ignore_flag)
                 ##### stop at white line #####
 
                 ##### stop behind robot #####
