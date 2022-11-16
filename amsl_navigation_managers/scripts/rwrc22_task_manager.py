@@ -20,20 +20,6 @@ class TaskManager:
         self.STOP_LIST_PATH = rospy.get_param('~STOP_LIST_PATH')
         self.turn_rate = rospy.get_param('~turn_rate', 0.5)
 
-        # ros
-        self.current_checkpoint_id_sub = rospy.Subscriber('/current_checkpoint', Int32, self.checkpoint_id_callback)
-        self.stop_line_flag_sub = rospy.Subscriber('/stop_line_flag', Bool, self.stop_line_flag_callback)
-        self.stop_behind_robot_flag_sub = rospy.Subscriber('/stop_behind_robot_flag', Bool, self.stop_behind_robot_flag_callback)
-        self.local_planner_cmd_vel_sub = rospy.Subscriber('/local_planner/cmd_vel', Twist, self.local_planner_cmd_vel_callback)
-        self.local_goal_sub = rospy.Subscriber('/local_goal', PoseStamped, self.local_goal_callback)
-        self.joy_sub = rospy.Subscriber('/joy', Joy, self.joy_callback)
-        self.amcl_pose_sub = rospy.Subscriber('/amcl_pose', PoseWithCovarianceStamped, self.amcl_pose_callback)
-        self.checkpoint_array_sub = rospy.Subscriber('/node_edge_map/checkpoint', Int32MultiArray, self.checkpoint_array_callback)
-
-        self.detect_line_flag_pub = rospy.Publisher('/detect_line', Bool, queue_size=1)
-        self.cmd_vel_pub = rospy.Publisher('/local_path/cmd_vel', Twist, queue_size=1)
-        self.is_stop_node_pub = rospy.Publisher('/is_stop_node_flag', Bool, queue_size=1)
-
         # params in callback function
         self.current_checkpoint_id = self.next_checkpoint_id = -1
         self.stop_line_flag = False
@@ -58,6 +44,20 @@ class TaskManager:
         self.local_goal_updated = False
         self.amcl_pose_updated = False
         self.joy_updated = False
+
+        # ros
+        self.current_checkpoint_id_sub = rospy.Subscriber('/current_checkpoint', Int32, self.checkpoint_id_callback)
+        self.stop_line_flag_sub = rospy.Subscriber('/stop_line_flag', Bool, self.stop_line_flag_callback)
+        self.stop_behind_robot_flag_sub = rospy.Subscriber('/stop_behind_robot_flag', Bool, self.stop_behind_robot_flag_callback)
+        self.local_planner_cmd_vel_sub = rospy.Subscriber('/local_planner/cmd_vel', Twist, self.local_planner_cmd_vel_callback)
+        self.local_goal_sub = rospy.Subscriber('/local_goal', PoseStamped, self.local_goal_callback)
+        self.joy_sub = rospy.Subscriber('/joy', Joy, self.joy_callback)
+        self.amcl_pose_sub = rospy.Subscriber('/amcl_pose', PoseWithCovarianceStamped, self.amcl_pose_callback)
+        self.checkpoint_array_sub = rospy.Subscriber('/node_edge_map/checkpoint', Int32MultiArray, self.checkpoint_array_callback)
+
+        self.detect_line_flag_pub = rospy.Publisher('/detect_line', Bool, queue_size=1)
+        self.cmd_vel_pub = rospy.Publisher('/local_path/cmd_vel', Twist, queue_size=1)
+        self.is_stop_node_pub = rospy.Publisher('/is_stop_node_flag', Bool, queue_size=1)
 
 
     def process(self):
