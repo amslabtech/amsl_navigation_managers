@@ -14,24 +14,11 @@ class RoadPublisher:
 
         ## check params
         if rospy.has_param('~WIDTH_YAML'):
-            self.width_yaml = rospy.get_param('~WIDTH_YAML')
+            self.width_file = rospy.get_param('~WIDTH_YAML')
         if rospy.has_param('~CHECKPOINT_YAML'):
-            self.checkpoint_yaml = rospy.get_param('~CHECKPOINT_YAML')
+            self.checkpoint_file = rospy.get_param('~CHECKPOINT_YAML')
         if rospy.has_param('~HZ'):
             self.hz = rospy.get_param('~HZ')
-
-        ## load yaml
-        self.width_yaml = self.load_width_yaml()
-        self.checkpoint_yaml = self.load_checkpoint_yaml()
-
-        ## make lists
-        self.make_checkpoint_list()
-        self.make_width_list()
-
-        ## check array size
-        if len(self.checkpoint_list) != len(self.width_list):
-            print('!==width_yaml and checkpoint_yaml size is not same==!')
-            exit()
 
         self.node_edge_map = NodeEdgeMap()
         self.road = Road()
@@ -44,10 +31,24 @@ class RoadPublisher:
         self.current_right_width = 0
         self.closed_checkpoint_num = -1
         self.old_checkpoint = 0
+        self.width_list = []
+        self.checkpoint_list = []
+
+        ## load yaml
+        self.width_yaml = self.load_width_yaml()
+        self.checkpoint_yaml = self.load_checkpoint_yaml()
+
+        ## make lists
+        self.make_width_list(self.width_list)
+        self.make_checkpoint_list(self.checkpoint_list)
+
+        ## check array size
+        if len(self.checkpoint_list) != len(self.width_list):
+            print('!==width_list and checkpoint_list size is not same==!')
+            exit()
 
         ## subscriber
         self.node_edge_map_sub = rospy.Subscriber("/node_edge_map/map", NodeEdgeMap, self.node_edge_map_callback)
-        # self.current_pose_sub = rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped, self.current_pose_callback)
         self.current_checkpoint_sub = rospy.Subscriber("/current_checkpoint", Int32, self.current_checkpoint_callback)
 
         ## publisher
@@ -58,9 +59,6 @@ class RoadPublisher:
         self.node_edge_map = msg
         print('get_node_edge_map')
 
-    # def current_pose_callback(self, msg):
-        # self.current_pose = msg
-
     def current_checkpoint_callback(self, msg):
         self.old_checkpoint = self.current_checkpoint
         self.current_checkpoint = msg.data
@@ -70,24 +68,22 @@ class RoadPublisher:
 
     ## load yaml
     def load_width_yaml(self):
-        with open(self.width_yaml, 'r') as file:
+        with open(self.width_file, 'r') as file:
             width_yaml = yaml.safe_load(file)
         return width_yaml
 
     def load_checkpoint_yaml(self):
-        with open(self.checkpoint_yaml, 'r') as file:
+        with open(self.checkpoint_file, 'r') as file:
             checkpoint_yaml = yaml.safe_load(file)
         return checkpoint_yaml
 
-    def make_checkpoint_list(self):
-        self.checkpoint_list = []
+    def make_checkpoint_list(self,checkpoint_list):
         for i in self.checkpoint_yaml['checkpoints']:
-            self.checkpoint_list.append(i)
+            checkpoint_list.append(i)
 
-    def make_width_list(self):
-        self.width_list = []
+    def make_width_list(self,width_list):
         for i in self.width_yaml['widths']:
-            self.width_list.append(i)
+            width_list.append(i)
 
 
     def get_next_checkpoint(self):
@@ -152,6 +148,25 @@ class RoadPublisher:
     def main(self):
         rate = rospy.Rate(self.hz)
         while not rospy.is_shutdown():
+            ## update width_list and checkpoint_list
+            ## width_list
+            new_width_list = []
+            self.width_yaml = self.load_width_yaml()
+            self.make_width_list(new_width_list)
+            if new_width_list != self.width_list:
+                self.width_list = new_width_list
+                print('~~width_list is changed~~')
+            ## checkpoint_list
+            new_checkpoint_list = []
+            self.checkpoint_yaml = self.load_checkpoint_yaml()
+            self.make_checkpoint_list(new_checkpoint_list)
+            if new_checkpoint_list != self.checkpoint_list:
+                self.checkpoint_list = new_checkpoint_list
+                print('~~checkpoint_list is changed~~')
+            ## check array size
+            if len(self.checkpoint_list) != len(self.width_list):
+                print('!==width_list and checkpoint_list size is not same==!')
+
             self.pub_road()
             rate.sleep()
 
