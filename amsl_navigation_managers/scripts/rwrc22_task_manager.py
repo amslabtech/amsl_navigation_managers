@@ -41,9 +41,8 @@ class TaskManager:
         self.stop_node_flag = False
         self.get_checkpoint_array = False
         self.pile_stop_line_flag = 1
-        self.ignore_count = 0
         self.ignore_flag = False
-        self.has_stoped = False
+        self.has_stopped = False
         self.switch_detect_line = False
 
         # msg update flags
@@ -131,21 +130,22 @@ class TaskManager:
 
                         # if self.stop_node_flag or (self.pile_stop_line_flag > self.STOP_LINE_THRESHOLD and self.ignore_count > 30):
                         if self.stop_node_flag or (self.pile_stop_line_flag > self.STOP_LINE_THRESHOLD and self.ignore_flag == False):
-                            self.has_stoped = True
+                            self.has_stopped = True
 
-                        if self.has_stoped:
+                        if self.has_stopped:
                             cmd_vel, is_not_toward = self.get_turn_cmd_vel(self.local_goal, self.local_planner_cmd_vel)
                             if is_not_toward == False: # toward goal
                                 cmd_vel.linear.x = 0.0
                                 cmd_vel.angular.z = 0.0
 
-                        if cmd_vel.linear.x < 0.01 and cmd_vel.angular.z < 0.01 and self.get_go_signal(self.joy) and self.stop_node_flag:
+                        # if cmd_vel.linear.x < 0.01 and cmd_vel.angular.z < 0.01 and self.get_go_signal(self.joy):
+                        if self.has_stopped and self.get_go_signal(self.joy):
                             # self.ignore_count = 0
                             # self.pile_stop_line_flag = 0
-                            self.has_stoped = False
-
+                            # if self.stop_node_flag or self.ignore_flag == False:
                             del self.stop_list[0]
                             self.ignore_flag = True
+                            self.has_stopped = False
                             # if self.stop_node_flag:
                             #     del self.stop_list[0]
 
