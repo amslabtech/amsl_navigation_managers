@@ -124,12 +124,11 @@ class TaskManager:
                         else:
                             self.pile_stop_line_flag = 1
 
-                        self.stop_node_flag = self.is_stop_node(self.stop_list, self.current_checkpoint_id)
                         # rospy.loginfo("=======================")
-                        rospy.loginfo('self.stop_node_flag = %s' % self.stop_node_flag)
+                        # rospy.loginfo('self.stop_node_flag = %s' % self.stop_node_flag)
 
                         # if self.stop_node_flag or (self.pile_stop_line_flag > self.STOP_LINE_THRESHOLD and self.ignore_count > 30):
-                        if self.stop_node_flag or (self.pile_stop_line_flag > self.STOP_LINE_THRESHOLD and self.ignore_flag == False):
+                        if self.pile_stop_line_flag > self.STOP_LINE_THRESHOLD and self.ignore_flag == False:
                             self.has_stopped = True
 
                         if self.has_stopped:
@@ -149,16 +148,22 @@ class TaskManager:
                             # if self.stop_node_flag:
                             #     del self.stop_list[0]
 
-                    else:
-                        self.stop_node_flag = self.is_stop_node(self.stop_list, self.current_checkpoint_id)
-                        if(self.stop_node_flag):
-                            cmd_vel, is_not_toward = self.get_turn_cmd_vel(self.local_goal, self.local_planner_cmd_vel)
-                            if is_not_toward == False: # toward goal
-                                cmd_vel.linear.x = 0.0
-                                cmd_vel.angular.z = 0.0
-                            if self.get_go_signal(self.joy):
-                                del self.stop_list[0]
+                self.stop_node_flag = self.is_stop_node(self.stop_list, self.current_checkpoint_id)
 
+                if(self.stop_node_flag):
+                    cmd_vel, is_not_toward = self.get_turn_cmd_vel(self.local_goal, self.local_planner_cmd_vel)
+                    if is_not_toward == False: # toward goal
+                        cmd_vel.linear.x = 0.0
+                        cmd_vel.angular.z = 0.0
+                    if self.get_go_signal(self.joy):
+                        self.ignore_flag = True
+                        del self.stop_list[0]
+
+                rospy.loginfo('self.stop_list = %s' % self.stop_list)
+                rospy.loginfo('self.current_checkpoint_id = %s' % self.current_checkpoint_id)
+                rospy.loginfo('self.ignore_flag = %s' % self.ignore_flag)
+                rospy.loginfo('self.stop_node_flag = %s' % self.stop_node_flag)
+                rospy.loginfo('self.has_stopped = %s' % self.has_stopped)
                     # rospy.loginfo("=======================")
                     # rospy.loginfo(f"{self.ignore_flag} {self.pile_stop_line_flag} {self.stop_node_flag}")
                 # rospy.loginfo('ignore_flag = %s' % self.ignore_flag)
