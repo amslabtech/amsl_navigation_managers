@@ -157,6 +157,7 @@ class TaskManager:
                         cmd_vel.angular.z = 0.0
                     if self.get_go_signal(self.joy):
                         self.ignore_flag = True
+                        self.has_stopped = False
                         del self.stop_list[0]
 
                 rospy.loginfo('self.stop_list = %s' % self.stop_list)
