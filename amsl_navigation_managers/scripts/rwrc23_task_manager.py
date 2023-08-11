@@ -81,18 +81,21 @@ class TaskManager:
                 rospy.loginfo('================================================================')
                 task_type = self.search_task_from_node_id(self.current_checkpoint_id, self.next_checkpoint_id)
 
-                ##### enable white line detector & stop behind robot & announce #####
+                ##### enable white line detector & stop behind robot #####
                 enable_detect_line = Bool()
                 if task_type == 'detect_line':
                     enable_detect_line.data = True
-                elif task_type == 'announce':
-                    self.set_sound_volume()
-                    self.announce_once()
                 else:
                     enable_detect_line.data = False
                 self.detect_line_flag_pub.publish(enable_detect_line)
                 # rospy.loginfo('detect_line_flag_pub = %s' % enable_detect_line.data)
                 ##### enable white line detector & stop behind robot #####
+
+                ##### announce #####
+                if task_type == 'announce':
+                    self.set_sound_volume()
+                    self.announce_once()
+                ##### announce #####
 
                 cmd_vel = Twist()
                 cmd_vel.linear.x = self.local_planner_cmd_vel.linear.x
