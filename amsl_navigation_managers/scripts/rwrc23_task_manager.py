@@ -160,6 +160,9 @@ class TaskManager:
 
                 self.stop_node_flag = self.is_stop_node(self.stop_list, self.current_checkpoint_id)
 
+                print(f"current_checkpoint : {self.current_checkpoint_id}")
+                print(f"next_checkpoint : {self.next_checkpoint_id}")
+
                 if(self.stop_node_flag):
                     cmd_vel, is_not_toward = self.get_turn_cmd_vel(self.local_goal, self.local_planner_cmd_vel)
                     if is_not_toward == False: # toward goal
