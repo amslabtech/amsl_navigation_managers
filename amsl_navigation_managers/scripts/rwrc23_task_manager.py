@@ -24,7 +24,7 @@ class TaskManager:
         self.STOP_LINE_THRESHOLD = rospy.get_param('~STOP_LINE_THRESHOLD')
         self.turn_rate = rospy.get_param('~turn_rate', 0.5)
         self.enable_announce = rospy.get_param('~enable_announce', False)
-        self.sound_volume = rospy.get_param('~sound_volume', 50)
+        self.sound_volume = rospy.get_param('~sound_volume', 70)
 
         # params in callback function
         self.current_checkpoint_id = self.next_checkpoint_id = -1
@@ -322,7 +322,7 @@ class TaskManager:
 
     def set_sound_volume(self):
         if self.enable_announce == True :
-            volume_cmd = "amixer sset Master " + str(self.sound_volume) + "%"
+            volume_cmd = "amixer -c1 sset Speaker " + str(self.sound_volume) + "%," + str(self.sound_volume) + "% unmute"
             subprocess.call(volume_cmd.split())
 
     def announce_once(self):
