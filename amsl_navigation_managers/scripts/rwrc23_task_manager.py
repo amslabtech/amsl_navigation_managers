@@ -84,10 +84,10 @@ class TaskManager:
 
                 ##### enable white line detector & stop behind robot #####
                 enable_detect_line = Bool()
-                if task_type == 'detect_line':
-                    enable_detect_line.data = self.USE_DETECT_WHITE_LINE
+                if self.USE_DETECT_WHITE_LINE and task_type == 'detect_line':
+                    enable_detect_line.data = True
                 else:
-                    enable_detect_line.data = self.USE_DETECT_WHITE_LINE
+                    enable_detect_line.data = False
                 self.detect_line_flag_pub.publish(enable_detect_line)
                 # rospy.loginfo('detect_line_flag_pub = %s' % enable_detect_line.data)
                 ##### enable white line detector & stop behind robot #####
@@ -173,11 +173,11 @@ class TaskManager:
                         self.has_stopped = False
                         del self.stop_list[0]
 
-                rospy.loginfo('self.stop_list = %s' % self.stop_list)
-                rospy.loginfo('self.current_checkpoint_id = %s' % self.current_checkpoint_id)
-                rospy.loginfo('self.ignore_flag = %s' % self.ignore_flag)
-                rospy.loginfo('self.stop_node_flag = %s' % self.stop_node_flag)
-                rospy.loginfo('self.has_stopped = %s' % self.has_stopped)
+                # rospy.loginfo('self.stop_list = %s' % self.stop_list)
+                # rospy.loginfo('self.current_checkpoint_id = %s' % self.current_checkpoint_id)
+                # rospy.loginfo('self.ignore_flag = %s' % self.ignore_flag)
+                # rospy.loginfo('self.stop_node_flag = %s' % self.stop_node_flag)
+                # rospy.loginfo('self.has_stopped = %s' % self.has_stopped)
                     # rospy.loginfo("=======================")
                     # rospy.loginfo(f"{self.ignore_flag} {self.pile_stop_line_flag} {self.stop_node_flag}")
                 # rospy.loginfo('ignore_flag = %s' % self.ignore_flag)
