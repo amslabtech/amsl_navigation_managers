@@ -24,7 +24,7 @@ class TaskManager:
         self.STOP_LINE_THRESHOLD = rospy.get_param('~STOP_LINE_THRESHOLD')
         self.turn_rate = rospy.get_param('~turn_rate', 0.5)
         # self.enable_announce = rospy.get_param('~enable_announce', False)
-        self.enable_announce = rospy.get_param('~ENABLE_ANNOUNCE', False)
+        self.enable_announce = rospy.get_param('~enable_announce', False)
         self.sound_volume = rospy.get_param('~sound_volume', 50)
 
         # params in callback function
