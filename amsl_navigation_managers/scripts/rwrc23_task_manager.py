@@ -102,8 +102,8 @@ class TaskManager:
                 cmd_vel.angular.z = self.local_planner_cmd_vel.angular.z
 
                 ##### turn at node #####
-                if(self.reached_checkpoint):
-                    cmd_vel, self.reached_checkpoint = self.get_turn_cmd_vel(self.local_goal, self.local_planner_cmd_vel)
+                # if(self.reached_checkpoint):
+                #     cmd_vel, self.reached_checkpoint = self.get_turn_cmd_vel(self.local_goal, self.local_planner_cmd_vel)
                 ##### turn at node #####
 
                 ##### stop at designated node #####
