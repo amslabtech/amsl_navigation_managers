@@ -23,7 +23,8 @@ class TaskManager:
         self.USE_DETECT_WHITE_LINE = rospy.get_param('~USE_DETECT_WHITE_LINE')
         self.STOP_LINE_THRESHOLD = rospy.get_param('~STOP_LINE_THRESHOLD')
         self.turn_rate = rospy.get_param('~turn_rate', 0.5)
-        self.enable_announce = rospy.get_param('~enable_announce', False)
+        # self.enable_announce = rospy.get_param('~enable_announce', False)
+        self.enable_announce = rospy.get_param('~ENABLE_ANNOUNCE', False)
         self.sound_volume = rospy.get_param('~sound_volume', 50)
 
         # params in callback function
@@ -84,9 +85,9 @@ class TaskManager:
                 ##### enable white line detector & stop behind robot #####
                 enable_detect_line = Bool()
                 if task_type == 'detect_line':
-                    enable_detect_line.data = True
+                    enable_detect_line.data = self.USE_DETECT_WHITE_LINE
                 else:
-                    enable_detect_line.data = False
+                    enable_detect_line.data = self.USE_DETECT_WHITE_LINE
                 self.detect_line_flag_pub.publish(enable_detect_line)
                 # rospy.loginfo('detect_line_flag_pub = %s' % enable_detect_line.data)
                 ##### enable white line detector & stop behind robot #####
@@ -123,40 +124,39 @@ class TaskManager:
                     self.ignore_flag = False
 
                 if enable_detect_line.data:
-                    if self.USE_DETECT_WHITE_LINE:
 
-                        # self.ignore_count += 1
-                        # if self.ignore_count > 100:
-                            # self.ignore_count = 100
+                    # self.ignore_count += 1
+                    # if self.ignore_count > 100:
+                        # self.ignore_count = 100
 
-                        if self.stop_line_flag:
-                            self.pile_stop_line_flag += 1
-                        else:
-                            self.pile_stop_line_flag = 1
+                    if self.stop_line_flag:
+                        self.pile_stop_line_flag += 1
+                    else:
+                        self.pile_stop_line_flag = 1
 
-                        # rospy.loginfo("=======================")
-                        # rospy.loginfo('self.stop_node_flag = %s' % self.stop_node_flag)
+                    # rospy.loginfo("=======================")
+                    # rospy.loginfo('self.stop_node_flag = %s' % self.stop_node_flag)
 
-                        # if self.stop_node_flag or (self.pile_stop_line_flag > self.STOP_LINE_THRESHOLD and self.ignore_count > 30):
-                        if self.pile_stop_line_flag > self.STOP_LINE_THRESHOLD and self.ignore_flag == False:
-                            self.has_stopped = True
+                    # if self.stop_node_flag or (self.pile_stop_line_flag > self.STOP_LINE_THRESHOLD and self.ignore_count > 30):
+                    if self.pile_stop_line_flag > self.STOP_LINE_THRESHOLD and self.ignore_flag == False:
+                        self.has_stopped = True
 
-                        if self.has_stopped:
-                            cmd_vel, is_not_toward = self.get_turn_cmd_vel(self.local_goal, self.local_planner_cmd_vel)
-                            if is_not_toward == False: # toward goal
-                                cmd_vel.linear.x = 0.0
-                                cmd_vel.angular.z = 0.0
+                    if self.has_stopped:
+                        cmd_vel, is_not_toward = self.get_turn_cmd_vel(self.local_goal, self.local_planner_cmd_vel)
+                        if is_not_toward == False: # toward goal
+                            cmd_vel.linear.x = 0.0
+                            cmd_vel.angular.z = 0.0
 
-                        # if cmd_vel.linear.x < 0.01 and cmd_vel.angular.z < 0.01 and self.get_go_signal(self.joy):
-                        if self.has_stopped and self.get_go_signal(self.joy):
-                            # self.ignore_count = 0
-                            # self.pile_stop_line_flag = 0
-                            # if self.stop_node_flag or self.ignore_flag == False:
-                            del self.stop_list[0]
-                            self.ignore_flag = True
-                            self.has_stopped = False
-                            # if self.stop_node_flag:
-                            #     del self.stop_list[0]
+                    # if cmd_vel.linear.x < 0.01 and cmd_vel.angular.z < 0.01 and self.get_go_signal(self.joy):
+                    if self.has_stopped and self.get_go_signal(self.joy):
+                        # self.ignore_count = 0
+                        # self.pile_stop_line_flag = 0
+                        # if self.stop_node_flag or self.ignore_flag == False:
+                        del self.stop_list[0]
+                        self.ignore_flag = True
+                        self.has_stopped = False
+                        # if self.stop_node_flag:
+                        #     del self.stop_list[0]
 
                 self.stop_node_flag = self.is_stop_node(self.stop_list, self.current_checkpoint_id)
 
