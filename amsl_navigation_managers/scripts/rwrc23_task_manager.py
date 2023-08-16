@@ -6,7 +6,7 @@ import yaml
 import math
 
 import rospy
-from std_msgs.msg import Bool, Int32, Int32MultiArray
+from std_msgs.msg import Bool, Int32, Int32MultiArray, Float64
 from geometry_msgs.msg import Twist, PoseStamped, PoseWithCovarianceStamped
 from sensor_msgs.msg import Joy
 import tf2_ros
@@ -30,6 +30,7 @@ class TaskManager:
         # params in callback function
         self.current_checkpoint_id = self.next_checkpoint_id = -1
         self.stop_line_flag = False
+        self.skip_node_flag = False
         self.stop_behind_robot_flag = False
         self.local_planner_cmd_vel = Twist()
         self.local_goal = PoseStamped()
@@ -49,6 +50,7 @@ class TaskManager:
         self.ignore_flag = False
         self.has_stopped = False
         self.switch_detect_line = False
+        self.local_goal_dist = 7.0
 
         # msg update flags
         self.local_planner_cmd_vel_updated = False
@@ -65,10 +67,12 @@ class TaskManager:
         self.joy_sub = rospy.Subscriber('/joy', Joy, self.joy_callback)
         self.amcl_pose_sub = rospy.Subscriber('/amcl_pose', PoseWithCovarianceStamped, self.amcl_pose_callback)
         self.checkpoint_array_sub = rospy.Subscriber('/node_edge_map/checkpoint', Int32MultiArray, self.checkpoint_array_callback)
+        self.skip_node_flag_sub = rospy.Subscriber('/skip_node_flag', Bool, self.skip_node_flag_callback)
 
         self.detect_line_flag_pub = rospy.Publisher('/detect_line', Bool, queue_size=1)
         self.cmd_vel_pub = rospy.Publisher('/local_path/cmd_vel', Twist, queue_size=1)
         self.is_stop_node_pub = rospy.Publisher('/is_stop_node_flag', Bool, queue_size=1)
+        self.local_goal_dist_pub = rospy.Publisher('/local_goal_dist', Float64, queue_size=1)
 
 
     def process(self):
@@ -97,6 +101,24 @@ class TaskManager:
                     self.set_sound_volume()
                     self.announce_once()
                 ##### announce #####
+
+                ##### shorten goal dist #####
+                if task_type == 'autodoor':
+                    self.local_goal_dist = 3.0
+                    self.set_sound_volume()
+                    self.announce_once()
+                else:
+                    self.local_goal_dist = 7.0
+                self.local_goal_dist_pub.publish(self.local_goal_dist)
+                ##### shorten goal dist #####
+
+                #### skip node announce ####
+                if self.skip_node_flag:
+                    self.set_sound_volume()
+                    self.announce_once()
+                    self.skip_node_flag = False
+                #### skip node announce ####
+
 
                 cmd_vel = Twist()
                 cmd_vel.linear.x = self.local_planner_cmd_vel.linear.x
@@ -244,6 +266,9 @@ class TaskManager:
 
     def stop_line_flag_callback(self, flag):
         self.stop_line_flag = flag.data
+
+    def skip_node_flag_callback(self, flag):
+        self.skip_node_flag = flag.data
 
     def stop_behind_robot_flag_callback(self, flag):
         self.stop_behind_robot_flag = flag.data
