@@ -105,8 +105,10 @@ class TaskManager:
                 ##### shorten goal dist #####
                 if task_type == 'autodoor':
                     self.local_goal_dist = 3.0
+                    self.use_point_follow_planner()
                 else:
                     self.local_goal_dist = 7.0
+                    self.use_local_planner()
                 self.local_goal_dist_pub.publish(self.local_goal_dist)
                 ##### shorten goal dist #####
 
@@ -118,10 +120,10 @@ class TaskManager:
                 #### skip node announce ####
 
                 ##### select cmd_vel #####
-                if task_type == 'change_local_planner':
-                    self.use_local_planner()
-                elif task_type == 'change_point_follow_planner':
-                    self.use_point_follow_planner()
+                # if task_type == 'change_local_planner':
+                #     self.use_local_planner()
+                # elif task_type == 'change_point_follow_planner':
+                #     self.use_point_follow_planner()
                 ##### select cmd_vel #####
 
                 cmd_vel = Twist()
