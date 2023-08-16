@@ -120,7 +120,7 @@ class TaskManager:
                 ##### select cmd_vel #####
                 if task_type == 'change_local_planner':
                     self.use_local_planner()
-                elif task_type == 'change_point_follow_planner'
+                elif task_type == 'change_point_follow_planner':
                     self.use_point_follow_planner()
                 ##### select cmd_vel #####
 
