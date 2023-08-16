@@ -104,6 +104,8 @@ class TaskManager:
 
                 ##### shorten goal dist #####
                 if task_type == 'autodoor':
+                    self.set_sound_volume()
+                    self.announce_once()
                     self.local_goal_dist = 3.0
                     self.use_point_follow_planner()
                 else:
