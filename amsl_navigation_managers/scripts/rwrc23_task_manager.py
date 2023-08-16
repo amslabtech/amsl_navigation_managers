@@ -6,7 +6,7 @@ import yaml
 import math
 
 import rospy
-from std_msgs.msg import Bool, Int32, Int32MultiArray
+from std_msgs.msg import Bool, Int32, Int32MultiArray, Float64
 from geometry_msgs.msg import Twist, PoseStamped, PoseWithCovarianceStamped
 from sensor_msgs.msg import Joy
 import tf2_ros
@@ -50,6 +50,7 @@ class TaskManager:
         self.ignore_flag = False
         self.has_stopped = False
         self.switch_detect_line = False
+        self.local_goal_dist = 7.0
 
         # msg update flags
         self.local_planner_cmd_vel_updated = False
@@ -71,6 +72,7 @@ class TaskManager:
         self.detect_line_flag_pub = rospy.Publisher('/detect_line', Bool, queue_size=1)
         self.cmd_vel_pub = rospy.Publisher('/local_path/cmd_vel', Twist, queue_size=1)
         self.is_stop_node_pub = rospy.Publisher('/is_stop_node_flag', Bool, queue_size=1)
+        self.local_goal_dist_pub = rospy.Publisher('/local_goal_dist', Float64, queue_size=1)
 
 
     def process(self):
@@ -99,6 +101,14 @@ class TaskManager:
                     self.set_sound_volume()
                     self.announce_once()
                 ##### announce #####
+
+                ##### shorten goal dist #####
+                if task_type == 'autodoor':
+                    self.local_goal_dist = 3.0
+                else:
+                    self.local_goal_dist = 7.0
+                self.local_goal_dist_pub.publish(self.local_goal_dist)
+                ##### shorten goal dist #####
 
                 #### skip node announce ####
                 if self.skip_node_flag:
