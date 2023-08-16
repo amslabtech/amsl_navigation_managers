@@ -70,7 +70,7 @@ class TaskManager:
         self.skip_node_flag_sub = rospy.Subscriber('/skip_node_flag', Bool, self.skip_node_flag_callback)
 
         self.detect_line_flag_pub = rospy.Publisher('/detect_line', Bool, queue_size=1)
-        self.cmd_vel_pub = rospy.Publisher('/local_path/cmd_vel', Twist, queue_size=1)
+        self.cmd_vel_pub = rospy.Publisher('/local_path/cmd_vel/hoge', Twist, queue_size=1)
         self.is_stop_node_pub = rospy.Publisher('/is_stop_node_flag', Bool, queue_size=1)
         self.local_goal_dist_pub = rospy.Publisher('/local_goal_dist', Float64, queue_size=1)
 
@@ -104,11 +104,13 @@ class TaskManager:
 
                 ##### shorten goal dist #####
                 if task_type == 'autodoor':
-                    self.local_goal_dist = 3.0
                     self.set_sound_volume()
                     self.announce_once()
+                    self.local_goal_dist = 3.0
+                    self.use_point_follow_planner()
                 else:
                     self.local_goal_dist = 7.0
+                    self.use_local_planner()
                 self.local_goal_dist_pub.publish(self.local_goal_dist)
                 ##### shorten goal dist #####
 
@@ -119,7 +121,13 @@ class TaskManager:
                     self.skip_node_flag = False
                 #### skip node announce ####
 
-
+                ##### select cmd_vel #####
+                # if task_type == 'change_local_planner':
+                #     self.use_local_planner()
+                # elif task_type == 'change_point_follow_planner':
+                #     self.use_point_follow_planner()
+                ##### select cmd_vel #####
+                
                 cmd_vel = Twist()
                 cmd_vel.linear.x = self.local_planner_cmd_vel.linear.x
                 cmd_vel.angular.z = self.local_planner_cmd_vel.angular.z
@@ -357,6 +365,12 @@ class TaskManager:
         if self.enable_announce == True :
             announce_cmd = "aplay " + self.ANNOUNCE_SOUND_PATH
             subprocess.call(announce_cmd.split())
+
+    def use_local_planner(self):
+        subprocess.call(['rosrun','topic_tools','mux_select','/local_path/cmd_vel','/local_planner/cmd_vel'])
+
+    def use_point_follow_planner(self):
+        subprocess.call(['rosrun','topic_tools','mux_select','/local_path/cmd_vel','/point_follow_planner/cmd_vel'])
 
 if __name__ == '__main__':
     task_manager = TaskManager()
