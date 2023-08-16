@@ -127,7 +127,7 @@ class TaskManager:
                 # elif task_type == 'change_point_follow_planner':
                 #     self.use_point_follow_planner()
                 ##### select cmd_vel #####
-
+                
                 cmd_vel = Twist()
                 cmd_vel.linear.x = self.local_planner_cmd_vel.linear.x
                 cmd_vel.angular.z = self.local_planner_cmd_vel.angular.z
