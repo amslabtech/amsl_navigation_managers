@@ -117,6 +117,12 @@ class TaskManager:
                     self.skip_node_flag = False
                 #### skip node announce ####
 
+                ##### select cmd_vel #####
+                if task_type == 'change_local_planner':
+                    self.use_local_planner()
+                elif task_type == 'change_point_follow_planner'
+                    self.use_point_follow_planner()
+                ##### select cmd_vel #####
 
                 cmd_vel = Twist()
                 cmd_vel.linear.x = self.local_planner_cmd_vel.linear.x
@@ -355,6 +361,12 @@ class TaskManager:
         if self.enable_announce == True :
             announce_cmd = "aplay " + self.ANNOUNCE_SOUND_PATH
             subprocess.call(announce_cmd.split())
+
+    def use_local_planner(self):
+        subprocess.call(['rosrun','topic_tools','mux_select','/local_path/cmd_vel','/local_planner/cmd_vel'])
+
+    def use_point_follow_planner(self):
+        subprocess.call(['rosrun','topic_tools','mux_select','/local_path/cmd_vel','/point_follow_planner/cmd_vel'])
 
 if __name__ == '__main__':
     task_manager = TaskManager()
