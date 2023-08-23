@@ -25,7 +25,7 @@ class TaskManager:
         self.turn_rate = rospy.get_param('~turn_rate', 0.5)
         # self.enable_announce = rospy.get_param('~enable_announce', False)
         self.enable_announce = rospy.get_param('~enable_announce', False)
-        self.sound_volume = rospy.get_param('~sound_volume', 70)
+        self.sound_volume = rospy.get_param('~sound_volume', 100)
 
         # params in callback function
         self.current_checkpoint_id = self.next_checkpoint_id = -1
@@ -51,6 +51,9 @@ class TaskManager:
         self.has_stopped = False
         self.switch_detect_line = False
         self.local_goal_dist = 7.0
+        self.start_announce_flag = False
+        self.announce_pid = 0
+        self.last_planner = "dwa"
 
         # msg update flags
         self.local_planner_cmd_vel_updated = False
@@ -62,7 +65,7 @@ class TaskManager:
         self.current_checkpoint_id_sub = rospy.Subscriber('/current_checkpoint', Int32, self.checkpoint_id_callback)
         self.stop_line_flag_sub = rospy.Subscriber('/stop_line_flag', Bool, self.stop_line_flag_callback)
         self.stop_behind_robot_flag_sub = rospy.Subscriber('/stop_behind_robot_flag', Bool, self.stop_behind_robot_flag_callback)
-        self.local_planner_cmd_vel_sub = rospy.Subscriber('/local_planner/cmd_vel', Twist, self.local_planner_cmd_vel_callback)
+        # self.local_planner_cmd_vel_sub = rospy.Subscriber('/local_planner/cmd_vel', Twist, self.local_planner_cmd_vel_callback)
         self.local_goal_sub = rospy.Subscriber('/local_goal', PoseStamped, self.local_goal_callback)
         self.joy_sub = rospy.Subscriber('/joy', Joy, self.joy_callback)
         self.amcl_pose_sub = rospy.Subscriber('/amcl_pose', PoseWithCovarianceStamped, self.amcl_pose_callback)
@@ -80,11 +83,17 @@ class TaskManager:
             rospy.logerr('task or stop list is not loaded')
             exit(-1)
 
+        prev_task_type = ''
         r = rospy.Rate(10)
+        # self.set_sound_volume(0)
+        # proc = announce_once()
+        self.set_sound_volume()
         while not rospy.is_shutdown():
-            if(self.local_planner_cmd_vel_updated and self.local_goal_updated and self.amcl_pose_updated):
+            if(self.local_goal_updated and self.amcl_pose_updated):
                 rospy.loginfo('================================================================')
                 task_type = self.search_task_from_node_id(self.current_checkpoint_id, self.next_checkpoint_id)
+                print("task_type: ", task_type)
+                print("last_planner: ", self.last_planner)
 
                 ##### enable white line detector & stop behind robot #####
                 enable_detect_line = Bool()
@@ -97,28 +106,29 @@ class TaskManager:
                 ##### enable white line detector & stop behind robot #####
 
                 ##### announce #####
-                if task_type == 'announce':
-                    self.set_sound_volume()
-                    self.announce_once()
+                # if task_type == 'announce':
+                #     self.announce_once()
                 ##### announce #####
 
                 ##### shorten goal dist #####
-                if task_type == 'autodoor':
-                    self.set_sound_volume()
-                    self.announce_once()
-                    self.local_goal_dist = 3.0
+                ##### autodoor #####
+                if task_type == 'autodoor' and prev_task_type != task_type:
+                    print("task_type: ", task_type)
                     self.use_point_follow_planner()
-                else:
-                    self.local_goal_dist = 7.0
+                    # self.announce_once()
+                    # self.local_goal_dist = 3.0
+                # else:
+                    # self.local_goal_dist = 7.0
+                if task_type != 'autodoor' and prev_task_type != task_type:
                     self.use_local_planner()
-                self.local_goal_dist_pub.publish(self.local_goal_dist)
+                # self.local_goal_dist_pub.publish(self.local_goal_dist)
                 ##### shorten goal dist #####
 
                 #### skip node announce ####
                 if self.skip_node_flag:
-                    self.set_sound_volume()
-                    self.announce_once()
                     self.skip_node_flag = False
+                    # self.set_sound_volume()
+                    # self.announce_once()
                 #### skip node announce ####
 
                 ##### select cmd_vel #####
@@ -127,7 +137,7 @@ class TaskManager:
                 # elif task_type == 'change_point_follow_planner':
                 #     self.use_point_follow_planner()
                 ##### select cmd_vel #####
-                
+
                 cmd_vel = Twist()
                 cmd_vel.linear.x = self.local_planner_cmd_vel.linear.x
                 cmd_vel.angular.z = self.local_planner_cmd_vel.angular.z
@@ -230,6 +240,7 @@ class TaskManager:
                 self.amcl_pose_updated = False
 
                 self.is_stop_node_flag_publish(self.next_checkpoint_id, self.stop_list)
+                prev_task_type = task_type
             else:
                 if self.local_planner_cmd_vel_updated == False:
                     rospy.logwarn('local_planner_cmd_vel is not updated')
@@ -359,18 +370,21 @@ class TaskManager:
     def set_sound_volume(self):
         if self.enable_announce == True :
             volume_cmd = "amixer -c1 sset Speaker " + str(self.sound_volume) + "%," + str(self.sound_volume) + "% unmute"
-            subprocess.call(volume_cmd.split())
+            subprocess.Popen(volume_cmd.split())
 
     def announce_once(self):
         if self.enable_announce == True :
             announce_cmd = "aplay " + self.ANNOUNCE_SOUND_PATH
-            subprocess.call(announce_cmd.split())
+            # announce_proc = subprocess.Popen(announce_cmd.split())
+            announce_proc = subprocess.call(announce_cmd.split())
 
     def use_local_planner(self):
-        subprocess.call(['rosrun','topic_tools','mux_select','/local_path/cmd_vel','/local_planner/cmd_vel'])
+        subprocess.Popen(['rosrun','topic_tools','mux_select','/local_path/cmd_vel','/local_planner/cmd_vel'])
+        self.last_planner = "dwa"
 
     def use_point_follow_planner(self):
-        subprocess.call(['rosrun','topic_tools','mux_select','/local_path/cmd_vel','/point_follow_planner/cmd_vel'])
+        subprocess.Popen(['rosrun','topic_tools','mux_select','/local_path/cmd_vel','/point_follow_planner/cmd_vel'])
+        self.last_planner = "pfp"
 
 if __name__ == '__main__':
     task_manager = TaskManager()
