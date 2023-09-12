@@ -88,7 +88,7 @@ class NodeEdgeMapManager:
 
     def load_map_from_yaml(self):
         with open(self.MAP_PATH) as file:
-            map_data = yaml.load(file)
+            map_data = yaml.safe_load(file)
             # remove first '/'
             map_data["MAP_FRAME"] = re.sub("^/", "", map_data["MAP_FRAME"])
         return map_data
