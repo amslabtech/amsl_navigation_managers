@@ -46,7 +46,6 @@ class TaskManager:
         self.stop_list = self.load_stop_list_from_yaml()
         self.stop_node_flag = False
         self.get_checkpoint_array = False
-        self.pile_stop_line_flag = 1
         self.ignore_flag = False
         self.has_stopped = False
         self.switch_detect_line = False
@@ -63,7 +62,7 @@ class TaskManager:
 
         # ros
         self.current_checkpoint_id_sub = rospy.Subscriber('/current_checkpoint', Int32, self.checkpoint_id_callback)
-        self.stop_line_flag_sub = rospy.Subscriber('/stop_line_flag', Bool, self.stop_line_flag_callback)
+        self.stop_line_flag_sub = rospy.Subscriber('/stop_line_detector/stop_flag', Bool, self.stop_line_flag_callback)
         self.stop_behind_robot_flag_sub = rospy.Subscriber('/stop_behind_robot_flag', Bool, self.stop_behind_robot_flag_callback)
         # self.local_planner_cmd_vel_sub = rospy.Subscriber('/local_planner/cmd_vel', Twist, self.local_planner_cmd_vel_callback)
         self.local_goal_sub = rospy.Subscriber('/local_goal', PoseStamped, self.local_goal_callback)
@@ -72,7 +71,7 @@ class TaskManager:
         self.checkpoint_array_sub = rospy.Subscriber('/node_edge_map/checkpoint', Int32MultiArray, self.checkpoint_array_callback)
         self.skip_node_flag_sub = rospy.Subscriber('/skip_node_flag', Bool, self.skip_node_flag_callback)
 
-        self.detect_line_flag_pub = rospy.Publisher('/detect_line', Bool, queue_size=1)
+        self.detect_line_flag_pub = rospy.Publisher('~request_detect_line', Bool, queue_size=1)
         self.cmd_vel_pub = rospy.Publisher('/local_path/cmd_vel/hoge', Twist, queue_size=1)
         self.is_stop_node_pub = rospy.Publisher('/is_stop_node_flag', Bool, queue_size=1)
         self.local_goal_dist_pub = rospy.Publisher('/local_goal_dist', Float64, queue_size=1)
@@ -97,7 +96,7 @@ class TaskManager:
 
                 ##### enable white line detector & stop behind robot #####
                 enable_detect_line = Bool()
-                if self.USE_DETECT_WHITE_LINE and task_type == 'detect_line':
+                if task_type == 'detect_line' and self.USE_DETECT_WHITE_LINE:
                     enable_detect_line.data = True
                 else:
                     enable_detect_line.data = False
@@ -169,16 +168,10 @@ class TaskManager:
                     # if self.ignore_count > 100:
                         # self.ignore_count = 100
 
-                    if self.stop_line_flag:
-                        self.pile_stop_line_flag += 1
-                    else:
-                        self.pile_stop_line_flag = 1
-
                     # rospy.loginfo("=======================")
                     # rospy.loginfo('self.stop_node_flag = %s' % self.stop_node_flag)
 
-                    # if self.stop_node_flag or (self.pile_stop_line_flag > self.STOP_LINE_THRESHOLD and self.ignore_count > 30):
-                    if self.pile_stop_line_flag > self.STOP_LINE_THRESHOLD and self.ignore_flag == False:
+                    if self.stop_line_flag and self.ignore_flag == False:
                         self.has_stopped = True
 
                     if self.has_stopped:
@@ -190,7 +183,6 @@ class TaskManager:
                     # if cmd_vel.linear.x < 0.01 and cmd_vel.angular.z < 0.01 and self.get_go_signal(self.joy):
                     if self.has_stopped and self.get_go_signal(self.joy):
                         # self.ignore_count = 0
-                        # self.pile_stop_line_flag = 0
                         # if self.stop_node_flag or self.ignore_flag == False:
                         del self.stop_list[0]
                         self.ignore_flag = True
@@ -218,8 +210,6 @@ class TaskManager:
                 # rospy.loginfo('self.ignore_flag = %s' % self.ignore_flag)
                 # rospy.loginfo('self.stop_node_flag = %s' % self.stop_node_flag)
                 # rospy.loginfo('self.has_stopped = %s' % self.has_stopped)
-                    # rospy.loginfo("=======================")
-                    # rospy.loginfo(f"{self.ignore_flag} {self.pile_stop_line_flag} {self.stop_node_flag}")
                 # rospy.loginfo('ignore_flag = %s' % self.ignore_flag)
                 ##### stop at white line #####
 
