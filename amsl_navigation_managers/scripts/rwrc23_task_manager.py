@@ -31,11 +31,10 @@ class TaskManager:
         self.current_checkpoint_id = self.next_checkpoint_id = -1
         self.stop_line_flag = False
         self.skip_node_flag = False
-        self.stop_behind_robot_flag = False
         self.local_planner_cmd_vel = Twist()
         self.local_goal = PoseStamped()
         self.joy = Joy()
-        self.amcl_pose = PoseWithCovarianceStamped()
+        self.localized_pose = PoseWithCovarianceStamped()
         self.checkpoint_array = []
 
         # params
@@ -57,22 +56,21 @@ class TaskManager:
         # msg update flags
         self.local_planner_cmd_vel_updated = False
         self.local_goal_updated = False
-        self.amcl_pose_updated = False
+        self.localized_pose_updated = False
         self.joy_updated = False
 
         # ros
         self.current_checkpoint_id_sub = rospy.Subscriber('/current_checkpoint', Int32, self.checkpoint_id_callback)
         self.stop_line_flag_sub = rospy.Subscriber('/stop_line_detector/stop_flag', Bool, self.stop_line_flag_callback)
-        self.stop_behind_robot_flag_sub = rospy.Subscriber('/stop_behind_robot_flag', Bool, self.stop_behind_robot_flag_callback)
-        # self.local_planner_cmd_vel_sub = rospy.Subscriber('/local_planner/cmd_vel', Twist, self.local_planner_cmd_vel_callback)
+        self.local_planner_cmd_vel_sub = rospy.Subscriber('/mux/cmd_vel', Twist, self.local_planner_cmd_vel_callback)
         self.local_goal_sub = rospy.Subscriber('/local_goal', PoseStamped, self.local_goal_callback)
         self.joy_sub = rospy.Subscriber('/joy', Joy, self.joy_callback)
-        self.amcl_pose_sub = rospy.Subscriber('/amcl_pose', PoseWithCovarianceStamped, self.amcl_pose_callback)
+        self.localized_pose_sub = rospy.Subscriber('/localized_pose', PoseWithCovarianceStamped, self.localized_pose_callback)
         self.checkpoint_array_sub = rospy.Subscriber('/node_edge_map/checkpoint', Int32MultiArray, self.checkpoint_array_callback)
         self.skip_node_flag_sub = rospy.Subscriber('/skip_node_flag', Bool, self.skip_node_flag_callback)
 
         self.detect_line_flag_pub = rospy.Publisher('~request_detect_line', Bool, queue_size=1)
-        self.cmd_vel_pub = rospy.Publisher('/local_path/cmd_vel/hoge', Twist, queue_size=1)
+        self.cmd_vel_pub = rospy.Publisher('/local_path/cmd_vel', Twist, queue_size=1)
         self.is_stop_node_pub = rospy.Publisher('/is_stop_node_flag', Bool, queue_size=1)
         self.local_goal_dist_pub = rospy.Publisher('/local_goal_dist', Float64, queue_size=1)
 
@@ -88,7 +86,7 @@ class TaskManager:
         # proc = announce_once()
         self.set_sound_volume()
         while not rospy.is_shutdown():
-            if(self.local_goal_updated and self.amcl_pose_updated):
+            if(self.local_goal_updated and self.localized_pose_updated):
                 rospy.loginfo('================================================================')
                 task_type = self.search_task_from_node_id(self.current_checkpoint_id, self.next_checkpoint_id)
                 print("task_type: ", task_type)
@@ -213,12 +211,6 @@ class TaskManager:
                 # rospy.loginfo('ignore_flag = %s' % self.ignore_flag)
                 ##### stop at white line #####
 
-                ##### stop behind robot #####
-                if(self.stop_behind_robot_flag):
-                    cmd_vel.linear.x = 0.0
-                    cmd_vel.angular.z = 0.0
-                ##### stop behind robot #####
-
                 ##### linear.x limit #####
                 if(enable_detect_line.data == True):
                     cmd_vel.linear.x = min(cmd_vel.linear.x, 0.3)
@@ -227,7 +219,7 @@ class TaskManager:
                 self.cmd_vel_pub.publish(cmd_vel)
                 self.local_planner_cmd_vel_updated = False
                 self.local_goal_updated = False
-                self.amcl_pose_updated = False
+                self.localized_pose_updated = False
 
                 self.is_stop_node_flag_publish(self.next_checkpoint_id, self.stop_list)
                 prev_task_type = task_type
@@ -236,8 +228,8 @@ class TaskManager:
                     rospy.logwarn('local_planner_cmd_vel is not updated')
                 if self.local_goal_updated == False:
                     rospy.logwarn('local_goal is not updated')
-                if self.amcl_pose_updated == False:
-                    rospy.logwarn('amcl_pose is not updated')
+                if self.localized_pose_updated == False:
+                    rospy.logwarn('localized_pose is not updated')
             r.sleep()
 
     def get_turn_cmd_vel(self, goal, local_planner_cmd_vel):
@@ -279,9 +271,6 @@ class TaskManager:
     def skip_node_flag_callback(self, flag):
         self.skip_node_flag = flag.data
 
-    def stop_behind_robot_flag_callback(self, flag):
-        self.stop_behind_robot_flag = flag.data
-
     def local_planner_cmd_vel_callback(self, msg):
         self.local_planner_cmd_vel = msg
         self.local_planner_cmd_vel_updated = True
@@ -294,9 +283,9 @@ class TaskManager:
         self.joy = msg
         self.joy_updated = True
 
-    def amcl_pose_callback(self, msg):
-        self.amcl_pose = msg
-        self.amcl_pose_updated = True
+    def localized_pose_callback(self, msg):
+        self.localized_pose = msg
+        self.localized_pose_updated = True
 
     def checkpoint_array_callback(self, msg):
         if self.get_checkpoint_array == False:
@@ -369,11 +358,11 @@ class TaskManager:
             announce_proc = subprocess.call(announce_cmd.split())
 
     def use_local_planner(self):
-        subprocess.Popen(['rosrun','topic_tools','mux_select','/local_path/cmd_vel','/local_planner/cmd_vel'])
+        subprocess.Popen(['rosrun','topic_tools','mux_select','/mux/cmd_vel','/local_planner/cmd_vel'])
         self.last_planner = "dwa"
 
     def use_point_follow_planner(self):
-        subprocess.Popen(['rosrun','topic_tools','mux_select','/local_path/cmd_vel','/point_follow_planner/cmd_vel'])
+        subprocess.Popen(['rosrun','topic_tools','mux_select','/mux/cmd_vel','/point_follow_planner/cmd_vel'])
         self.last_planner = "pfp"
 
 if __name__ == '__main__':
