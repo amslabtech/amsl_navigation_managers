@@ -183,7 +183,7 @@ class TaskManager:
                     if self.has_stopped and self.get_go_signal(self.joy):
                         # self.ignore_count = 0
                         # if self.stop_node_flag or self.ignore_flag == False:
-                        del self.stop_list[0]
+                        # del self.stop_list[0]
                         self.ignore_flag = True
                         self.has_stopped = False
                         # if self.stop_node_flag:
