@@ -96,6 +96,7 @@ class TaskManager:
                 enable_detect_line = Bool()
                 if task_type == 'detect_line' and self.USE_DETECT_WHITE_LINE:
                     enable_detect_line.data = True
+                    self.use_point_follow_planner()
                 else:
                     enable_detect_line.data = False
                 self.detect_line_flag_pub.publish(enable_detect_line)
@@ -116,7 +117,7 @@ class TaskManager:
                     # self.local_goal_dist = 3.0
                 # else:
                     # self.local_goal_dist = 7.0
-                if task_type != 'autodoor' and prev_task_type != task_type:
+                if task_type == '' and prev_task_type != task_type:
                     self.use_local_planner()
                 # self.local_goal_dist_pub.publish(self.local_goal_dist)
                 ##### shorten goal dist #####
