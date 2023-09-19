@@ -62,7 +62,7 @@ class TaskManager:
         # ros
         self.current_checkpoint_id_sub = rospy.Subscriber('/current_checkpoint', Int32, self.checkpoint_id_callback)
         self.stop_line_flag_sub = rospy.Subscriber('/stop_line_detector/stop_flag', Bool, self.stop_line_flag_callback)
-        self.local_planner_cmd_vel_sub = rospy.Subscriber('/mux/cmd_vel', Twist, self.local_planner_cmd_vel_callback)
+        self.local_planner_cmd_vel_sub = rospy.Subscriber('/local_planner/cmd_vel', Twist, self.local_planner_cmd_vel_callback)
         self.local_goal_sub = rospy.Subscriber('/local_goal', PoseStamped, self.local_goal_callback)
         self.joy_sub = rospy.Subscriber('/joy', Joy, self.joy_callback)
         self.localized_pose_sub = rospy.Subscriber('/localized_pose', PoseWithCovarianceStamped, self.localized_pose_callback)
@@ -359,11 +359,15 @@ class TaskManager:
             announce_proc = subprocess.call(announce_cmd.split())
 
     def use_local_planner(self):
-        subprocess.Popen(['rosrun','topic_tools','mux_select','/mux/cmd_vel','/local_planner/cmd_vel'])
+        subprocess.Popen(['rosrun','topic_tools','mux_select','/local_planner/cmd_vel','/local_planner/dwa_planner/cmd_vel'])
+        subprocess.Popen(['rosrun','topic_tools','mux_select','/local_planner/candidate_trajectories','/local_planner/dwa_planner/candidate_trajectories'])
+        subprocess.Popen(['rosrun','topic_tools','mux_select','/local_planner/selected_trajectory','/local_planner/dwa_planner/selected_trajectory'])
         self.last_planner = "dwa"
 
     def use_point_follow_planner(self):
-        subprocess.Popen(['rosrun','topic_tools','mux_select','/mux/cmd_vel','/point_follow_planner/cmd_vel'])
+        subprocess.Popen(['rosrun','topic_tools','mux_select','/local_planner/cmd_vel','/local_planner/point_follow_planner/cmd_vel'])
+        subprocess.Popen(['rosrun','topic_tools','mux_select','/local_planner/candidate_trajectories','/local_planner/point_follow_planner/candidate_trajectories'])
+        subprocess.Popen(['rosrun','topic_tools','mux_select','/local_planner/selected_trajectory','/local_planner/point_follow_planner/best_trajectory'])
         self.last_planner = "pfp"
 
 if __name__ == '__main__':
