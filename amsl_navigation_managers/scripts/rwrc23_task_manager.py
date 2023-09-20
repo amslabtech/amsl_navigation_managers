@@ -38,7 +38,7 @@ class TaskManager:
         self.local_goal = PoseStamped()
         self.joy = Joy()
         self.localized_pose = PoseWithCovarianceStamped()
-        self.checkpoint_array = []
+        # self.checkpoint_array = []
         self.target_velocity = Twist()
 
         # params
@@ -49,7 +49,7 @@ class TaskManager:
         self.stop_list = self.load_stop_list_from_yaml()
         self.stop_node_flag = False
         self.cross_traffic_light_flag = False
-        self.get_checkpoint_array = False
+        # self.get_checkpoint_array = False
         self.ignore_flag = False
         self.has_stopped = False
         self.switch_detect_line = False
@@ -65,13 +65,14 @@ class TaskManager:
         self.joy_updated = False
 
         # ros
-        self.current_checkpoint_id_sub = rospy.Subscriber('/current_checkpoint', Int32, self.checkpoint_id_callback)
+        self.current_checkpoint_id_sub = rospy.Subscriber('/current_checkpoint', Int32, self.current_checkpoint_id_callback)
+        self.current_nextpoint_id_sub = rospy.Subscriber('/next_checkpoint', Int32, self.next_checkpoint_id_callback)
         self.stop_line_flag_sub = rospy.Subscriber('/stop_line_detector/stop_flag', Bool, self.stop_line_flag_callback)
         self.local_planner_cmd_vel_sub = rospy.Subscriber('/local_planner/cmd_vel', Twist, self.local_planner_cmd_vel_callback)
         self.local_goal_sub = rospy.Subscriber('/local_goal', PoseStamped, self.local_goal_callback)
         self.joy_sub = rospy.Subscriber('/joy', Joy, self.joy_callback)
         self.localized_pose_sub = rospy.Subscriber('/localized_pose', PoseWithCovarianceStamped, self.localized_pose_callback)
-        self.checkpoint_array_sub = rospy.Subscriber('/node_edge_map/checkpoint', Int32MultiArray, self.checkpoint_array_callback)
+        # self.checkpoint_array_sub = rospy.Subscriber('/node_edge_map/checkpoint', Int32MultiArray, self.checkpoint_array_callback)
         self.skip_node_flag_sub = rospy.Subscriber('/skip_node_flag', Bool, self.skip_node_flag_callback)
         self.cross_traffic_light_flag_sub = rospy.Subscriber('/cross_traffic_light_flag', Bool, self.cross_traffic_light_flag_callback)
 
@@ -288,10 +289,16 @@ class TaskManager:
             stop_list.append(stop['node_id'])
         return stop_list
 
-    def checkpoint_id_callback(self, msg):
-        if self.current_checkpoint_id != int(msg.data):
-            self.current_checkpoint_id, self.next_checkpoint_id = self.search_current_edge(int(msg.data))
-            self.reached_checkpoint = True
+    # def checkpoint_id_callback(self, msg):
+    #     if self.current_checkpoint_id != int(msg.data):
+    #         self.current_checkpoint_id, self.next_checkpoint_id = self.search_current_edge(int(msg.data))
+    #         self.reached_checkpoint = True
+
+    def current_checkpoint_id_callback(self, msg):
+        self.current_checkpoint_id = int(msg.data)
+
+    def next_checkpoint_id_callback(self, msg):
+        self.next_checkpoint_id = int(msg.data)
 
     def stop_line_flag_callback(self, flag):
         self.stop_line_flag = flag.data
@@ -318,12 +325,12 @@ class TaskManager:
         self.localized_pose = msg
         self.localized_pose_updated = True
 
-    def checkpoint_array_callback(self, msg):
-        if self.get_checkpoint_array == False:
-            self.checkpoint_array.clear()
-            for id in msg.data:
-                self.checkpoint_array.append(id)
-            self.get_checkpoint_array = True
+    # def checkpoint_array_callback(self, msg):
+    #     if self.get_checkpoint_array == False:
+    #         self.checkpoint_array.clear()
+    #         for id in msg.data:
+    #             self.checkpoint_array.append(id)
+    #         self.get_checkpoint_array = True
 
     def search_task_from_node_id(self, node0_id, node1_id):
         if self.get_task == True:
@@ -354,18 +361,18 @@ class TaskManager:
         else:
             return False
 
-    def search_current_edge(self, current_checkpoint_id):
-        if len(self.checkpoint_array) == 0:
-            return -1, -1
-        current_id = self.checkpoint_array[0]
-        next_id = self.checkpoint_array[1]
-        while self.checkpoint_array[0] == current_checkpoint_id:
-            current_id = self.checkpoint_array[0]
-            next_id = self.checkpoint_array[1]
-            del self.checkpoint_array[0]
-            if len(self.checkpoint_array) < 1:
-                return -1, -1
-        return current_id, next_id
+    # def search_current_edge(self, current_checkpoint_id):
+    #     if len(self.checkpoint_array) == 0:
+    #         return -1, -1
+    #     current_id = self.checkpoint_array[0]
+    #     next_id = self.checkpoint_array[1]
+    #     while self.checkpoint_array[0] == current_checkpoint_id:
+    #         current_id = self.checkpoint_array[0]
+    #         next_id = self.checkpoint_array[1]
+    #         del self.checkpoint_array[0]
+    #         if len(self.checkpoint_array) < 1:
+    #             return -1, -1
+    #     return current_id, next_id
 
     def is_stop_node_flag_publish(self, next_node_id, stop_list):
         is_stop_node_flag = Bool()
