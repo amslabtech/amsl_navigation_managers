@@ -39,7 +39,7 @@ class TaskManager:
         self.joy = Joy()
         self.localized_pose = PoseWithCovarianceStamped()
         self.checkpoint_array = []
-        # self.target_velocity = Twist()
+        self.target_velocity = Twist()
 
         # params
         self.get_task = False
@@ -104,9 +104,9 @@ class TaskManager:
                 if task_type == 'detect_line' and self.USE_DETECT_WHITE_LINE:
                     enable_detect_line.data = True
                     self.use_point_follow_planner()
-                    target_velocity = Twist()
-                    target_velocity.linear.x = self.detect_line_pfp_target_velocity
-                    self.target_velocity_pub.publish(target_velocity)
+                    # target_velocity = Twist()
+                    self.target_velocity.linear.x = self.detect_line_pfp_target_velocity
+                    # self.target_velocity_pub.publish(target_velocity)
                 else:
                     enable_detect_line.data = False
                 self.detect_line_flag_pub.publish(enable_detect_line)
@@ -130,18 +130,18 @@ class TaskManager:
                 if task_type == 'autodoor' and prev_task_type != task_type:
                     # print("task_type: ", task_type)
                     self.use_point_follow_planner()
-                    target_velocity = Twist()
-                    target_velocity.linear.x = self.pfp_target_velocity
-                    self.target_velocity_pub.publish(target_velocity)
+                    # target_velocity = Twist()
+                    self.target_velocity.linear.x = self.pfp_target_velocity
+                    # self.target_velocity_pub.publish(target_velocity)
                     # self.announce_once()
                     # self.local_goal_dist = 3.0
                 # else:
                     # self.local_goal_dist = 7.0
                 if task_type == '' and prev_task_type != task_type:
                     self.use_local_planner()
-                    target_velocity = Twist()
-                    target_velocity.linear.x = self.dwa_target_velocity
-                    self.target_velocity_pub.publish(target_velocity)
+                    # target_velocity = Twist()
+                    self.target_velocity.linear.x = self.dwa_target_velocity
+                    # self.target_velocity_pub.publish(target_velocity)
                 # self.local_goal_dist_pub.publish(self.local_goal_dist)
                 ##### shorten goal dist #####
 
@@ -199,6 +199,7 @@ class TaskManager:
                     if self.has_stopped:
                         cmd_vel, is_not_toward = self.get_turn_cmd_vel(self.local_goal, self.local_planner_cmd_vel)
                         if is_not_toward == False: # toward goal
+                            self.target_velocity.linear.x = 0.0
                             cmd_vel.linear.x = 0.0
                             cmd_vel.angular.z = 0.0
 
@@ -220,6 +221,7 @@ class TaskManager:
                 if(self.stop_node_flag):
                     cmd_vel, is_not_toward = self.get_turn_cmd_vel(self.local_goal, self.local_planner_cmd_vel)
                     if is_not_toward == False: # toward goal
+                        self.target_velocity.linear.x = 0.0
                         cmd_vel.linear.x = 0.0
                         cmd_vel.angular.z = 0.0
                     if self.get_go_signal(self.joy):
@@ -244,6 +246,7 @@ class TaskManager:
                 self.local_planner_cmd_vel_updated = False
                 self.local_goal_updated = False
                 self.localized_pose_updated = False
+                self.target_velocity_pub.publish(target_velocity)
 
                 self.is_stop_node_flag_publish(self.next_checkpoint_id, self.stop_list)
                 prev_task_type = task_type
