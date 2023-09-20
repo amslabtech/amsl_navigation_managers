@@ -57,6 +57,7 @@ class TaskManager:
         self.start_announce_flag = False
         self.announce_pid = 0
         self.last_planner = "dwa"
+        self.task_stop_flag = Bool()
 
         # msg update flags
         self.local_planner_cmd_vel_updated = False
@@ -81,6 +82,7 @@ class TaskManager:
         self.is_stop_node_pub = rospy.Publisher('/is_stop_node_flag', Bool, queue_size=1)
         self.local_goal_dist_pub = rospy.Publisher('/local_goal_dist', Float64, queue_size=1)
         self.target_velocity_pub = rospy.Publisher('/target_velocity', Twist, queue_size=1)
+        self.task_stop_pub = rospy.Publisher('/task/stop', Bool, queue_size=1)
 
 
     def process(self):
@@ -100,6 +102,7 @@ class TaskManager:
                 print("task_type: ", task_type)
                 print("last_planner: ", self.last_planner)
                 self.target_velocity.linear.x = self.dwa_target_velocity
+                self.task_stop_flag.data = False
 
                 ##### enable white line detector & stop behind robot #####
                 enable_detect_line = Bool()
@@ -204,6 +207,7 @@ class TaskManager:
                             self.target_velocity.linear.x = 0.0
                             cmd_vel.linear.x = 0.0
                             cmd_vel.angular.z = 0.0
+                            self.task_stop_flag.data = True
 
                     # if cmd_vel.linear.x < 0.01 and cmd_vel.angular.z < 0.01 and self.get_go_signal(self.joy):
                     if self.has_stopped and self.get_go_signal(self.joy):
@@ -226,6 +230,7 @@ class TaskManager:
                         self.target_velocity.linear.x = 0.0
                         cmd_vel.linear.x = 0.0
                         cmd_vel.angular.z = 0.0
+                        self.task_stop_flag.data = True
                     if self.get_go_signal(self.joy):
                         self.ignore_flag = True
                         self.has_stopped = False
@@ -249,6 +254,7 @@ class TaskManager:
                 self.local_goal_updated = False
                 self.localized_pose_updated = False
                 self.target_velocity_pub.publish(self.target_velocity)
+                self.task_stop_pub.publish(self.task_stop_flag)
 
                 self.is_stop_node_flag_publish(self.next_checkpoint_id, self.stop_list)
                 prev_task_type = task_type
@@ -355,7 +361,7 @@ class TaskManager:
     def get_go_signal(self, joy):
         if self.joy_updated == True:
             self.joy_updated = False
-            if joy.buttons[11] == 1 and joy.buttons[12] == 1:
+            if (joy.buttons[11] == 1 and joy.buttons[12] == 1) or joy.buttons[1] == 1:
                 return True
             return False
         else:
