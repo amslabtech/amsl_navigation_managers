@@ -44,6 +44,7 @@ class TaskManager:
         self.get_stop_list = False
         self.stop_list = self.load_stop_list_from_yaml()
         self.stop_node_flag = False
+        self.cross_traffic_light_flag = False
         self.get_checkpoint_array = False
         self.ignore_flag = False
         self.has_stopped = False
@@ -68,6 +69,7 @@ class TaskManager:
         self.localized_pose_sub = rospy.Subscriber('/localized_pose', PoseWithCovarianceStamped, self.localized_pose_callback)
         self.checkpoint_array_sub = rospy.Subscriber('/node_edge_map/checkpoint', Int32MultiArray, self.checkpoint_array_callback)
         self.skip_node_flag_sub = rospy.Subscriber('/skip_node_flag', Bool, self.skip_node_flag_callback)
+        self.cross_traffic_light_flag_sub = rospy.Subscriber('/cross_traffic_light_flag', Bool, self.cross_traffic_light_flag_callback)
 
         self.detect_line_flag_pub = rospy.Publisher('~request_detect_line', Bool, queue_size=1)
         self.cmd_vel_pub = rospy.Publisher('/local_path/cmd_vel', Twist, queue_size=1)
@@ -109,6 +111,13 @@ class TaskManager:
                 ##### announce #####
 
                 ##### shorten goal dist #####
+
+                if task_type == "traffic_light" and prev_task_type != task_type:
+                    if(self.cross_traffic_light_flag and self.get_go_signal(joy)):
+                        self.ignore_flag = True
+                        self.has_stopped = False
+
+
                 ##### autodoor #####
                 if task_type == 'autodoor' and prev_task_type != task_type:
                     print("task_type: ", task_type)
@@ -268,6 +277,9 @@ class TaskManager:
 
     def stop_line_flag_callback(self, flag):
         self.stop_line_flag = flag.data
+
+    def cross_traffic_light_flag_callback(self, flag):
+        self.cross_traffic_light_flag = flag.data
 
     def skip_node_flag_callback(self, flag):
         self.skip_node_flag = flag.data
