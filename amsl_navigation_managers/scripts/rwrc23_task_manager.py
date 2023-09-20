@@ -208,6 +208,7 @@ class TaskManager:
                             cmd_vel.linear.x = 0.0
                             cmd_vel.angular.z = 0.0
                             self.task_stop_flag.data = True
+                            self.task_stop_pub.publish(self.task_stop_flag)
 
                     # if cmd_vel.linear.x < 0.01 and cmd_vel.angular.z < 0.01 and self.get_go_signal(self.joy):
                     if self.has_stopped and self.get_go_signal(self.joy):
@@ -219,8 +220,9 @@ class TaskManager:
                         # if self.stop_node_flag:
                         #     del self.stop_list[0]
                         self.task_stop_flag.data = False
+                        self.task_stop_pub.publish(self.task_stop_flag)
 
-                    self.task_stop_pub.publish(self.task_stop_flag)
+                    # self.task_stop_pub.publish(self.task_stop_flag)
 
                 self.stop_node_flag = self.is_stop_node(self.stop_list, self.current_checkpoint_id)
 
@@ -234,13 +236,15 @@ class TaskManager:
                         cmd_vel.linear.x = 0.0
                         cmd_vel.angular.z = 0.0
                         self.task_stop_flag.data = True
+                        self.task_stop_pub.publish(self.task_stop_flag)
                     if self.get_go_signal(self.joy):
                         self.ignore_flag = True
                         self.has_stopped = False
                         del self.stop_list[0]
                         self.task_stop_flag.data = False
+                        self.task_stop_pub.publish(self.task_stop_flag)
 
-                    self.task_stop_pub.publish(self.task_stop_flag)
+                    # self.task_stop_pub.publish(self.task_stop_flag)
 
                 # rospy.loginfo('self.stop_list = %s' % self.stop_list)
                 # rospy.loginfo('self.current_checkpoint_id = %s' % self.current_checkpoint_id)
