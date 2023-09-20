@@ -102,7 +102,7 @@ class TaskManager:
                 print("task_type: ", task_type)
                 print("last_planner: ", self.last_planner)
                 self.target_velocity.linear.x = self.dwa_target_velocity
-                self.task_stop_flag.data = False
+                # self.task_stop_flag.data = False
 
                 ##### enable white line detector & stop behind robot #####
                 enable_detect_line = Bool()
@@ -218,6 +218,9 @@ class TaskManager:
                         self.has_stopped = False
                         # if self.stop_node_flag:
                         #     del self.stop_list[0]
+                        self.task_stop_flag.data = False
+
+                    self.task_stop_pub.publish(self.task_stop_flag)
 
                 self.stop_node_flag = self.is_stop_node(self.stop_list, self.current_checkpoint_id)
 
@@ -235,6 +238,9 @@ class TaskManager:
                         self.ignore_flag = True
                         self.has_stopped = False
                         del self.stop_list[0]
+                        self.task_stop_flag.data = False
+
+                    self.task_stop_pub.publish(self.task_stop_flag)
 
                 # rospy.loginfo('self.stop_list = %s' % self.stop_list)
                 # rospy.loginfo('self.current_checkpoint_id = %s' % self.current_checkpoint_id)
@@ -254,7 +260,6 @@ class TaskManager:
                 self.local_goal_updated = False
                 self.localized_pose_updated = False
                 self.target_velocity_pub.publish(self.target_velocity)
-                self.task_stop_pub.publish(self.task_stop_flag)
 
                 self.is_stop_node_flag_publish(self.next_checkpoint_id, self.stop_list)
                 prev_task_type = task_type
