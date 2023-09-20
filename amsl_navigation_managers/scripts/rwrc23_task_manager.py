@@ -98,6 +98,7 @@ class TaskManager:
                 task_type = self.search_task_from_node_id(self.current_checkpoint_id, self.next_checkpoint_id)
                 print("task_type: ", task_type)
                 print("last_planner: ", self.last_planner)
+                self.target_velocity.linear.x = self.dwa_target_velocity
 
                 ##### enable white line detector & stop behind robot #####
                 enable_detect_line = Bool()
@@ -246,7 +247,7 @@ class TaskManager:
                 self.local_planner_cmd_vel_updated = False
                 self.local_goal_updated = False
                 self.localized_pose_updated = False
-                self.target_velocity_pub.publish(target_velocity)
+                self.target_velocity_pub.publish(self.target_velocity)
 
                 self.is_stop_node_flag_publish(self.next_checkpoint_id, self.stop_list)
                 prev_task_type = task_type
