@@ -26,6 +26,9 @@ class TaskManager:
         # self.enable_announce = rospy.get_param('~enable_announce', False)
         self.enable_announce = rospy.get_param('~enable_announce', False)
         self.sound_volume = rospy.get_param('~sound_volume', 100)
+        self.dwa_target_velocity = rospy.get_param('~dwa_target_velocity', 1.0)
+        self.pfp_target_velocity = rospy.get_param('~pfp_target_velocity', 1.0)
+        self.detect_line_pfp_target_velocity = rospy.get_param('~detect_line_pfp_target_velocity', 0.3)
 
         # params in callback function
         self.current_checkpoint_id = self.next_checkpoint_id = -1
@@ -36,6 +39,7 @@ class TaskManager:
         self.joy = Joy()
         self.localized_pose = PoseWithCovarianceStamped()
         self.checkpoint_array = []
+        # self.target_velocity = Twist()
 
         # params
         self.get_task = False
@@ -72,9 +76,10 @@ class TaskManager:
         self.cross_traffic_light_flag_sub = rospy.Subscriber('/cross_traffic_light_flag', Bool, self.cross_traffic_light_flag_callback)
 
         self.detect_line_flag_pub = rospy.Publisher('~request_detect_line', Bool, queue_size=1)
-        self.cmd_vel_pub = rospy.Publisher('/local_path/cmd_vel', Twist, queue_size=1)
+        self.cmd_vel_pub = rospy.Publisher('/local_path/cmd_vel/no_use', Twist, queue_size=1)
         self.is_stop_node_pub = rospy.Publisher('/is_stop_node_flag', Bool, queue_size=1)
         self.local_goal_dist_pub = rospy.Publisher('/local_goal_dist', Float64, queue_size=1)
+        self.target_velocity_pub = rospy.Publisher('/target_velocity', Twist, queue_size=1)
 
 
     def process(self):
@@ -99,6 +104,9 @@ class TaskManager:
                 if task_type == 'detect_line' and self.USE_DETECT_WHITE_LINE:
                     enable_detect_line.data = True
                     self.use_point_follow_planner()
+                    target_velocity = Twist()
+                    target_velocity.linear.x = self.detect_line_pfp_target_velocity
+                    self.target_velocity_pub.publish(target_velocity)
                 else:
                     enable_detect_line.data = False
                 self.detect_line_flag_pub.publish(enable_detect_line)
@@ -120,14 +128,20 @@ class TaskManager:
 
                 ##### autodoor #####
                 if task_type == 'autodoor' and prev_task_type != task_type:
-                    print("task_type: ", task_type)
+                    # print("task_type: ", task_type)
                     self.use_point_follow_planner()
+                    target_velocity = Twist()
+                    target_velocity.linear.x = self.pfp_target_velocity
+                    self.target_velocity_pub.publish(target_velocity)
                     # self.announce_once()
                     # self.local_goal_dist = 3.0
                 # else:
                     # self.local_goal_dist = 7.0
                 if task_type == '' and prev_task_type != task_type:
                     self.use_local_planner()
+                    target_velocity = Twist()
+                    target_velocity.linear.x = self.dwa_target_velocity
+                    self.target_velocity_pub.publish(target_velocity)
                 # self.local_goal_dist_pub.publish(self.local_goal_dist)
                 ##### shorten goal dist #####
 
@@ -222,8 +236,8 @@ class TaskManager:
                 ##### stop at white line #####
 
                 ##### linear.x limit #####
-                if(enable_detect_line.data == True):
-                    cmd_vel.linear.x = min(cmd_vel.linear.x, 0.3)
+                # if(enable_detect_line.data == True):
+                #     cmd_vel.linear.x = min(cmd_vel.linear.x, 0.3)
                 ##### linear.x limit #####
 
                 self.cmd_vel_pub.publish(cmd_vel)
