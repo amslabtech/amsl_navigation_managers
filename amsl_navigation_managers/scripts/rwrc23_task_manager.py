@@ -108,13 +108,18 @@ class TaskManager:
                 enable_detect_line = Bool()
                 if task_type == 'detect_line' and self.USE_DETECT_WHITE_LINE:
                     enable_detect_line.data = True
-                    self.use_point_follow_planner()
+                    # self.use_point_follow_planner()
                     # target_velocity = Twist()
-                    self.target_velocity.linear.x = self.detect_line_pfp_target_velocity
+                    # self.target_velocity.linear.x = self.detect_line_pfp_target_velocity
                     # self.target_velocity_pub.publish(target_velocity)
                 else:
                     enable_detect_line.data = False
                 self.detect_line_flag_pub.publish(enable_detect_line)
+
+                if task_type == 'detect_line' and prev_task_type != task_type:
+                    self.use_point_follow_planner()
+                    self.target_velocity.linear.x = self.detect_line_pfp_target_velocity
+
                 # rospy.loginfo('detect_line_flag_pub = %s' % enable_detect_line.data)
                 ##### enable white line detector & stop behind robot #####
 
