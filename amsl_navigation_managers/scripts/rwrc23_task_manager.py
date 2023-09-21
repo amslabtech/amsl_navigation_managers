@@ -46,9 +46,7 @@ class TaskManager:
         self.stop_list = self.load_stop_list_from_yaml()
         self.stop_node_flag = False
         self.cross_traffic_light_flag = False
-        # self.ignore_flag = False
         self.has_stopped = False
-        self.switch_detect_line = False
         self.local_goal_dist = 7.0
         self.start_announce_flag = False
         self.announce_pid = 0
@@ -88,7 +86,7 @@ class TaskManager:
         self.target_velocity.linear.x = self.dwa_target_velocity
         enable_detect_line = Bool()
         while not rospy.is_shutdown():
-            if(self.local_goal_updated):
+            if self.local_goal_updated:
                 rospy.loginfo_throttle(1, '================================================================')
                 task_type = self.search_task_from_node_id(self.current_checkpoint_id, self.next_checkpoint_id)
                 rospy.loginfo_throttle(1, f"task_type : {task_type}")
@@ -109,8 +107,7 @@ class TaskManager:
 
                 ##### traffic_light #####
                 if task_type == "traffic_light" and prev_task_type != task_type:
-                    if(self.cross_traffic_light_flag and self.get_go_signal(joy)):
-                        # self.ignore_flag = True
+                    if self.cross_traffic_light_flag and self.get_go_signal(joy):
                         self.has_stopped = False
                         enable_detect_line.data = False
 
@@ -133,12 +130,7 @@ class TaskManager:
                     # self.announce_once()
 
                 ##### stop at white line #####
-                # if self.switch_detect_line != enable_detect_line.data:
-                #     self.switch_detect_line = enable_detect_line.data
-                    # self.ignore_flag = False
-
                 if enable_detect_line.data:
-                    # if self.stop_line_flag and self.ignore_flag == False:
                     if self.stop_line_flag:
                         self.has_stopped = True
 
@@ -147,7 +139,6 @@ class TaskManager:
                         self.task_stop_pub.publish(self.task_stop_flag)
 
                     if self.has_stopped and self.get_go_signal(self.joy):
-                        # self.ignore_flag = True
                         self.has_stopped = False
                         self.task_stop_flag.data = False
                         self.task_stop_pub.publish(self.task_stop_flag)
@@ -156,12 +147,11 @@ class TaskManager:
 
                 ##### stop node #####
                 self.stop_node_flag = self.is_stop_node(self.stop_list, self.current_checkpoint_id)
-                if(self.stop_node_flag):
+                if self.stop_node_flag:
                     self.task_stop_flag.data = True
                     self.task_stop_pub.publish(self.task_stop_flag)
 
                     if self.get_go_signal(self.joy):
-                        # self.ignore_flag = True
                         self.has_stopped = False
                         del self.stop_list[0]
                         self.task_stop_flag.data = False
@@ -198,7 +188,6 @@ class TaskManager:
 
     def stop_line_flag_callback(self, flag):
         self.stop_line_flag = flag.data
-        # rospy.loginfo('stop_line_flag: ', self.stop_line_flag)
 
     def cross_traffic_light_flag_callback(self, flag):
         self.cross_traffic_light_flag = flag.data
@@ -217,7 +206,7 @@ class TaskManager:
     def search_task_from_node_id(self, node0_id, node1_id):
         if self.get_task == True:
             for count, task in enumerate(self.task_data['task']):
-                if (task['edge']['node0_id'] == node0_id) and (task['edge']['node1_id'] == node1_id):
+                if task['edge']['node0_id'] == node0_id and task['edge']['node1_id'] == node1_id:
                     return task['task_type']
             return ''
         else:
@@ -243,7 +232,7 @@ class TaskManager:
 
     def is_stop_node_flag_publish(self, next_node_id, stop_list):
         is_stop_node_flag = Bool()
-        if(len(stop_list) == 0) or self.get_stop_list == False:
+        if len(stop_list) == 0 or self.get_stop_list == False:
             is_stop_node_flag.data = False
         elif next_node_id == stop_list[0]:
             is_stop_node_flag.data = True
