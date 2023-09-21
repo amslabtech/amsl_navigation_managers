@@ -152,6 +152,7 @@ class TaskManager:
                         self.task_stop_flag.data = False
                         self.task_stop_pub.publish(self.task_stop_flag)
                         enable_detect_line.data = False
+                        self.stop_line_flag = False
 
                 ##### stop node #####
                 self.stop_node_flag = self.is_stop_node(self.stop_list, self.current_checkpoint_id)
