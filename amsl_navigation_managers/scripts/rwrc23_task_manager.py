@@ -254,12 +254,14 @@ class TaskManager:
         subprocess.Popen(['rosrun','topic_tools','mux_select','/local_planner/cmd_vel','/local_planner/dwa_planner/cmd_vel'])
         subprocess.Popen(['rosrun','topic_tools','mux_select','/local_planner/candidate_trajectories','/local_planner/dwa_planner/candidate_trajectories'])
         subprocess.Popen(['rosrun','topic_tools','mux_select','/local_planner/selected_trajectory','/local_planner/dwa_planner/selected_trajectory'])
+        subprocess.Popen(['rosrun','topic_tools','mux_select','/local_planner/predict_footprint','/local_planner/dwa_planner/predict_footprint'])
         self.last_planner = "dwa"
 
     def use_point_follow_planner(self):
         subprocess.Popen(['rosrun','topic_tools','mux_select','/local_planner/cmd_vel','/local_planner/point_follow_planner/cmd_vel'])
         subprocess.Popen(['rosrun','topic_tools','mux_select','/local_planner/candidate_trajectories','/local_planner/point_follow_planner/candidate_trajectories'])
         subprocess.Popen(['rosrun','topic_tools','mux_select','/local_planner/selected_trajectory','/local_planner/point_follow_planner/best_trajectory'])
+        subprocess.Popen(['rosrun','topic_tools','mux_select','/local_planner/predict_footprint','/local_planner/point_follow_planner/predict_footprint'])
         self.last_planner = "pfp"
 
 if __name__ == '__main__':
