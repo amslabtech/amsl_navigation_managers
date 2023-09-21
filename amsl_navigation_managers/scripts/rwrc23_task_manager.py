@@ -140,11 +140,17 @@ class TaskManager:
                     self.switch_detect_line = enable_detect_line.data
                     self.ignore_flag = False
 
+                # print('enable_detect_line : ', enable_detect_line.data)
+                print('has_stopped : ', self.has_stopped)
                 if enable_detect_line.data:
                     if self.stop_line_flag and self.ignore_flag == False:
+                        print('stop_line_flag_if: ', self.stop_line_flag)
+                        print('ignore_flag_if: ', self.ignore_flag)
+                        print('has_stopped_if : ', self.has_stopped)
                         self.has_stopped = True
 
                     if self.has_stopped:
+                        print('trueeeeeeeeeee')
                         self.task_stop_flag.data = True
                         self.task_stop_pub.publish(self.task_stop_flag)
 
@@ -157,6 +163,7 @@ class TaskManager:
 
                 ##### stop node #####
                 self.stop_node_flag = self.is_stop_node(self.stop_list, self.current_checkpoint_id)
+                # print('stop_node_flag : ', self.stop_node_flag)
                 if(self.stop_node_flag):
                     self.task_stop_flag.data = True
                     self.task_stop_pub.publish(self.task_stop_flag)
@@ -205,6 +212,7 @@ class TaskManager:
 
     def stop_line_flag_callback(self, flag):
         self.stop_line_flag = flag.data
+        print('stop_line_flag: ', self.stop_line_flag)
 
     def cross_traffic_light_flag_callback(self, flag):
         self.cross_traffic_light_flag = flag.data
