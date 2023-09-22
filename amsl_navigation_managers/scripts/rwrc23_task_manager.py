@@ -95,12 +95,16 @@ class TaskManager:
                 rospy.loginfo_throttle(1, f"next_checkpoint : {self.next_checkpoint_id}")
 
                 ##### enable white line detector #####
-                if task_type == 'detect_line' and prev_task_type != task_type and self.USE_DETECT_WHITE_LINE:
+                if task_type == 'detect_line' and self.USE_DETECT_WHITE_LINE:
                     enable_detect_line.data = True
                     self.target_velocity.linear.x = self.detect_line_pfp_target_velocity
                     self.use_point_follow_planner()
+                    if prev_task_type != task_type:
+                        self.target_velocity.linear.x = self.detect_line_pfp_target_velocity
+                        self.use_point_follow_planner()
+                else:
+                    enable_detect_line.data = False
                 self.detect_line_flag_pub.publish(enable_detect_line)
-
                 ##### announce #####
                 # if task_type == 'announce':
                 #     self.announce_once()
@@ -144,6 +148,8 @@ class TaskManager:
                         self.task_stop_pub.publish(self.task_stop_flag)
                         enable_detect_line.data = False
                         self.stop_line_flag = False
+                        self.target_velocity.linear.x = self.dwa_target_velocity
+                        self.use_local_planner()
 
                 ##### stop node #####
                 self.stop_node_flag = self.is_stop_node(self.stop_list, self.current_checkpoint_id)
