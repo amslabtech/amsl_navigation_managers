@@ -44,7 +44,8 @@ class TaskManager:
         self.reached_checkpoint = False
         self.get_stop_list = False
         self.stop_list = self.load_stop_list_from_yaml()
-        self.stop_node_flag = False
+        self.current_stop_node_flag = False
+        self.next_stop_node_flag = False
         self.cross_traffic_light_flag = False
         self.has_stopped = False
         self.local_goal_dist = 7.0
@@ -153,8 +154,11 @@ class TaskManager:
                         self.target_velocity.linear.x = self.pfp_target_velocity
 
                 ##### stop node #####
-                self.stop_node_flag = self.is_stop_node(self.stop_list, self.current_checkpoint_id)
-                if self.stop_node_flag and self.finish_flag:
+                # self.current_stop_node_flag = self.is_current_stop_node(self.stop_list, self.current_checkpoint_id)
+                self.next_stop_node_flag = self.is_next_stop_node(self.stop_list, self.next_checkpoint_id)
+                # if self.current_stop_node_flag and self.finish_flag:
+                if self.next_stop_node_flag and self.finish_flag:
+                    rospy.loginfo_throttle(1, "======== stop_node ========")
                     self.task_stop_flag.data = True
                     self.task_stop_pub.publish(self.task_stop_flag)
 
@@ -223,12 +227,21 @@ class TaskManager:
         else:
             return ''
 
-    def is_stop_node(self, stop_list, current_checkpoint_id):
+    def is_current_stop_node(self, stop_list, current_checkpoint_id):
         if self.get_stop_list == False:
             return False
         if len(stop_list) == 0:
             return False
         if stop_list[0] == current_checkpoint_id:
+            return True
+        return False
+
+    def is_next_stop_node(self, stop_list, next_checkpoint_id):
+        if self.get_stop_list == False:
+            return False
+        if len(stop_list) == 0:
+            return False
+        if stop_list[0] == next_checkpoint_id:
             return True
         return False
 
