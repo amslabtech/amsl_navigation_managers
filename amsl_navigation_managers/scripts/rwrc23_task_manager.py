@@ -59,6 +59,7 @@ class TaskManager:
         self.local_goal_updated = False
         self.joy_updated = False
         self.stop_node_flag_updated = False
+        self.exec_traffic_light_detector = False
 
         # ros
         self.current_checkpoint_id_sub = rospy.Subscriber('/current_checkpoint', Int32, self.current_checkpoint_id_callback)
@@ -71,6 +72,7 @@ class TaskManager:
         self.finish_flag_sub = rospy.Subscriber('/local_planner/finish_flag', Bool, self.finish_flag_callback)
 
         self.detect_line_flag_pub = rospy.Publisher('~request_detect_line', Bool, queue_size=1)
+        self.detect_traffic_light_flag_pub = rospy.Publisher('/request_traffic_light_flag', Bool, queue_size=1)
         # self.is_stop_node_pub = rospy.Publisher('/is_stop_node_flag', Bool, queue_size=1)
         self.local_goal_dist_pub = rospy.Publisher('/local_goal_dist', Float64, queue_size=1)
         self.target_velocity_pub = rospy.Publisher('/target_velocity', Twist, queue_size=1)
@@ -115,10 +117,13 @@ class TaskManager:
                 #     self.announce_once()
 
                 ##### traffic_light #####
-                if task_type == "traffic_light" and prev_task_type != task_type:
-                    if self.cross_traffic_light_flag and self.get_go_signal(joy):
-                        self.has_stopped = False
-                        enable_detect_line.data = False
+                if task_type == 'traffic_light':
+                    self.exec_traffic_light_detector = True
+                    if prev_task_type != task_type:
+                        self.use_point_follow_planner()
+                else:
+                    self.exec_traffic_light_detector = False
+                self.detect_traffic_light_flag_pub.publish(self.exec_traffic_light_detector)
 
                 ##### point_follow_planner #####
                 if task_type == 'autodoor' and prev_task_type != task_type:
@@ -162,7 +167,7 @@ class TaskManager:
                     self.task_stop_flag.data = True
                     self.task_stop_pub.publish(self.task_stop_flag)
 
-                    if self.get_go_signal(self.joy):
+                    if self.get_go_signal(self.joy) or self.cross_traffic_light_flag:
                         self.has_stopped = False
                         self.finish_flag = False
                         self.stop_node_flag_updated = False
