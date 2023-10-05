@@ -105,18 +105,14 @@ class TaskManager:
 
                 ##### enable white line detector #####
                 if task_type == 'detect_line' and self.USE_DETECT_WHITE_LINE:
+                # if task_type == 'detect_line' and prev_task_type != task_type and self.USE_DETECT_WHITE_LINE:
                     enable_detect_line.data = True
-                    self.target_velocity.linear.x = self.detect_line_pfp_target_velocity
-                    self.use_point_follow_planner()
                     if prev_task_type != task_type:
                         self.target_velocity.linear.x = self.detect_line_pfp_target_velocity
                         self.use_point_follow_planner()
                 else:
                     enable_detect_line.data = False
                 self.detect_line_flag_pub.publish(enable_detect_line)
-                ##### announce #####
-                # if task_type == 'announce':
-                #     self.announce_once()
 
                 ##### traffic_light #####
                 if task_type == 'traffic_light':
@@ -131,13 +127,13 @@ class TaskManager:
                 if task_type == 'autodoor' and prev_task_type != task_type:
                     self.use_point_follow_planner()
                     self.target_velocity.linear.x = self.pfp_target_velocity
-                    enable_detect_line.data = False
+                    # enable_detect_line.data = False
 
                 ##### no task #####
                 if task_type == '' and prev_task_type != task_type:
                     self.use_local_planner()
                     self.target_velocity.linear.x = self.dwa_target_velocity
-                    enable_detect_line.data = False
+                    # enable_detect_line.data = False
 
                 #### skip node announce ####
                 if self.skip_node_flag:
