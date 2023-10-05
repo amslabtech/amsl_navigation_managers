@@ -60,6 +60,8 @@ class TaskManager:
         self.joy_updated = False
         self.stop_node_flag_updated = False
         self.exec_traffic_light_detector = False
+        # self.finish_flag_updated = False
+        # self.is_stop = False
 
         # ros
         self.current_checkpoint_id_sub = rospy.Subscriber('/current_checkpoint', Int32, self.current_checkpoint_id_callback)
@@ -69,10 +71,10 @@ class TaskManager:
         self.joy_sub = rospy.Subscriber('/joy', Joy, self.joy_callback)
         self.skip_node_flag_sub = rospy.Subscriber('/skip_node_flag', Bool, self.skip_node_flag_callback)
         self.cross_traffic_light_flag_sub = rospy.Subscriber('/cross_traffic_light_flag', Bool, self.cross_traffic_light_flag_callback)
-        self.finish_flag_sub = rospy.Subscriber('/local_planner/finish_flag', Bool, self.finish_flag_callback)
+        # self.finish_flag_sub = rospy.Subscriber('/local_planner/finish_flag', Bool, self.finish_flag_callback)
 
         self.detect_line_flag_pub = rospy.Publisher('~request_detect_line', Bool, queue_size=1)
-        self.detect_traffic_light_flag_pub = rospy.Publisher('/request_traffic_light_flag', Bool, queue_size=1)
+        self.detect_traffic_light_flag_pub = rospy.Publisher('/request_detect_traffic_light', Bool, queue_size=1)
         # self.is_stop_node_pub = rospy.Publisher('/is_stop_node_flag', Bool, queue_size=1)
         self.local_goal_dist_pub = rospy.Publisher('/local_goal_dist', Float64, queue_size=1)
         self.target_velocity_pub = rospy.Publisher('/target_velocity', Twist, queue_size=1)
@@ -161,16 +163,23 @@ class TaskManager:
                         self.target_velocity.linear.x = self.pfp_target_velocity
 
                 ##### stop node #####
-                print('stop_node_flag_updated : ', self.stop_node_flag_updated)
-                if self.stop_node_flag_updated and self.finish_flag:
+                rospy.loginfo_throttle(1, f'stop_node_flag_updated : {self.stop_node_flag_updated}')
+                # rospy.loginfo_throttle(1, f'finish_flag_updated : {self.finish_flag_updated}')
+                if self.stop_node_flag_updated:
+                #     self.is_stop = True
+                # rospy.loginfo_throttle(1, f'is_stop : {self.is_stop}')
+                #
+                # if self.is_stop:
                     rospy.loginfo_throttle(1, "======== stop_node ========")
                     self.task_stop_flag.data = True
                     self.task_stop_pub.publish(self.task_stop_flag)
 
                     if self.get_go_signal(self.joy) or self.cross_traffic_light_flag:
+                        rospy.loginfo_throttle(1, "======== go signal ========")
                         self.has_stopped = False
-                        self.finish_flag = False
+                        # self.finish_flag_updated = False
                         self.stop_node_flag_updated = False
+                        # self.is_stop = False
                         del self.stop_list[0]
                         self.task_stop_flag.data = False
                         self.task_stop_pub.publish(self.task_stop_flag)
@@ -201,13 +210,17 @@ class TaskManager:
 
     def current_checkpoint_id_callback(self, msg):
         self.current_checkpoint_id = int(msg.data)
+        self.stop_node_flag = self.is_stop_node(self.stop_list, self.current_checkpoint_id)
+        rospy.loginfo_throttle(1, f"stop_node_flag : {self.stop_node_flag}")
+        if self.stop_node_flag:
+            self.stop_node_flag_updated = True
 
     def next_checkpoint_id_callback(self, msg):
         self.next_checkpoint_id = int(msg.data)
-        self.stop_node_flag = self.is_stop_node(self.stop_list, self.next_checkpoint_id)
-        # print('stop_node_flag : ', self.stop_node_flag)
-        if self.stop_node_flag:
-            self.stop_node_flag_updated = True
+        # self.stop_node_flag = self.is_stop_node(self.stop_list, self.next_checkpoint_id)
+        # rospy.loginfo_throttle(1, f"stop_node_flag : {self.stop_node_flag}")
+        # if self.stop_node_flag:
+        #     self.stop_node_flag_updated = True
 
     def stop_line_flag_callback(self, flag):
         self.stop_line_flag = flag.data
@@ -228,6 +241,9 @@ class TaskManager:
 
     def finish_flag_callback(self, flag):
         self.finish_flag = flag.data
+        # rospy.loginfo_throttle(1, "======== finish call ========")
+        # if self.finish_flag:
+        #     self.finish_flag_updated = True
 
     def search_task_from_node_id(self, node0_id, node1_id):
         if self.get_task == True:
