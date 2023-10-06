@@ -29,7 +29,6 @@ class TaskManager:
         self.dwa_target_velocity = rospy.get_param('~dwa_target_velocity', 1.0)
         self.pfp_target_velocity = rospy.get_param('~pfp_target_velocity', 1.0)
         self.detect_line_pfp_target_velocity = rospy.get_param('~detect_line_pfp_target_velocity', 0.3)
-        self.dist_to_goal_th = rospy.get_param('~dist_to_goal_th', 0.3)
 
         # params in callback function
         self.current_checkpoint_id = self.next_checkpoint_id = -1
@@ -75,7 +74,6 @@ class TaskManager:
         self.local_goal_dist_pub = rospy.Publisher('/local_goal_dist', Float64, queue_size=1)
         self.target_velocity_pub = rospy.Publisher('/target_velocity', Twist, queue_size=1)
         self.task_stop_pub = rospy.Publisher('/task/stop', Bool, queue_size=1)
-        self.dist_to_goal_th_pub = rospy.Publisher('/dist_to_goal_th', Float64, queue_size=1)
 
 
     def process(self):
@@ -174,7 +172,6 @@ class TaskManager:
 
                 self.local_goal_updated = False
                 self.target_velocity_pub.publish(self.target_velocity)
-                self.dist_to_goal_th_pub.publish(self.dist_to_goal_th)
                 self.detect_line_flag_pub.publish(enable_detect_line)
                 self.detect_traffic_light_flag_pub.publish(self.exec_traffic_light_detector)
                 # self.is_stop_node_flag_publish(self.next_checkpoint_id, self.stop_list)
