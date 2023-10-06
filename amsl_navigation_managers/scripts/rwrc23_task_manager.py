@@ -90,7 +90,7 @@ class TaskManager:
         enable_detect_line = Bool()
         while not rospy.is_shutdown():
             if self.local_goal_updated:
-                rospy.loginfo_throttle(1, '================================================================')
+                rospy.loginfo_throttle(1, '=====')
                 task_type = self.search_task_from_node_id(self.current_checkpoint_id, self.next_checkpoint_id)
                 rospy.loginfo_throttle(1, f"task_type : {task_type}")
                 rospy.loginfo_throttle(1, f"last_planner : {self.last_planner}")
@@ -109,7 +109,6 @@ class TaskManager:
 
                 ##### traffic_light #####
                 if task_type == 'traffic_light':
-                # if task_type == 'traffic_light' and prev_task_type != task_type:
                     self.exec_traffic_light_detector = True
                     if prev_task_type != task_type:
                         self.use_local_planner()
@@ -157,12 +156,12 @@ class TaskManager:
                 ##### stop node #####
                 # rospy.loginfo_throttle(1, f'stop_node_flag_updated : {self.stop_node_flag_updated}')
                 if self.stop_node_flag_updated:
-                    rospy.loginfo_throttle(1, "========== stop_node ==========")
+                    rospy.loginfo_throttle(1, "=== stop_node ===")
                     self.task_stop_flag.data = True
                     self.task_stop_pub.publish(self.task_stop_flag)
 
                     if self.get_go_signal(self.joy) or self.cross_traffic_light_flag:
-                        rospy.loginfo_throttle(1, "========== Go signal ==========")
+                        rospy.loginfo_throttle(1, "=== Go signal ===")
                         self.has_stopped = False
                         self.stop_node_flag_updated = False
                         del self.stop_list[0]
