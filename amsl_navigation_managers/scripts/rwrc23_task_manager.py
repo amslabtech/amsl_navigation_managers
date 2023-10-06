@@ -104,15 +104,14 @@ class TaskManager:
                 rospy.loginfo_throttle(1, f"next_checkpoint : {self.next_checkpoint_id}")
 
                 ##### enable white line detector #####
-                if task_type == 'detect_line' and self.USE_DETECT_WHITE_LINE:
-                # if task_type == 'detect_line' and prev_task_type != task_type and self.USE_DETECT_WHITE_LINE:
+                # if task_type == 'detect_line' and self.USE_DETECT_WHITE_LINE:
+                if task_type == 'detect_line' and prev_task_type != task_type and self.USE_DETECT_WHITE_LINE:
                     enable_detect_line.data = True
-                    if prev_task_type != task_type:
-                        self.target_velocity.linear.x = self.detect_line_pfp_target_velocity
-                        self.use_point_follow_planner()
-                else:
-                    enable_detect_line.data = False
-                self.detect_line_flag_pub.publish(enable_detect_line)
+                    # if prev_task_type != task_type:
+                    self.target_velocity.linear.x = self.detect_line_pfp_target_velocity
+                    self.use_point_follow_planner()
+                # else:
+                #     enable_detect_line.data = False
 
                 ##### traffic_light #####
                 if task_type == 'traffic_light':
@@ -183,6 +182,7 @@ class TaskManager:
                 self.local_goal_updated = False
                 self.target_velocity_pub.publish(self.target_velocity)
                 self.dist_to_goal_th_pub.publish(self.dist_to_goal_th)
+                self.detect_line_flag_pub.publish(enable_detect_line)
                 # self.is_stop_node_flag_publish(self.next_checkpoint_id, self.stop_list)
                 prev_task_type = task_type
             else:
