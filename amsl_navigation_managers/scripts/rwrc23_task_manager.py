@@ -44,7 +44,7 @@ class TaskManager:
         self.dwa_finish_flag = rospy.get_param('~dwa_finish_flag', '')
         self.pfp_cmd_vel = rospy.get_param('~pfp_cmd_vel', '')
         self.pfp_cand_traj = rospy.get_param('~pfp_cand_traj', '')
-        self.pfp_sel_traj = rospy.get_param('~pfp_sel_traj', '')
+        self.pfp_best_traj = rospy.get_param('~pfp_best_traj', '')
         self.pfp_footprint = rospy.get_param('~pfp_footprint', '')
         self.pfp_finish_flag = rospy.get_param('~pfp_finish_flag', '')
 
@@ -298,7 +298,7 @@ class TaskManager:
         # subprocess.Popen(['rosrun','topic_tools','mux_select','/local_planner/finish_flag','/local_planner/point_follow_planner/finish_flag'])
         subprocess.Popen(['rosrun','topic_tools','mux_select',str(self.cmd_vel_topic),str(self.pfp_cmd_vel)])
         subprocess.Popen(['rosrun','topic_tools','mux_select',str(self.cand_traj_topic),str(self.pfp_cand_traj)])
-        subprocess.Popen(['rosrun','topic_tools','mux_select',str(self.sel_traj_topic),str(self.pfp_sel_traj)])
+        subprocess.Popen(['rosrun','topic_tools','mux_select',str(self.sel_traj_topic),str(self.pfp_best_traj)])
         subprocess.Popen(['rosrun','topic_tools','mux_select',str(self.footprint_topic),str(self.pfp_footprint)])
         subprocess.Popen(['rosrun','topic_tools','mux_select',str(self.finish_flag_topic),str(self.pfp_finish_flag)])
         self.last_planner = "pfp"
