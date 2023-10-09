@@ -54,7 +54,7 @@ class TaskManager:
         self.stop_node_flag = False
 
         # msg update flags
-        self.local_goal_updated = False
+        self.checkpoint_id_subscribed = False
         self.joy_updated = False
         self.stop_node_flag_updated = False
         self.exec_traffic_light_detector = False
@@ -89,7 +89,7 @@ class TaskManager:
         self.target_velocity.linear.x = self.dwa_target_velocity
         enable_detect_line = Bool()
         while not rospy.is_shutdown():
-            if self.local_goal_updated:
+            if self.checkpoint_id_subscribed:
                 rospy.loginfo_throttle(1, '=====')
                 task_type = self.search_task_from_node_id(self.current_checkpoint_id, self.next_checkpoint_id)
                 rospy.loginfo_throttle(1, f"task_type : {task_type}")
@@ -169,14 +169,13 @@ class TaskManager:
                         self.task_stop_pub.publish(self.task_stop_flag)
                         # self.exec_traffic_light_detector = False
 
-                self.local_goal_updated = False
                 self.target_velocity_pub.publish(self.target_velocity)
                 self.detect_line_flag_pub.publish(enable_detect_line)
                 self.detect_traffic_light_flag_pub.publish(self.exec_traffic_light_detector)
                 # self.is_stop_node_flag_publish(self.next_checkpoint_id, self.stop_list)
                 prev_task_type = task_type
             else:
-                rospy.logwarn_throttle(1, "local_goal is not updated")
+                rospy.logwarn_throttle(1, "Checkpoint id is not updated")
             r.sleep()
 
     def load_task_from_yaml(self):
@@ -196,6 +195,7 @@ class TaskManager:
 
     def current_checkpoint_id_callback(self, msg):
         self.current_checkpoint_id = int(msg.data)
+        self.checkpoint_id_subscribed = True
         self.stop_node_flag = self.is_stop_node(self.stop_list, self.current_checkpoint_id)
         # rospy.loginfo_throttle(1, f"stop_node_flag : {self.stop_node_flag}")
         if self.stop_node_flag:
@@ -215,7 +215,6 @@ class TaskManager:
 
     def local_goal_callback(self, msg):
         self.local_goal = msg
-        self.local_goal_updated = True
 
     def joy_callback(self, msg):
         self.joy = msg
