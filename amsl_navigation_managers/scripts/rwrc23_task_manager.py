@@ -52,7 +52,6 @@ class TaskManager:
         self.current_checkpoint_id = self.next_checkpoint_id = -1
         self.stop_line_flag = False
         self.skip_node_flag = False
-        # self.local_goal = PoseStamped()
         self.joy = Joy()
         self.target_velocity = Twist()
 
@@ -64,7 +63,6 @@ class TaskManager:
         self.stop_list = self.load_stop_list_from_yaml()
         self.cross_traffic_light_flag = False
         self.has_stopped = False
-        # self.local_goal_dist = 7.0
         self.start_announce_flag = False
         self.announce_pid = 0
         self.last_planner = "dwa"
@@ -81,15 +79,12 @@ class TaskManager:
         self.current_checkpoint_id_sub = rospy.Subscriber('/current_checkpoint', Int32, self.current_checkpoint_id_callback)
         self.next_checkpoint_id_sub = rospy.Subscriber('/next_checkpoint', Int32, self.next_checkpoint_id_callback)
         self.stop_line_flag_sub = rospy.Subscriber('/stop_line_detector/stop_flag', Bool, self.stop_line_flag_callback)
-        # self.local_goal_sub = rospy.Subscriber('/local_goal', PoseStamped, self.local_goal_callback)
         self.joy_sub = rospy.Subscriber('/joy', Joy, self.joy_callback)
         self.skip_node_flag_sub = rospy.Subscriber('/skip_node_flag', Bool, self.skip_node_flag_callback)
         self.cross_traffic_light_flag_sub = rospy.Subscriber('/cross_traffic_light_flag', Bool, self.cross_traffic_light_flag_callback)
 
         self.detect_line_flag_pub = rospy.Publisher('~request_detect_line', Bool, queue_size=1)
         self.detect_traffic_light_flag_pub = rospy.Publisher('/request_detect_traffic_light', Bool, queue_size=1)
-        # self.is_stop_node_pub = rospy.Publisher('/is_stop_node_flag', Bool, queue_size=1)
-        # self.local_goal_dist_pub = rospy.Publisher('/local_goal_dist', Float64, queue_size=1)
         self.target_velocity_pub = rospy.Publisher('/target_velocity', Twist, queue_size=1)
         self.task_stop_pub = rospy.Publisher('/task/stop', Bool, queue_size=1)
 
@@ -177,12 +172,10 @@ class TaskManager:
                         del self.stop_list[0]
                         self.task_stop_flag.data = False
                         self.task_stop_pub.publish(self.task_stop_flag)
-                        # self.exec_traffic_light_detector = False
 
                 self.target_velocity_pub.publish(self.target_velocity)
                 self.detect_line_flag_pub.publish(enable_detect_line)
                 self.detect_traffic_light_flag_pub.publish(self.exec_traffic_light_detector)
-                # self.is_stop_node_flag_publish(self.next_checkpoint_id, self.stop_list)
                 prev_task_type = task_type
             else:
                 rospy.logwarn_throttle(1, "Checkpoint id is not updated")
@@ -222,9 +215,6 @@ class TaskManager:
     def skip_node_flag_callback(self, flag):
         self.skip_node_flag = flag.data
 
-    # def local_goal_callback(self, msg):
-    #     self.local_goal = msg
-
     def joy_callback(self, msg):
         self.joy = msg
         self.joy_updated = True
@@ -256,16 +246,6 @@ class TaskManager:
         else:
             return False
 
-    # def is_stop_node_flag_publish(self, next_node_id, stop_list):
-    #     is_stop_node_flag = Bool()
-    #     if len(stop_list) == 0 or self.get_stop_list == False:
-    #         is_stop_node_flag.data = False
-    #     elif next_node_id == stop_list[0]:
-    #         is_stop_node_flag.data = True
-    #     else:
-    #         is_stop_node_flag.data = False
-    #     self.is_stop_node_pub.publish(is_stop_node_flag)
-
     def set_sound_volume(self):
         if self.enable_announce == True :
             volume_cmd = "amixer -c1 sset Speaker " + str(self.sound_volume) + "%," + str(self.sound_volume) + "% unmute"
@@ -277,11 +257,6 @@ class TaskManager:
             announce_proc = subprocess.call(announce_cmd.split())
 
     def use_dwa_planner(self):
-        # subprocess.Popen(['rosrun','topic_tools','mux_select','/local_planner/cmd_vel','/local_planner/dwa_planner/cmd_vel'])
-        # subprocess.Popen(['rosrun','topic_tools','mux_select','/local_planner/candidate_trajectories','/local_planner/dwa_planner/candidate_trajectories'])
-        # subprocess.Popen(['rosrun','topic_tools','mux_select','/local_planner/selected_trajectory','/local_planner/dwa_planner/selected_trajectory'])
-        # subprocess.Popen(['rosrun','topic_tools','mux_select','/local_planner/predict_footprint','/local_planner/dwa_planner/predict_footprint'])
-        # subprocess.Popen(['rosrun','topic_tools','mux_select','/local_planner/finish_flag','/local_planner/dwa_planner/finish_flag'])
         subprocess.Popen(['rosrun','topic_tools','mux_select',str(self.cmd_vel_topic),str(self.dwa_cmd_vel)])
         subprocess.Popen(['rosrun','topic_tools','mux_select',str(self.cand_traj_topic),str(self.dwa_cand_traj)])
         subprocess.Popen(['rosrun','topic_tools','mux_select',str(self.sel_traj_topic),str(self.dwa_sel_traj)])
@@ -291,11 +266,6 @@ class TaskManager:
         self.target_velocity.linear.x = self.dwa_target_velocity
 
     def use_point_follow_planner(self):
-        # subprocess.Popen(['rosrun','topic_tools','mux_select','/local_planner/cmd_vel','/local_planner/point_follow_planner/cmd_vel'])
-        # subprocess.Popen(['rosrun','topic_tools','mux_select','/local_planner/candidate_trajectories','/local_planner/point_follow_planner/candidate_trajectories'])
-        # subprocess.Popen(['rosrun','topic_tools','mux_select','/local_planner/selected_trajectory','/local_planner/point_follow_planner/best_trajectory'])
-        # subprocess.Popen(['rosrun','topic_tools','mux_select','/local_planner/predict_footprint','/local_planner/point_follow_planner/predict_footprint'])
-        # subprocess.Popen(['rosrun','topic_tools','mux_select','/local_planner/finish_flag','/local_planner/point_follow_planner/finish_flag'])
         subprocess.Popen(['rosrun','topic_tools','mux_select',str(self.cmd_vel_topic),str(self.pfp_cmd_vel)])
         subprocess.Popen(['rosrun','topic_tools','mux_select',str(self.cand_traj_topic),str(self.pfp_cand_traj)])
         subprocess.Popen(['rosrun','topic_tools','mux_select',str(self.sel_traj_topic),str(self.pfp_best_traj)])
