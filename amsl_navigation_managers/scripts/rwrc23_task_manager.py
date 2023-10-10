@@ -125,7 +125,7 @@ class TaskManager:
                     self.exec_traffic_light_detector = False
 
                 ##### point_follow_planner #####
-                if task_type == 'autodoor' and prev_task_type != task_type:
+                if task_type == 'in_line' and prev_task_type != task_type:
                     self.use_point_follow_planner()
 
                 ##### slow #####
