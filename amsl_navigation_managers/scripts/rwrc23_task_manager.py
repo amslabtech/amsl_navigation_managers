@@ -105,13 +105,16 @@ class TaskManager:
             if self.checkpoint_id_subscribed:
                 rospy.loginfo_throttle(1, '=====')
                 task_type = self.search_task_from_node_id(self.current_checkpoint_id, self.next_checkpoint_id)
-                rospy.loginfo_throttle(1, f"task_type : {task_type}")
-                rospy.loginfo_throttle(1, f"last_planner : {self.last_planner}")
-                rospy.loginfo_throttle(1, f"current_checkpoint : {self.current_checkpoint_id}")
-                rospy.loginfo_throttle(1, f"next_checkpoint : {self.next_checkpoint_id}")
+                # rospy.loginfo_throttle(1, f"task_type : {task_type}")
+                # rospy.loginfo_throttle(1, f"last_planner : {self.last_planner}")
+                # rospy.loginfo_throttle(1, f"current_checkpoint : {self.current_checkpoint_id}")
+                # rospy.loginfo_throttle(1, f"next_checkpoint : {self.next_checkpoint_id}")
+                rospy.logerr_throttle(1, f"stop_list : {self.stop_list}")
+                rospy.logerr_throttle(1, f"stop_line_flag : {self.stop_line_flag}")
 
                 ##### enable white line detector #####
                 if task_type == 'detect_line' and prev_task_type != task_type and self.USE_DETECT_WHITE_LINE:
+                    self.stop_line_flag = False
                     enable_detect_line.data = True
                     self.use_point_follow_planner()
                     self.target_velocity.linear.x = self.detect_line_pfp_target_velocity
@@ -147,10 +150,12 @@ class TaskManager:
 
                 ##### stop at white line #####
                 if enable_detect_line.data:
+                    rospy.logerr_throttle(1, "enable_detect_line")
                     if self.stop_line_flag:
                         self.has_stopped = True
 
                     if self.has_stopped:
+                        rospy.logerr_throttle(1, "enable_detect_line has_stopped")
                         self.task_stop_flag.data = True
                         self.task_stop_pub.publish(self.task_stop_flag)
 
@@ -164,12 +169,14 @@ class TaskManager:
 
                 ##### stop node #####
                 if self.stop_node_flag_updated:
-                    rospy.loginfo_throttle(1, "=== stop_node ===")
+                    # rospy.loginfo_throttle(1, "=== stop_node ===")
+                    rospy.logerr_throttle(1, "stop_node")
                     self.task_stop_flag.data = True
                     self.task_stop_pub.publish(self.task_stop_flag)
+                    # print("cross_traffic_light_flag : ", self.cross_traffic_light_flag)
 
                     if self.get_go_signal(self.joy) or self.cross_traffic_light_flag:
-                        rospy.loginfo_throttle(1, "=== Go signal ===")
+                        # rospy.loginfo_throttle(1, "=== Go signal ===")
                         self.has_stopped = False
                         self.stop_node_flag_updated = False
                         del self.stop_list[0]
