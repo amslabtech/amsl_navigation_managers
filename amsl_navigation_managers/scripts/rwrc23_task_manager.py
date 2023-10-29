@@ -241,7 +241,7 @@ class TaskManager:
         self.checkpoint_list_subscribed = True
 
     def select_topic_callback(self, msg):
-        self.last_planner = msg.data.split('/')[-2]
+        self.last_planner = msg.data.split('/')[-2].replace('_planner', '').replace('point_follow', 'pfp')
 
     def init_stop_list(self):
         for id in self.checkpoint_list.data:
