@@ -6,7 +6,7 @@ import yaml
 import math
 
 import rospy
-from std_msgs.msg import Bool, Int32, Int32MultiArray, Float64
+from std_msgs.msg import Bool, Int32, Int32MultiArray, Float64, String
 from geometry_msgs.msg import Twist, PoseStamped, PoseWithCovarianceStamped
 from sensor_msgs.msg import Joy
 import tf2_ros
@@ -86,6 +86,7 @@ class TaskManager:
         self.skip_node_flag_sub = rospy.Subscriber('/skip_node_flag', Bool, self.skip_node_flag_callback)
         self.cross_traffic_light_flag_sub = rospy.Subscriber('/cross_traffic_light_flag', Bool, self.cross_traffic_light_flag_callback)
         self.checkpoint_sub = rospy.Subscriber('/checkpoint', Int32MultiArray, self.checkpoint_callback)
+        self.select_topic_sub = rospy.Subscriber('/select_topic', String, self.select_topic_callback)
 
         self.detect_line_flag_pub = rospy.Publisher('~request_detect_line', Bool, queue_size=1)
         self.detect_traffic_light_flag_pub = rospy.Publisher('/request_detect_traffic_light', Bool, queue_size=1)
@@ -238,6 +239,9 @@ class TaskManager:
         if self.checkpoint_list_subscribed == False:
             self.init_stop_list()
         self.checkpoint_list_subscribed = True
+
+    def select_topic_callback(self, msg):
+        self.last_planner = msg.data.split('/')[-2].replace('_planner', '').replace('point_follow', 'pfp')
 
     def init_stop_list(self):
         for id in self.checkpoint_list.data:
