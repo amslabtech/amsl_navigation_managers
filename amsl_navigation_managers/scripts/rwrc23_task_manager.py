@@ -66,7 +66,7 @@ class TaskManager:
         self.has_stopped = False
         self.start_announce_flag = False
         self.announce_pid = 0
-        self.last_planner = 'dwa'
+        self.current_planner = ''
         self.task_stop_flag = Bool()
         self.stop_node_flag = False
         self.checkpoint_list = Int32MultiArray()
@@ -114,12 +114,10 @@ class TaskManager:
             if self.checkpoint_id_subscribed:
                 rospy.loginfo_throttle(1, '=====')
                 task_type = self.search_task_from_node_id(self.current_checkpoint_id, self.next_checkpoint_id)
-                # rospy.loginfo_throttle(1, f'task_type : {task_type}')
-                # rospy.loginfo_throttle(1, f'last_planner : {self.last_planner}')
-                # rospy.loginfo_throttle(1, f'current_checkpoint : {self.current_checkpoint_id}')
-                # rospy.loginfo_throttle(1, f'next_checkpoint : {self.next_checkpoint_id}')
-                rospy.logerr_throttle(1, f'stop_list : {self.stop_list}')
-                rospy.logerr_throttle(1, f'stop_line_flag : {self.stop_line_flag}')
+                rospy.loginfo_throttle(1, f'task_type : {task_type}')
+                rospy.loginfo_throttle(1, f'current_planner : {self.current_planner}')
+                rospy.loginfo_throttle(1, f'current_checkpoint : {self.current_checkpoint_id}')
+                rospy.loginfo_throttle(1, f'next_checkpoint : {self.next_checkpoint_id}')
 
                 ##### enable white line detector #####
                 if task_type == 'detect_line' and prev_task_type != task_type and self.USE_DETECT_WHITE_LINE:
@@ -159,7 +157,6 @@ class TaskManager:
 
                 ##### stop at white line #####
                 if enable_detect_line.data:
-                    rospy.logerr_throttle(1, 'enable_detect_line')
                     if self.stop_line_flag:
                         self.has_stopped = True
                         if not is_finish_flag_pub:
@@ -167,7 +164,6 @@ class TaskManager:
                             is_finish_flag_pub = True
 
                     if self.has_stopped:
-                        rospy.logerr_throttle(1, 'enable_detect_line has_stopped')
                         self.task_stop_flag.data = True
                         self.task_stop_pub.publish(self.task_stop_flag)
 
@@ -183,14 +179,11 @@ class TaskManager:
 
                 ##### stop node #####
                 if self.stop_node_flag_updated:
-                    # rospy.loginfo_throttle(1, '=== stop_node ===')
-                    rospy.logerr_throttle(1, 'stop_node')
+                    rospy.logwarn_throttle(1, '=== stop_node ===')
                     self.task_stop_flag.data = True
                     self.task_stop_pub.publish(self.task_stop_flag)
-                    # print('cross_traffic_light_flag : ', self.cross_traffic_light_flag)
 
                     if self.get_go_signal(self.joy) or self.cross_traffic_light_flag:
-                        # rospy.loginfo_throttle(1, '=== Go signal ===')
                         self.has_stopped = False
                         self.stop_node_flag_updated = False
                         del self.stop_list[0]
@@ -250,7 +243,7 @@ class TaskManager:
         self.checkpoint_list_subscribed = True
 
     def select_topic_callback(self, msg):
-        self.last_planner = msg.data.split('/')[-2].replace('_planner', '').replace('point_follow', 'pfp')
+        self.current_planner = msg.data.split('/')[-2].replace('_planner', '').replace('point_follow', 'pfp')
 
     def finish_flag_callback(self, flag):
         self.finish_flag.data = flag.data
@@ -306,7 +299,6 @@ class TaskManager:
         subprocess.Popen(['rosrun','topic_tools','mux_select',str(self.sel_traj_topic),str(self.dwa_sel_traj)])
         subprocess.Popen(['rosrun','topic_tools','mux_select',str(self.footprint_topic),str(self.dwa_footprint)])
         subprocess.Popen(['rosrun','topic_tools','mux_select',str(self.finish_flag_topic),str(self.dwa_finish_flag)])
-        self.last_planner = 'dwa'
         self.target_velocity.linear.x = self.dwa_target_velocity
 
     def use_point_follow_planner(self):
@@ -315,7 +307,6 @@ class TaskManager:
         subprocess.Popen(['rosrun','topic_tools','mux_select',str(self.sel_traj_topic),str(self.pfp_best_traj)])
         subprocess.Popen(['rosrun','topic_tools','mux_select',str(self.footprint_topic),str(self.pfp_footprint)])
         subprocess.Popen(['rosrun','topic_tools','mux_select',str(self.finish_flag_topic),str(self.pfp_finish_flag)])
-        self.last_planner = 'pfp'
         self.target_velocity.linear.x = self.pfp_target_velocity
 
 if __name__ == '__main__':
