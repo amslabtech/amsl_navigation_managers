@@ -70,6 +70,7 @@ class TaskManager:
         self.task_stop_flag = Bool()
         self.stop_node_flag = False
         self.checkpoint_list = Int32MultiArray()
+        self.finish_flag = Bool()
 
         # msg update flags
         self.checkpoint_list_subscribed = False
@@ -87,11 +88,13 @@ class TaskManager:
         self.cross_traffic_light_flag_sub = rospy.Subscriber('/cross_traffic_light_flag', Bool, self.cross_traffic_light_flag_callback)
         self.checkpoint_sub = rospy.Subscriber('/checkpoint', Int32MultiArray, self.checkpoint_callback)
         self.select_topic_sub = rospy.Subscriber('/select_topic', String, self.select_topic_callback)
+        self.finish_flag_sub = rospy.Subscriber('/local_Planner/finish_flag', Bool, self.finish_flag_callback)
 
         self.detect_line_flag_pub = rospy.Publisher('~request_detect_line', Bool, queue_size=1)
         self.detect_traffic_light_flag_pub = rospy.Publisher('/request_detect_traffic_light', Bool, queue_size=1)
         self.target_velocity_pub = rospy.Publisher('/target_velocity', Twist, queue_size=1)
         self.task_stop_pub = rospy.Publisher('/task/stop', Bool, queue_size=1)
+        self.finish_flag_pub = rospy.Publisher('/finish_flag', Bool, queue_size=1)
 
 
     def process(self):
@@ -106,6 +109,7 @@ class TaskManager:
         self.set_sound_volume()
         self.target_velocity.linear.x = self.dwa_target_velocity
         enable_detect_line = Bool()
+        is_finish_flag_pub = False
         while not rospy.is_shutdown():
             if self.checkpoint_id_subscribed:
                 rospy.loginfo_throttle(1, '=====')
@@ -158,6 +162,9 @@ class TaskManager:
                     rospy.logerr_throttle(1, 'enable_detect_line')
                     if self.stop_line_flag:
                         self.has_stopped = True
+                        if not is_finish_flag_pub:
+                            self.finish_flag.data = True
+                            is_finish_flag_pub = True
 
                     if self.has_stopped:
                         rospy.logerr_throttle(1, 'enable_detect_line has_stopped')
@@ -171,6 +178,8 @@ class TaskManager:
                         enable_detect_line.data = False
                         self.stop_line_flag = False
                         self.target_velocity.linear.x = self.pfp_target_velocity
+                        self.finish_flag.data = False
+                        is_finish_flag_pub = False
 
                 ##### stop node #####
                 if self.stop_node_flag_updated:
@@ -191,6 +200,7 @@ class TaskManager:
                 self.target_velocity_pub.publish(self.target_velocity)
                 self.detect_line_flag_pub.publish(enable_detect_line)
                 self.detect_traffic_light_flag_pub.publish(self.exec_traffic_light_detector)
+                self.finish_flag_pub.publish(self.finish_flag.data)
                 prev_task_type = task_type
             else:
                 rospy.logwarn_throttle(1, 'Checkpoint id is not updated')
@@ -242,6 +252,9 @@ class TaskManager:
 
     def select_topic_callback(self, msg):
         self.last_planner = msg.data.split('/')[-2].replace('_planner', '').replace('point_follow', 'pfp')
+
+    def finish_flag_callback(self, flag):
+        self.finish_flag.data = flag.data
 
     def init_stop_list(self):
         for id in self.checkpoint_list.data:
