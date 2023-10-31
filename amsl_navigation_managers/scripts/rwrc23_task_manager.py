@@ -53,7 +53,6 @@ class TaskManager:
         # params in callback function
         self.current_checkpoint_id = self.next_checkpoint_id = -1
         self.stop_line_flag = False
-        self.skip_node_flag = False
         self.joy = Joy()
         self.target_velocity = Twist()
 
@@ -86,7 +85,6 @@ class TaskManager:
         self.next_checkpoint_id_sub = rospy.Subscriber('/next_checkpoint', Int32, self.next_checkpoint_id_callback)
         self.stop_line_flag_sub = rospy.Subscriber('/stop_line_detector/stop_flag', Bool, self.stop_line_flag_callback)
         self.joy_sub = rospy.Subscriber('/joy', Joy, self.joy_callback)
-        self.skip_node_flag_sub = rospy.Subscriber('/skip_node_flag', Bool, self.skip_node_flag_callback)
         self.cross_traffic_light_flag_sub = rospy.Subscriber('/cross_traffic_light_flag', Bool, self.cross_traffic_light_flag_callback)
         self.checkpoint_sub = rospy.Subscriber('/checkpoint', Int32MultiArray, self.checkpoint_callback)
         self.select_topic_sub = rospy.Subscriber('/select_topic', String, self.select_topic_callback)
@@ -151,14 +149,10 @@ class TaskManager:
                 ##### no task #####
                 if task_type == '' and prev_task_type != task_type:
                     self.use_dwa_planner()
-                    if not self.is_stop_node(stop_list, next_checkpoint_id):
-                        self.skip_mode_flag.data = True
 
-                #### skip node announce ####
-                if self.skip_node_flag:
-                    self.skip_node_flag = False
-                    # self.set_sound_volume()
-                    # self.announce_once()
+                ##### skip_mode #####
+                if task_type == '' and not self.is_stop_node(self.stop_list, self.next_checkpoint_id):
+                    self.skip_mode_flag.data = True
 
                 ##### stop at white line #####
                 if enable_detect_line.data:
@@ -238,9 +232,6 @@ class TaskManager:
 
     def cross_traffic_light_flag_callback(self, flag):
         self.cross_traffic_light_flag = flag.data
-
-    def skip_node_flag_callback(self, flag):
-        self.skip_node_flag = flag.data
 
     def joy_callback(self, msg):
         self.joy = msg
