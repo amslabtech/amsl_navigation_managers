@@ -72,6 +72,7 @@ class TaskManager:
         self.stop_node_flag = False
         self.checkpoint_list = Int32MultiArray()
         self.finish_flag = Bool()
+        self.skip_mode_flag = Bool()
 
         # msg update flags
         self.checkpoint_list_subscribed = False
@@ -96,6 +97,7 @@ class TaskManager:
         self.target_velocity_pub = rospy.Publisher('/target_velocity', Twist, queue_size=1)
         self.task_stop_pub = rospy.Publisher('/task/stop', Bool, queue_size=1)
         self.finish_flag_pub = rospy.Publisher('/finish_flag', Bool, queue_size=1)
+        self.skip_mode_flag_pub = rospy.Publisher('/skip_mode_flag', Bool, queue_size=1)
 
 
     def process(self):
@@ -149,6 +151,8 @@ class TaskManager:
                 ##### no task #####
                 if task_type == '' and prev_task_type != task_type:
                     self.use_dwa_planner()
+                    if not self.is_stop_node(stop_list, next_checkpoint_id):
+                        self.skip_mode_flag.data = True
 
                 #### skip node announce ####
                 if self.skip_node_flag:
@@ -194,10 +198,12 @@ class TaskManager:
                 self.detect_line_flag_pub.publish(enable_detect_line)
                 self.detect_traffic_light_flag_pub.publish(self.exec_traffic_light_detector)
                 self.finish_flag_pub.publish(self.finish_flag.data)
+                self.skip_mode_flag_pub.publish(self.skip_mode_flag.data)
                 if self.finish_flag.data:
                     rospy.sleep(self.sleep_time_after_finish)
 
                 prev_task_type = task_type
+                self.skip_mode_flag.data = False
             else:
                 rospy.logwarn_throttle(1, 'Checkpoint id is not updated')
             r.sleep()
@@ -268,12 +274,12 @@ class TaskManager:
         else:
             return ''
 
-    def is_stop_node(self, stop_list, next_checkpoint_id):
+    def is_stop_node(self, stop_list, checkpoint_id):
         if self.get_stop_list == False:
             return False
         if len(stop_list) == 0:
             return False
-        if stop_list[0] == next_checkpoint_id:
+        if stop_list[0] == checkpoint_id:
             return True
         return False
 
