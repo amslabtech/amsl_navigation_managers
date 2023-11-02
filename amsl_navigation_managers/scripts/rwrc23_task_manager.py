@@ -126,6 +126,9 @@ class TaskManager:
                     self.use_point_follow_planner()
                     self.target_velocity.linear.x = self.detect_line_pfp_target_velocity
 
+                if task_type != 'detect_line':
+                    self.enable_detect_line.data = False
+
                 ##### traffic_light #####
                 if task_type == 'traffic_light':
                     self.exec_traffic_light_detector = True
