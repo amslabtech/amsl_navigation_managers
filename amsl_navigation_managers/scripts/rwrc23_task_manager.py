@@ -72,6 +72,7 @@ class TaskManager:
         self.checkpoint_list = Int32MultiArray()
         self.finish_flag = Bool()
         self.skip_mode_flag = Bool()
+        self.enable_detect_line = Bool()
 
         # msg update flags
         self.checkpoint_list_subscribed = False
@@ -79,7 +80,6 @@ class TaskManager:
         self.joy_updated = False
         self.stop_node_flag_updated = False
         self.exec_traffic_light_detector = False
-        self.is_finish_flag_pub = False
 
         # ros
         self.current_checkpoint_id_sub = rospy.Subscriber('/current_checkpoint', Int32, self.current_checkpoint_id_callback)
@@ -110,7 +110,6 @@ class TaskManager:
         # proc = announce_once()
         self.set_sound_volume()
         self.target_velocity.linear.x = self.dwa_target_velocity
-        enable_detect_line = Bool()
         while not rospy.is_shutdown():
             if self.checkpoint_id_subscribed:
                 rospy.loginfo_throttle(1, '=====')
@@ -123,9 +122,12 @@ class TaskManager:
                 ##### enable white line detector #####
                 if task_type == 'detect_line' and prev_task_type != task_type and self.USE_DETECT_WHITE_LINE:
                     self.stop_line_flag = False
-                    enable_detect_line.data = True
+                    self.enable_detect_line.data = True
                     self.use_point_follow_planner()
                     self.target_velocity.linear.x = self.detect_line_pfp_target_velocity
+
+                if task_type != 'detect_line':
+                    self.enable_detect_line.data = False
 
                 ##### traffic_light #####
                 if task_type == 'traffic_light':
@@ -152,12 +154,9 @@ class TaskManager:
                     self.skip_mode_flag.data = True
 
                 ##### stop at white line #####
-                if enable_detect_line.data:
+                if self.enable_detect_line.data:
                     if self.stop_line_flag:
                         self.has_stopped = True
-                        if not self.is_finish_flag_pub:
-                            self.finish_flag.data = True
-                            self.is_finish_flag_pub = True
 
                     if self.has_stopped:
                         self.task_stop_flag.data = True
@@ -167,10 +166,10 @@ class TaskManager:
                         self.has_stopped = False
                         self.task_stop_flag.data = False
                         self.task_stop_pub.publish(self.task_stop_flag)
-                        enable_detect_line.data = False
+                        self.enable_detect_line.data = False
                         self.stop_line_flag = False
+                        self.finish_flag.data = True
                         self.target_velocity.linear.x = self.pfp_target_velocity
-                        self.is_finish_flag_pub = False
 
                 ##### stop node #####
                 if self.stop_node_flag_updated:
@@ -186,7 +185,7 @@ class TaskManager:
                         self.task_stop_pub.publish(self.task_stop_flag)
 
                 self.target_velocity_pub.publish(self.target_velocity)
-                self.detect_line_flag_pub.publish(enable_detect_line)
+                self.detect_line_flag_pub.publish(self.enable_detect_line)
                 self.detect_traffic_light_flag_pub.publish(self.exec_traffic_light_detector)
                 self.finish_flag_pub.publish(self.finish_flag.data)
                 self.skip_mode_flag_pub.publish(self.skip_mode_flag.data)
