@@ -258,7 +258,11 @@ class TaskManager:
             if id == self.start_node_id:
                 return
             if id == self.stop_list[0]:
-                del self.stop_list[0]
+                if len(self.stop_list) == 1:
+                    self.stop_list[0] = -1
+                    return
+                else:
+                    del self.stop_list[0]
 
     def search_task_from_node_id(self, node0_id, node1_id):
         if self.get_task == True:
