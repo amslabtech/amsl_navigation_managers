@@ -72,6 +72,7 @@ class TaskManager:
         self.checkpoint_list = Int32MultiArray()
         self.finish_flag = Bool()
         self.skip_mode_flag = Bool()
+        self.recovery_mode_flag = Bool()
         self.enable_detect_line = Bool()
 
         # msg update flags
@@ -97,7 +98,7 @@ class TaskManager:
         self.task_stop_pub = rospy.Publisher('/task/stop', Bool, queue_size=1)
         self.finish_flag_pub = rospy.Publisher('/finish_flag', Bool, queue_size=1)
         self.skip_mode_flag_pub = rospy.Publisher('/skip_mode_flag', Bool, queue_size=1)
-
+        self.recovery_mode_flag_pub = rospy.Publisher('/recovery_mode_flag', Bool, queue_size=1)
 
     def process(self):
         if self.get_task == False or self.get_stop_list == False:
@@ -153,6 +154,10 @@ class TaskManager:
                 if task_type == '' and not self.is_stop_node(self.stop_list, self.next_checkpoint_id):
                     self.skip_mode_flag.data = True
 
+                ##### no task #####
+                if task_type == '':
+                    self.recovery_mode_flag.data = True
+
                 ##### stop at white line #####
                 if self.enable_detect_line.data:
                     if self.stop_line_flag:
@@ -189,11 +194,13 @@ class TaskManager:
                 self.detect_traffic_light_flag_pub.publish(self.exec_traffic_light_detector)
                 self.finish_flag_pub.publish(self.finish_flag.data)
                 self.skip_mode_flag_pub.publish(self.skip_mode_flag.data)
+                self.recovery_mode_flag_pub.publish(self.recovery_mode_flag.data)
                 if self.finish_flag.data:
                     rospy.sleep(self.sleep_time_after_finish)
 
                 prev_task_type = task_type
                 self.skip_mode_flag.data = False
+                self.recovery_mode_flag.data = False
                 self.finish_flag.data = False
             else:
                 rospy.logwarn_throttle(1, 'Checkpoint id is not updated')
