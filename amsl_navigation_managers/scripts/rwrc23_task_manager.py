@@ -154,8 +154,8 @@ class TaskManager:
                 if task_type == '' and not self.is_stop_node(self.stop_list, self.next_checkpoint_id):
                     self.skip_mode_flag.data = True
 
-                ##### no task #####
-                if task_type == '':
+                ##### recovery_mode #####
+                if task_type == '' or task_type == 'slow':
                     self.recovery_mode_flag.data = True
 
                 ##### stop at white line #####
