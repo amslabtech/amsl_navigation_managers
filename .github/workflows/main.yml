@@ -19,6 +19,6 @@ jobs:
         with:
           required-ros-distributions: noetic
       - name: Build
-        uses: ros-tooling/action-ros-ci@v0.4
+        uses: ros-tooling/action-ros-ci@v0.3
         with:
           target-ros1-distro: noetic
