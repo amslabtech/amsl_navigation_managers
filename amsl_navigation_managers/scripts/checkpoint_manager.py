@@ -27,11 +27,8 @@ class CheckpointManager:
     def __init__(self):
         rospy.init_node("checkpoint_manager")
 
-        # if rospy.has_param("~MAP_PATH"):
-        #     self.MAP_PATH = rospy.get_param("~MAP_PATH")
-        self.MAP_PATH = (
-            "/home/amsl/catkin_ws/src/amsl_navigation_managers/amsl_navigation_managers/sample/map/ikuta_graph.yaml"
-        )
+        if rospy.has_param("~MAP_PATH"):
+            self.MAP_PATH = rospy.get_param("~MAP_PATH")
 
         self.HZ = 10
         if rospy.has_param("~HZ"):
