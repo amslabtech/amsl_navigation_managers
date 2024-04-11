@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
 <launch>
 
-    <arg name="map_path" default="$(find amsl_navigation_managers)/sample/map/sample_map.yaml"/>
+    <arg name="map_path" default="$(find amsl_navigation_managers)/sample/map/ikuta_graph.yaml"/>
+    <!-- <arg name="map_path" default="$(find amsl_navigation_managers)/sample/map/sample_map.yaml"/> -->
     <arg name="checkpoint_path" default="$(find amsl_navigation_managers)/sample/checkpoint/sample_checkpoint.yaml"/>
     <arg name="task_list_path" default="$(find amsl_navigation_managers)/sample/task/sample_task.yaml"/>
     <arg name="enable_task" default="true"/>
@@ -13,7 +14,8 @@
     </node>
 
     <node pkg="amsl_navigation_managers" type="checkpoint_manager.py" name="checkpoint_manager" ns="navigation_managers">
-        <param name="CHECKPOINT_PATH" value="$(arg checkpoint_path)"/>
+        <!-- <param name="CHECKPOINT_PATH" value="$(arg checkpoint_path)"/> -->
+        <param name="MAP_PATH" value="$(arg map_path)"/>
         <param name="HZ" value="$(arg hz)"/>
     </node>
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #! coding:utf-8
 
 import numpy as np
@@ -21,24 +21,20 @@ from visualization_msgs.msg import Marker, MarkerArray
 
 from amsl_navigation_msgs.msg import Node, Edge, NodeEdgeMap
 from amsl_navigation_msgs.srv import UpdateCheckpoint, UpdateCheckpointResponse
-import global_path_planner
 
 
 class CheckpointManager:
     def __init__(self):
         rospy.init_node("checkpoint_manager")
 
-        if rospy.has_param("~MAP_PATH"):
-            self.MAP_PATH = rospy.get_param("~MAP_PATH")
-        # self.MAP_PATH = (
-        # "/home/amsl/catkin_ws/src/amsl_navigation_managers/amsl_navigation_managers/sample/map/ikuta_graph.yaml"
-        # )
+        if rospy.has_param("~CHECKPOINT_PATH"):
+            self.CHECKPOINT_PATH = rospy.get_param("~CHECKPOINT_PATH")
 
         self.HZ = 10
         if rospy.has_param("~HZ"):
             self.HZ = rospy.get_param("~HZ")
 
-        self.cp_data = global_path_planner.id_list
+        self.cp_data = self.load_cp_from_yaml()
         pprint.pprint(self.cp_data)
 
         self.cp_passed = []
@@ -73,7 +69,7 @@ class CheckpointManager:
         self.make_and_publish_checkpoint()
 
         timestamp = time.mktime(datetime.datetime.now().utctimetuple())
-        dir_name = os.path.dirname(self.MAP_PATH)
+        dir_name = os.path.dirname(self.CHECKPOINT_PATH)
 
         while not rospy.is_shutdown():
             for file in os.listdir(dir_name):
@@ -83,12 +79,17 @@ class CheckpointManager:
                 if timestamp < file_timestamp:
                     timestamp = file_timestamp
                     try:
-                        self.cp_data = global_path_planner.id_list
+                        self.cp_data = self.load_cp_from_yaml()
                         print("checkpoint updated!")
                     except:
                         print("failed to update checkpoint")
             self.make_and_publish_checkpoint()
             r.sleep()
+
+    def load_cp_from_yaml(self):
+        with open(self.CHECKPOINT_PATH) as file:
+            cp_data = yaml.load(file)
+        return cp_data
 
     def make_and_publish_checkpoint(self):
         self.make_checkpoint()
@@ -98,7 +99,7 @@ class CheckpointManager:
 
     def make_checkpoint(self):
         self.checkpoint_list = Int32MultiArray()
-        for cp in self.cp_data:
+        for cp in self.cp_data["checkpoints"]:
             self.checkpoint_list.data.append(cp)
 
     def node_callback(self, node):
@@ -108,9 +109,9 @@ class CheckpointManager:
     def edge_callback(self, edge):
         with self.lock:
             self.current_edge = edge
-            if self.cp_data[0] == self.current_edge.node0_id:
-                self.cp_passed.append(self.cp_data[0])
-                del self.cp_data[0]
+            if self.cp_data["checkpoints"][0] == self.current_edge.node0_id:
+                self.cp_passed.append(self.cp_data["checkpoints"][0])
+                del self.cp_data["checkpoints"][0]
 
     def update_node_color(self):
         self.cp_marker = MarkerArray()
@@ -150,7 +151,7 @@ class CheckpointManager:
                     if node.id == request.id:
                         flag = True
                 if flag:
-                    self.cp_data.insert(0, request.id)
+                    self.cp_data["checkpoints"].insert(0, request.id)
                 else:
                     raise Exception
                 self.make_and_publish_checkpoint()
@@ -161,7 +162,7 @@ class CheckpointManager:
                 return UpdateCheckpointResponse(False)
         elif request.operation == request.DELETE:
             try:
-                self.cp_data.remove(request.id)
+                self.cp_data["checkpoints"].remove(request.id)
                 self.make_and_publish_checkpoint()
                 return UpdateCheckpointResponse(True)
             except Exception as e:
