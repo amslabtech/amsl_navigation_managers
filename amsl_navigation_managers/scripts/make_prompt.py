@@ -2,9 +2,9 @@ from llama_cpp import Llama
 import get_data
 import re
 
-llm = Llama(model_path="/home/amsl/catkin_ws/src/llama.cpp/models/llama-2-7b-chat.q4_K_M.gguf")
+llm = Llama(model_path="/home/amsl/llama.cpp/models/llama-2-7b-chat.q4_K_M.gguf")
 # 変数
-filename = "/home/amsl/catkin_ws/src/amsl_navigation_managers/amsl_navigation_managers/sample/map/ikuta_graph.yaml"
+filename = "/home/amsl/catkin_ws/src/rwrc23/map/graph/ikuta_graph.yaml"
 ids = []
 labels = []
 choices = ""

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #! coding:utf-8
 
 import numpy as np
@@ -58,7 +58,7 @@ class CheckpointManager:
             "/node_edge_map/update_checkpoint", UpdateCheckpoint, self.update_checkpoint_handler
         )
 
-        self.cp_data_sub = rospy.Subscriber("/path", Int32MultiArray, self.cp_data_callback)
+        self.cp_data_sub = rospy.Subscriber("/global_path", Int32MultiArray, self.cp_data_callback)
 
         self.lock = threading.Lock()
 
@@ -67,23 +67,23 @@ class CheckpointManager:
     def process(self):
         r = rospy.Rate(self.HZ)
 
-        self.make_and_publish_checkpoint()
-
         timestamp = time.mktime(datetime.datetime.now().utctimetuple())
         dir_name = os.path.dirname(self.MAP_PATH)
 
         while not rospy.is_shutdown():
-            for file in os.listdir(dir_name):
-                if file.find(".") == 0:
-                    continue
-                file_timestamp = os.stat(dir_name + "/" + file)[ST_MTIME]
-                if timestamp < file_timestamp:
-                    timestamp = file_timestamp
-                    try:
-                        print("checkpoint updated!")
-                    except:
-                        print("failed to update checkpoint")
-            self.make_and_publish_checkpoint()
+            if self.cp_data_flag == True:
+                self.make_and_publish_checkpoint()
+                for file in os.listdir(dir_name):
+                    if file.find(".") == 0:
+                        continue
+                    file_timestamp = os.stat(dir_name + "/" + file)[ST_MTIME]
+                    if timestamp < file_timestamp:
+                        timestamp = file_timestamp
+                        try:
+                            print("checkpoint updated!")
+                        except:
+                            print("failed to update checkpoint")
+                self.make_and_publish_checkpoint()
             r.sleep()
 
     def make_and_publish_checkpoint(self):
@@ -91,6 +91,7 @@ class CheckpointManager:
         self.update_node_color()
         self.checkpoint_list_pub.publish(self.checkpoint_list)
         self.cp_marker_pub.publish(self.cp_marker)
+
 
     def node_callback(self, node):
         with self.lock:
@@ -104,7 +105,7 @@ class CheckpointManager:
                 del self.cp_data[0]
 
     def cp_data_callback(self, cp):
-        if self.cp_data_flag == False:
+        if self.cp_data_flag == False and len(cp.data) != 0:
             self.cp_data = cp
             self.cp_data_flag = True
 

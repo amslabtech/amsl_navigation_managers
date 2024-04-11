@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #! coding:utf-8
 
 import yaml
@@ -149,7 +149,7 @@ if __name__ == "__main__":
     r = rospy.Rate(10)
     START_NODE_ID = rospy.get_param("~start_node_id", 0)
 
-    filename = "/home/amsl/catkin_ws/src/amsl_navigation_managers/amsl_navigation_managers/sample/map/ikuta_graph.yaml"
+    filename = "/home/amsl/catkin_ws/src/rwrc23/map/graph/ikuta_graph.yaml"
     node_list, edge_list = get_data(filename)
 
     goal_id = int(make_prompt.answer)
@@ -167,7 +167,7 @@ if __name__ == "__main__":
 
     print(id_list)
 
-    global_path_pub = rospy.Publisher("/path", Int32MultiArray, queue_size=10)
+    global_path_pub = rospy.Publisher("/global_path", Int32MultiArray, queue_size=10)
     id_list_forPublish = Int32MultiArray(data=id_list)
 
     while not rospy.is_shutdown():

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #! coding:utf-8
 
 # 注：rwrc22_task_managerをベースにしています
@@ -207,8 +207,8 @@ class TaskManager:
                 self.skip_mode_flag.data = False
                 self.recovery_mode_flag.data = False
                 self.finish_flag.data = False
-            else:
-                rospy.logwarn_throttle(1, "Checkpoint id is not updated")
+            # else:
+                # rospy.logwarn_throttle(1, "Checkpoint id is not updated")
             r.sleep()
 
     def load_task_from_yaml(self):

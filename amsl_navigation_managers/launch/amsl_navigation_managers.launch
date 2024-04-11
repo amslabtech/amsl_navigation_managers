@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
 
-    <arg name="map_path" default="$(find amsl_navigation_managers)/sample/map/ikuta_graph.yaml"/>
+    <arg name="map_path" default="$(find rwrc23)/map/graph/ikuta_graph.yaml"/>
     <!-- <arg name="map_path" default="$(find amsl_navigation_managers)/sample/map/sample_map.yaml"/> -->
     <arg name="checkpoint_path" default="$(find amsl_navigation_managers)/sample/checkpoint/sample_checkpoint.yaml"/>
     <arg name="task_list_path" default="$(find amsl_navigation_managers)/sample/task/sample_task.yaml"/>
