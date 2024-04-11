@@ -169,11 +169,7 @@ if __name__ == "__main__":
 
     global_path_pub = rospy.Publisher("/path", Int32MultiArray, queue_size=10)
     id_list_forPublish = Int32MultiArray(data=id_list)
-    pub_flag = False
 
     while not rospy.is_shutdown():
-        if pub_flag == False:
-            global_path_pub.publish(id_list_forPublish)
-            # pub_flag = True
-
+        global_path_pub.publish(id_list_forPublish)
         r.sleep()
