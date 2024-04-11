@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-#! coding:utf-8
+#!/usr/bin/python3
 
 import numpy as np
 import math
@@ -21,26 +20,24 @@ from visualization_msgs.msg import Marker, MarkerArray
 
 from amsl_navigation_msgs.msg import Node, Edge, NodeEdgeMap
 from amsl_navigation_msgs.srv import UpdateCheckpoint, UpdateCheckpointResponse
-import global_path_planner
 
 
 class CheckpointManager:
     def __init__(self):
         rospy.init_node("checkpoint_manager")
 
-        if rospy.has_param("~MAP_PATH"):
-            self.MAP_PATH = rospy.get_param("~MAP_PATH")
-        # self.MAP_PATH = (
-        # "/home/amsl/catkin_ws/src/amsl_navigation_managers/amsl_navigation_managers/sample/map/ikuta_graph.yaml"
-        # )
+        # if rospy.has_param("~MAP_PATH"):
+        #     self.MAP_PATH = rospy.get_param("~MAP_PATH")
+        self.MAP_PATH = (
+            "/home/amsl/catkin_ws/src/amsl_navigation_managers/amsl_navigation_managers/sample/map/ikuta_graph.yaml"
+        )
 
         self.HZ = 10
         if rospy.has_param("~HZ"):
             self.HZ = rospy.get_param("~HZ")
 
-        self.cp_data = global_path_planner.id_list
-        pprint.pprint(self.cp_data)
-
+        self.cp_data = Int32MultiArray()
+        self.cp_data_flag = False
         self.cp_passed = []
 
         self.cp_marker = MarkerArray()
@@ -63,6 +60,8 @@ class CheckpointManager:
             "/node_edge_map/update_checkpoint", UpdateCheckpoint, self.update_checkpoint_handler
         )
 
+        self.cp_data_sub = rospy.Subscriber("/path", Int32MultiArray, self.cp_data_callback)
+
         self.lock = threading.Lock()
 
         print("=== checkpoint manager ===")
@@ -83,7 +82,6 @@ class CheckpointManager:
                 if timestamp < file_timestamp:
                     timestamp = file_timestamp
                     try:
-                        self.cp_data = global_path_planner.id_list
                         print("checkpoint updated!")
                     except:
                         print("failed to update checkpoint")
@@ -91,15 +89,10 @@ class CheckpointManager:
             r.sleep()
 
     def make_and_publish_checkpoint(self):
-        self.make_checkpoint()
+        self.checkpoint_list = self.cp_data
         self.update_node_color()
         self.checkpoint_list_pub.publish(self.checkpoint_list)
         self.cp_marker_pub.publish(self.cp_marker)
-
-    def make_checkpoint(self):
-        self.checkpoint_list = Int32MultiArray()
-        for cp in self.cp_data:
-            self.checkpoint_list.data.append(cp)
 
     def node_callback(self, node):
         with self.lock:
@@ -111,6 +104,11 @@ class CheckpointManager:
             if self.cp_data[0] == self.current_edge.node0_id:
                 self.cp_passed.append(self.cp_data[0])
                 del self.cp_data[0]
+
+    def cp_data_callback(self, cp):
+        if self.cp_data_flag == False:
+            self.cp_data = cp
+            self.cp_data_flag = True
 
     def update_node_color(self):
         self.cp_marker = MarkerArray()

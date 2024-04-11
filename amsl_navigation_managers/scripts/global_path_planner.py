@@ -4,7 +4,7 @@ import yaml
 import math
 import make_prompt
 import rospy
-from std_msgs.msg import Int64MultiArray
+from std_msgs.msg import Int32MultiArray
 
 
 class Node:
@@ -143,29 +143,34 @@ def aster(start, end):
             open_list.append(child)
 
 
-# if __name__ == "__main__":
-# rospy.init_node("global_path_planner", anonymous=True)
-# r = rospy.Rate(10)
+if __name__ == "__main__":
+    rospy.init_node("global_path_planner", anonymous=True)
+    r = rospy.Rate(10)
 
-filename = "/home/amsl/catkin_ws/src/amsl_navigation_managers/amsl_navigation_managers/sample/map/ikuta_graph.yaml"
-node_list, edge_list = get_data(filename)
+    filename = "/home/amsl/catkin_ws/src/amsl_navigation_managers/amsl_navigation_managers/sample/map/ikuta_graph.yaml"
+    node_list, edge_list = get_data(filename)
 
-goal_id = int(make_prompt.answer)
+    goal_id = int(make_prompt.answer)
 
-start_node = get_position(node_list[0])
-for node in node_list:
-    if node["id"] == goal_id:
-        end_node = get_position(node)
+    start_node = get_position(node_list[0])
+    for node in node_list:
+        if node["id"] == goal_id:
+            end_node = get_position(node)
 
-path = aster(start_node, end_node)
+    path = aster(start_node, end_node)
 
-id_list = []
-for position in path:
-    id_list.append(get_id(position))
+    id_list = []
+    for position in path:
+        id_list.append(get_id(position))
 
-# global_path_pub = rospy.Publisher("/path", Int64MultiArray, queue_size=10)
-# id_list_forPublish = Int64MultiArray(data=id_list)
+    print(id_list)
+    global_path_pub = rospy.Publisher("/path", Int32MultiArray, queue_size=10)
+    id_list_forPublish = Int32MultiArray(data=id_list)
+    pub_flag = False
 
-# while not rospy.is_shutdown():
-# global_path_pub.publish(id_list_forPublish)
-# r.sleep()
+    while not rospy.is_shutdown():
+        if pub_flag == False:
+            global_path_pub.publish(id_list_forPublish)
+            # pub_flag = True
+
+        r.sleep()
