@@ -1,4 +1,5 @@
-#!/usr/bin/python3
+#!/usr/bin/env python
+#! coding:utf-8
 
 # 注：rwrc22_task_managerをベースにしています
 import yaml
