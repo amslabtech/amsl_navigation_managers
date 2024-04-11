@@ -146,13 +146,14 @@ def aster(start, end):
 if __name__ == "__main__":
     rospy.init_node("global_path_planner", anonymous=True)
     r = rospy.Rate(10)
+    START_NODE_ID = rospy.get_param("~start_node_id", 0)
 
     filename = "/home/amsl/catkin_ws/src/amsl_navigation_managers/amsl_navigation_managers/sample/map/ikuta_graph.yaml"
     node_list, edge_list = get_data(filename)
 
     goal_id = int(make_prompt.answer)
 
-    start_node = get_position(node_list[0])
+    start_node = get_position(node_list[START_NODE_ID])
     for node in node_list:
         if node["id"] == goal_id:
             end_node = get_position(node)
@@ -164,6 +165,7 @@ if __name__ == "__main__":
         id_list.append(get_id(position))
 
     print(id_list)
+
     global_path_pub = rospy.Publisher("/path", Int32MultiArray, queue_size=10)
     id_list_forPublish = Int32MultiArray(data=id_list)
     pub_flag = False
