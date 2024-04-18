@@ -17,7 +17,7 @@ def from_yaml(filename):
 
 
 if __name__ == "__main__":
-    filename = "/home/amsl/catkin_ws/src/rwrc23/map/graph/ikuta_graph.yaml"
+    filename = "/home/user/ws/src/advanced_navigation_launcher/map/graph/ikuta_graph.yaml"
     ids = []
     labels = []
     choices = ""
