@@ -1,8 +1,8 @@
 # amsl_navigation_managers
 
 ## Environments
-- Ubuntu 16.04LTS & ROS Kinetic
-- Ubuntu 18.04LTS & ROS Melodic
+- Ubuntu 20.04
+- ROS Noetic
 
 ## Requirements
 - pyyaml
@@ -16,14 +16,14 @@
 ### services
   - /node_edge_map/update_node (amsl_navigation_msgs/UpdateNode)
   - /node_edge_map/update_edge (amsl_navigation_msgs/UpdateNode)
-### params 
+### params
 - HZ
   - loop rate (default: 10)
 - MAP_PATH
   - ABSOLUTE path to map yaml file (default: $(find amsl_navigation_managers)/sample/map/sample_map.yaml)
 
 ## checkpoint_manager
-- This node loads checkpoint(node) id from yaml. 
+- This node loads checkpoint(node) id from yaml.
 ### published topics
   - /node_edge_map/checkpoint (std_msgs/Int32MultiArray)
 ### subscribed topics
