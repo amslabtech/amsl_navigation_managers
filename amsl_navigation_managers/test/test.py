@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import unittest
 import rostest
@@ -12,7 +12,7 @@ class TestCase(unittest.TestCase):
 
     def test_mytest(self):
         self.assertTrue(True)
-        
+
 if __name__ == '__main__':
     time.sleep(3)
     rospy.init_node('test_amsl_navigation_managers')

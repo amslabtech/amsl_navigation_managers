@@ -1,5 +1,5 @@
-#! /usr/bin/env python
-#! coding: utf-8
+#!/usr/bin/env python3
+#! coding:utf-8
 
 import sys
 import os
@@ -31,7 +31,7 @@ if __name__=="__main__":
     data = None
     with open(args.input_path, 'r') as input_csv:
         reader = csv.reader(input_csv)
-        data = {'MAP_FRAME': '/map'} 
+        data = {'MAP_FRAME': '/map'}
         nodes = []
         edges = []
         for row in reader:
@@ -48,5 +48,5 @@ if __name__=="__main__":
         data.update({'NODE': nodes})
         data.update({'EDGE': edges})
 
-    with open(args.output_path, 'w') as output_yaml: 
-        yaml.dump(data, output_yaml) 
+    with open(args.output_path, 'w') as output_yaml:
+        yaml.dump(data, output_yaml)
