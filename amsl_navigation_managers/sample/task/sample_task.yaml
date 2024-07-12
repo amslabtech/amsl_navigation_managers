@@ -23,7 +23,7 @@ task:
         progress_min: 0.8
         progress_max: 1.2
       repeat: True
-    - trigger: "recognition/stop_line/T"
+    - trigger: "recognition/stop_line"
       task_type: "stop"
       edge:
         node0_id: 14
@@ -42,7 +42,7 @@ task:
         progress_min: 0.8
         progress_max: 1.2
       repeat: True
-    - trigger: "recognition/stop_line/T"
+    - trigger: "recognition/stop_line"
       task_type: "stop"
       edge:
         node0_id: 67
@@ -61,7 +61,7 @@ task:
         progress_min: 0.8
         progress_max: 1.2
       repeat: True
-    - trigger: "recognition/stop_line/T"
+    - trigger: "recognition/stop_line"
       task_type: "stop"
       edge:
         node0_id: 77
@@ -80,7 +80,7 @@ task:
         progress_min: 0.0
         progress_max: 1.2
       repeat: True
-    - trigger: "recognition/stop_line/T"
+    - trigger: "recognition/stop_line"
       task_type: "stop"
       edge:
         node0_id: 70
