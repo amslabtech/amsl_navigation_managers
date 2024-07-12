@@ -109,9 +109,7 @@ class TaskManager:
         timestamp = time.mktime(datetime.datetime.now().utctimetuple())
         dir_name = os.path.dirname(self.TASK_LIST_PATH)
         while not rospy.is_shutdown():
-            # print('=== task manager ===')
             if self.map is not None:
-                # print("node id :{}".format(self.map.nodes[self.estimated_edge.node0_id].id))
                 if (
                     self.map.nodes[self.estimated_edge.node0_id].label
                     == "park"
@@ -189,14 +187,12 @@ class TaskManager:
                                 line_direction = self.calc_line_direction(
                                     line_angle
                                 )
-                                # print("direction :{} angle :{}".format(line_direction, line_angle))
                                 if (
                                     line_direction > math.pi * 0.25
                                     and line_direction < math.pi * 0.75
                                 ) or self.t_flag:
                                     line_dist = self.calc_line_dist()
                                     if line_dist > self.LINE_DIST_THRESHOLD:
-                                        # print("line dist :{}".format(line_dist))
                                         self.line_detected_pose = self.odom
                                         if "performed" in task:
                                             if task["repeat"]:
@@ -281,8 +277,6 @@ class TaskManager:
                                             rel_local_goal = Rz.dot(
                                                 abs_local_goal
                                             )
-                                            # print("line angle :{}".format(line_angle))
-                                            # print("absolute local goal :{}\nrelative local goal :{}".format(abs_local_goal, rel_local_goal))
                                             rospy.sleep(self.REST_TIME)
                                             self.stop_pub.publish(
                                                 Bool(self.line_detected)
@@ -355,7 +349,6 @@ class TaskManager:
         )
         edge_direction = self.estimated_edge.direction
         direction_diff = robot_direction - edge_direction
-        # print("robot :{} edge :{} diff :{}".format(robot_direction, edge_direction, direction_diff))
         line_direction = line_angle - math.pi * 0.5 + direction_diff
         line_direction = abs(
             math.atan2(math.sin(line_direction), math.cos(line_direction))
@@ -469,13 +462,11 @@ class TaskManager:
         self.estimated_pose = pose
         # if self.line_detected_pose == None:
         #     self.line_detected_pose = pose
-        # print("line detected pose x:{}, y:{}".format(self.line_detected_pose.pose.pose.position.x, self.line_detected_pose.pose.pose.position.y))
 
     def odom_callback(self, odom):
         self.odom = odom
         if self.line_detected_pose == None:
             self.line_detected_pose = odom
-        # print("pose x:{}, y:{}".format(odom.pose.pose.position.x, odom.pose.pose.position.y))
 
     def edge_callback(self, edge):
         self.estimated_edge = edge
