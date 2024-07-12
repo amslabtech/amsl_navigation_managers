@@ -100,7 +100,7 @@ class CheckpointManager:
 
     def load_cp_from_yaml(self):
         with open(self.CHECKPOINT_PATH) as file:
-            cp_data = yaml.load(file)
+            cp_data = yaml.safe_load(file)
         return cp_data
 
     def make_and_publish_checkpoint(self):

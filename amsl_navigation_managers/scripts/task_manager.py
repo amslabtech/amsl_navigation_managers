@@ -427,7 +427,7 @@ class TaskManager:
 
     def load_task_from_yaml(self):
         with open(self.TASK_LIST_PATH) as file:
-            task_data = yaml.load(file)
+            task_data = yaml.safe_load(file)
         pprint(task_data)
         return task_data
 

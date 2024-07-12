@@ -87,7 +87,7 @@ class MapMaker:
 
     def load_map_from_yaml(self, path):
         with open(path, "r") as f:
-            map_data = yaml.load(f)
+            map_data = yaml.safe_load(f)
         return map_data
 
     def save_map_to_yaml(self, map_data, path):
