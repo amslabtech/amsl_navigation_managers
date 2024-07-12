@@ -1,37 +1,38 @@
 #!/usr/bin/env python3
 #! coding:utf-8
 
-import numpy as np
-import math
-import threading
-import yaml
-import pprint
-import os
-import time
-import datetime
-from stat import *
 import copy
+import datetime
+import math
+import os
+import pprint
+import threading
+import time
+from stat import *
 
+import numpy as np
 import rospy
 import tf
-from std_msgs.msg import ColorRGBA, Int32MultiArray
+import yaml
+from geometry_msgs.msg import Point, Quaternion
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import Quaternion, Point
+from std_msgs.msg import ColorRGBA, Int32MultiArray
 from visualization_msgs.msg import Marker, MarkerArray
 
-from amsl_navigation_msgs.msg import Node, Edge, NodeEdgeMap
+from amsl_navigation_msgs.msg import Edge, Node, NodeEdgeMap
 from amsl_navigation_msgs.srv import UpdateCheckpoint, UpdateCheckpointResponse
+
 
 class CheckpointManager:
     def __init__(self):
-        rospy.init_node('checkpoint_manager')
+        rospy.init_node("checkpoint_manager")
 
-        if rospy.has_param('~CHECKPOINT_PATH'):
-            self.CHECKPOINT_PATH = rospy.get_param('~CHECKPOINT_PATH')
+        if rospy.has_param("~CHECKPOINT_PATH"):
+            self.CHECKPOINT_PATH = rospy.get_param("~CHECKPOINT_PATH")
 
         self.HZ = 10
-        if rospy.has_param('~HZ'):
-            self.HZ = rospy.get_param('~HZ')
+        if rospy.has_param("~HZ"):
+            self.HZ = rospy.get_param("~HZ")
 
         self.cp_data = self.load_cp_from_yaml()
         pprint.pprint(self.cp_data)
@@ -39,22 +40,40 @@ class CheckpointManager:
         self.cp_passed = []
 
         self.cp_marker = MarkerArray()
-        self.cp_marker_pub = rospy.Publisher('/node_edge_map/viz/node/checkpoint', MarkerArray, queue_size=1, latch=True)
+        self.cp_marker_pub = rospy.Publisher(
+            "/node_edge_map/viz/node/checkpoint",
+            MarkerArray,
+            queue_size=1,
+            latch=True,
+        )
 
         self.checkpoint_list = Int32MultiArray()
-        self.checkpoint_list_pub = rospy.Publisher('/node_edge_map/checkpoint', Int32MultiArray, queue_size=1, latch=True)
+        self.checkpoint_list_pub = rospy.Publisher(
+            "/node_edge_map/checkpoint",
+            Int32MultiArray,
+            queue_size=1,
+            latch=True,
+        )
 
         self.node_markers = MarkerArray()
-        self.node_sub = rospy.Subscriber('/node_edge_map/viz/node', MarkerArray, self.node_callback)
+        self.node_sub = rospy.Subscriber(
+            "/node_edge_map/viz/node", MarkerArray, self.node_callback
+        )
 
         self.current_edge = Edge()
-        self.edge_sub = rospy.Subscriber('/estimated_pose/edge', Edge, self.edge_callback)
+        self.edge_sub = rospy.Subscriber(
+            "/estimated_pose/edge", Edge, self.edge_callback
+        )
 
-        self.update_checkpoint_server = rospy.Service('/node_edge_map/update_checkpoint', UpdateCheckpoint, self.update_checkpoint_handler)
+        self.update_checkpoint_server = rospy.Service(
+            "/node_edge_map/update_checkpoint",
+            UpdateCheckpoint,
+            self.update_checkpoint_handler,
+        )
 
         self.lock = threading.Lock()
 
-        print('=== checkpoint manager ===')
+        print("=== checkpoint manager ===")
 
     def process(self):
         r = rospy.Rate(self.HZ)
@@ -66,16 +85,16 @@ class CheckpointManager:
 
         while not rospy.is_shutdown():
             for file in os.listdir(dir_name):
-                if file.find('.') == 0:
+                if file.find(".") == 0:
                     continue
-                file_timestamp = os.stat(dir_name+'/'+file)[ST_MTIME]
+                file_timestamp = os.stat(dir_name + "/" + file)[ST_MTIME]
                 if timestamp < file_timestamp:
                     timestamp = file_timestamp
                     try:
                         self.cp_data = self.load_cp_from_yaml()
-                        print('checkpoint updated!')
+                        print("checkpoint updated!")
                     except:
-                        print('failed to update checkpoint')
+                        print("failed to update checkpoint")
             self.make_and_publish_checkpoint()
             r.sleep()
 
@@ -92,7 +111,7 @@ class CheckpointManager:
 
     def make_checkpoint(self):
         self.checkpoint_list = Int32MultiArray()
-        for cp in self.cp_data['checkpoints']:
+        for cp in self.cp_data["checkpoints"]:
             self.checkpoint_list.data.append(cp)
 
     def node_callback(self, node):
@@ -102,9 +121,9 @@ class CheckpointManager:
     def edge_callback(self, edge):
         with self.lock:
             self.current_edge = edge
-            if self.cp_data['checkpoints'][0] == self.current_edge.node0_id:
-                self.cp_passed.append(self.cp_data['checkpoints'][0])
-                del(self.cp_data['checkpoints'][0])
+            if self.cp_data["checkpoints"][0] == self.current_edge.node0_id:
+                self.cp_passed.append(self.cp_data["checkpoints"][0])
+                del self.cp_data["checkpoints"][0]
 
     def update_node_color(self):
         self.cp_marker = MarkerArray()
@@ -144,25 +163,26 @@ class CheckpointManager:
                     if node.id == request.id:
                         flag = True
                 if flag:
-                    self.cp_data['checkpoints'].insert(0, request.id)
+                    self.cp_data["checkpoints"].insert(0, request.id)
                 else:
                     raise Exception
                 self.make_and_publish_checkpoint()
                 return UpdateCheckpointResponse(True)
             except Exception as e:
                 print(e)
-                print('failed to update checkpoint')
+                print("failed to update checkpoint")
                 return UpdateCheckpointResponse(False)
         elif request.operation == request.DELETE:
             try:
-                self.cp_data['checkpoints'].remove(request.id)
+                self.cp_data["checkpoints"].remove(request.id)
                 self.make_and_publish_checkpoint()
                 return UpdateCheckpointResponse(True)
             except Exception as e:
                 print(e)
-                print('failed to update checkpoint')
+                print("failed to update checkpoint")
                 return UpdateCheckpointResponse(False)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     checkpoint_manager = CheckpointManager()
     checkpoint_manager.process()
