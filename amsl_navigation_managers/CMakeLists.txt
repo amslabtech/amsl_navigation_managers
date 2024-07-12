@@ -166,7 +166,9 @@ add_dependencies(node_edge_map_interface ${${PROJECT_NAME}_EXPORTED_TARGETS} ${c
 
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
-install(PROGRAMS scripts
+FILE(GLOB scripts "scripts/*.py")
+FILE(GLOB tools "scripts/tools/*.py")
+install(PROGRAMS ${scripts} ${tools}
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
