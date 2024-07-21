@@ -12,7 +12,7 @@ from amsl_navigation_msgs.msg import NodeEdgeMap, Road
 
 
 @dataclass(frozen=True)
-class Params:
+class Param:
     """data class for parameters
 
     Attributes:
@@ -28,7 +28,7 @@ class RoadPublisher:
     """class for road publisher
 
     Attributes:
-        _params (Params): parameters
+        _param (Param): parameters
         _road_pub (rospy.Publisher): road publisher
         _current_checkpoint_id_sub (rospy.Subscriber): current checkpoint id
           subscriber
@@ -45,7 +45,7 @@ class RoadPublisher:
         """constructor"""
         rospy.init_node("road_publisher")
 
-        self._params = Params(
+        self._param = Param(
             hz=rospy.get_param("~hz", 10),
             path=rospy.get_param("~path", "road_width.yaml"),
         )
@@ -66,7 +66,7 @@ class RoadPublisher:
         self._current_checkpoint_id: Optional[int] = None
         self._next_checkpoint_id: Optional[int] = None
         self._node_edge_map: Optional[NodeEdgeMap] = None
-        self._widths: dict = self._load_width_from_yaml(self._params.path)
+        self._widths: dict = self._load_width_from_yaml(self._param.path)
 
     def _node_edge_map_callback(self, msg: NodeEdgeMap) -> None:
         """node edge map callback
@@ -121,7 +121,7 @@ class RoadPublisher:
 
     def process(self) -> None:
         """process"""
-        r: rospy.Rate = rospy.Rate(self._params.hz)
+        r: rospy.Rate = rospy.Rate(self._param.hz)
         while not rospy.is_shutdown():
             if (
                 self._node_edge_map is not None
