@@ -12,6 +12,7 @@ import yaml
 from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped, Twist
 from sensor_msgs.msg import Joy
 from std_msgs.msg import Bool, Float64, Int32, Int32MultiArray, String
+from std_srvs.srv import SetBool, SetBoolResponse
 
 
 class TaskManager:
@@ -72,7 +73,6 @@ class TaskManager:
         self.reached_checkpoint = False
         self.get_stop_list = False
         self.stop_list = self.load_stop_list_from_yaml()
-        self.cross_traffic_light_flag = False
         self.has_stopped = False
         self.start_announce_flag = False
         self.announce_pid = 0
@@ -137,6 +137,7 @@ class TaskManager:
         self.recovery_mode_flag_pub = rospy.Publisher(
             "/recovery_mode_flag", Bool, queue_size=1
         )
+        self.task_stop_client = rospy.ServiceProxy("/task/stop", SetBool)
 
     def process(self):
         if self.get_task == False or self.get_stop_list == False:
@@ -232,19 +233,11 @@ class TaskManager:
 
                 ##### stop node #####
                 if self.stop_node_flag_updated:
-                    rospy.logwarn_throttle(1, "=== stop_node ===")
-                    self.task_stop_flag.data = True
-                    self.task_stop_pub.publish(self.task_stop_flag)
-
-                    if (
-                        self.get_go_signal(self.joy)
-                        or self.cross_traffic_light_flag
-                    ):
-                        self.has_stopped = False
-                        self.stop_node_flag_updated = False
-                        del self.stop_list[0]
-                        self.task_stop_flag.data = False
-                        self.task_stop_pub.publish(self.task_stop_flag)
+                    resp = self.task_stop_client(True)
+                    rospy.logwarn(resp.message)
+                    self.has_stopped = False
+                    self.stop_node_flag_updated = False
+                    del self.stop_list[0]
 
                 self.target_velocity_pub.publish(self.target_velocity)
                 self.detect_line_flag_pub.publish(self.enable_detect_line)
@@ -298,7 +291,9 @@ class TaskManager:
         self.stop_line_flag = flag.data
 
     def cross_traffic_light_flag_callback(self, flag):
-        self.cross_traffic_light_flag = flag.data
+        if self.flag.data:
+            resp = self.task_stop_client(False)
+            rospy.logwarn(resp.message)
 
     def joy_callback(self, msg):
         self.joy = msg
