@@ -10,7 +10,6 @@ import rospy
 import tf2_ros
 import yaml
 from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped, Twist
-from sensor_msgs.msg import Joy
 from std_msgs.msg import Bool, Float64, Int32, Int32MultiArray, String
 from std_srvs.srv import SetBool, SetBoolResponse
 
@@ -63,8 +62,6 @@ class TaskManager:
 
         # params in callback function
         self.current_checkpoint_id = self.next_checkpoint_id = -1
-        self.stop_line_flag = False
-        self.joy = Joy()
         self.target_velocity = Twist()
 
         # params
@@ -73,24 +70,17 @@ class TaskManager:
         self.reached_checkpoint = False
         self.get_stop_list = False
         self.stop_list = self.load_stop_list_from_yaml()
-        self.has_stopped = False
         self.start_announce_flag = False
         self.announce_pid = 0
         self.current_planner = ""
-        self.task_stop_flag = Bool()
-        self.stop_node_flag = False
         self.checkpoint_list = Int32MultiArray()
         self.finish_flag = Bool()
         self.skip_mode_flag = Bool()
         self.recovery_mode_flag = Bool()
-        self.enable_detect_line = Bool()
 
         # msg update flags
         self.checkpoint_list_subscribed = False
         self.checkpoint_id_subscribed = False
-        self.joy_updated = False
-        self.stop_node_flag_updated = False
-        self.exec_traffic_light_detector = False
 
         # ros
         self.current_checkpoint_id_sub = rospy.Subscriber(
@@ -98,15 +88,6 @@ class TaskManager:
         )
         self.next_checkpoint_id_sub = rospy.Subscriber(
             "/next_checkpoint", Int32, self.next_checkpoint_id_callback
-        )
-        self.stop_line_flag_sub = rospy.Subscriber(
-            "/stop_line_detector/stop_flag", Bool, self.stop_line_flag_callback
-        )
-        self.joy_sub = rospy.Subscriber("/joy", Joy, self.joy_callback)
-        self.cross_traffic_light_flag_sub = rospy.Subscriber(
-            "/cross_traffic_light_flag",
-            Bool,
-            self.cross_traffic_light_flag_callback,
         )
         self.checkpoint_sub = rospy.Subscriber(
             "/checkpoint", Int32MultiArray, self.checkpoint_callback
@@ -118,16 +99,9 @@ class TaskManager:
             "/local_planner/finish_flag", Bool, self.finish_flag_callback
         )
 
-        self.detect_line_flag_pub = rospy.Publisher(
-            "~request_detect_line", Bool, queue_size=1
-        )
-        self.detect_traffic_light_flag_pub = rospy.Publisher(
-            "/request_detect_traffic_light", Bool, queue_size=1
-        )
         self.target_velocity_pub = rospy.Publisher(
             "/target_velocity", Twist, queue_size=1
         )
-        self.task_stop_pub = rospy.Publisher("/task/stop", Bool, queue_size=1)
         self.finish_flag_pub = rospy.Publisher(
             "/finish_flag", Bool, queue_size=1
         )
@@ -137,14 +111,25 @@ class TaskManager:
         self.recovery_mode_flag_pub = rospy.Publisher(
             "/recovery_mode_flag", Bool, queue_size=1
         )
+        self.stop_line_detected_server = rospy.Service(
+            "/stop_line_detector/stop",
+            SetBool,
+            self.stop_line_detected_callback,
+        )
         self.task_stop_client = rospy.ServiceProxy("/task/stop", SetBool)
+        self.stop_line_detector_client = rospy.ServiceProxy(
+            "/stop_line_detector/request", SetBool
+        )
+        self.traffic_light_detector_client = rospy.ServiceProxy(
+            "/traffic_light_detector/request", SetBool
+        )
 
     def process(self):
         if self.get_task == False or self.get_stop_list == False:
             rospy.logerr("task or stop list is not loaded")
             exit(-1)
 
-        prev_task_type = ""
+        prev_task_type = "init"
         r = rospy.Rate(10)
         # self.set_sound_volume(0)
         # proc = announce_once()
@@ -165,96 +150,78 @@ class TaskManager:
                     1, f"next_checkpoint : {self.next_checkpoint_id}"
                 )
 
-                ##### enable white line detector #####
-                if (
-                    task_type == "detect_line"
-                    and prev_task_type != task_type
-                    and self.USE_DETECT_WHITE_LINE
-                ):
-                    self.stop_line_flag = False
-                    self.enable_detect_line.data = True
-                    self.use_point_follow_planner()
-                    self.target_velocity.linear.x = (
-                        self.detect_line_pfp_target_velocity
-                    )
-
-                if task_type != "detect_line":
-                    self.enable_detect_line.data = False
-
-                ##### traffic_light #####
-                if task_type == "traffic_light":
-                    self.exec_traffic_light_detector = True
-                    if prev_task_type != task_type:
-                        self.use_dwa_planner()
-                else:
-                    self.exec_traffic_light_detector = False
-
-                ##### point_follow_planner #####
-                if task_type == "in_line" and prev_task_type != task_type:
-                    self.use_point_follow_planner()
-
-                ##### slow #####
-                if task_type == "slow" and prev_task_type != task_type:
-                    self.target_velocity.linear.x = self.slow_target_velocity
-
-                ##### no task #####
-                if task_type == "" and prev_task_type != task_type:
-                    self.use_dwa_planner()
-
-                ##### skip_mode #####
-                if task_type == "" and not self.is_stop_node(
-                    self.stop_list, self.next_checkpoint_id
-                ):
-                    self.skip_mode_flag.data = True
-
-                ##### recovery_mode #####
-                if task_type == "" or task_type == "slow":
-                    self.recovery_mode_flag.data = True
-
-                ##### stop at white line #####
-                if self.enable_detect_line.data:
-                    if self.stop_line_flag:
-                        self.has_stopped = True
-
-                    if self.has_stopped:
-                        self.task_stop_flag.data = True
-                        self.task_stop_pub.publish(self.task_stop_flag)
-
-                    if self.has_stopped and self.get_go_signal(self.joy):
-                        self.has_stopped = False
-                        self.task_stop_flag.data = False
-                        self.task_stop_pub.publish(self.task_stop_flag)
-                        self.enable_detect_line.data = False
-                        self.stop_line_flag = False
-                        self.finish_flag.data = True
+                # update task
+                if prev_task_type != task_type:
+                    rospy.logwarn(f"task updated : {task_type}")
+                    # detect_line
+                    if (
+                        task_type == "detect_line"
+                        and self.USE_DETECT_WHITE_LINE
+                    ):
+                        self.stop_line_detector_client(True)
+                        self.use_point_follow_planner()
                         self.target_velocity.linear.x = (
-                            self.pfp_target_velocity
+                            self.detect_line_pfp_target_velocity
+                        )
+                    else:
+                        self.stop_line_detector_client(False)
+
+                    # traffic_light
+                    if task_type == "traffic_light":
+                        self.traffic_light_detector_client(True)
+                        self.use_dwa_planner()
+                    else:
+                        self.traffic_light_detector_client(False)
+
+                    # point_follow_planner
+                    if task_type == "in_line":
+                        self.use_point_follow_planner()
+
+                    # slow
+                    if task_type == "slow":
+                        self.target_velocity.linear.x = (
+                            self.slow_target_velocity
                         )
 
-                ##### stop node #####
-                if self.stop_node_flag_updated:
-                    resp = self.task_stop_client(True)
-                    rospy.logwarn(resp.message)
-                    self.has_stopped = False
-                    self.stop_node_flag_updated = False
-                    del self.stop_list[0]
+                    # no task
+                    if task_type == "":
+                        self.use_dwa_planner()
 
+                    # check stop node
+                    is_stop_node = self.is_stop_node(
+                        self.stop_list, self.next_checkpoint_id
+                    )
+
+                    # skip_mode
+                    if task_type == "" and not is_stop_node:
+                        self.skip_mode_flag.data = True
+                    else:
+                        self.skip_mode_flag.data = False
+
+                    # stop node
+                    if is_stop_node:
+                        resp = self.task_stop_client(True)
+                        rospy.logwarn(resp.message)
+                        del self.stop_list[0]
+
+                    # recovery_mode
+                    if task_type == "" or task_type == "slow":
+                        self.recovery_mode_flag.data = True
+                    else:
+                        self.recovery_mode_flag.data = False
+
+                # publish
                 self.target_velocity_pub.publish(self.target_velocity)
-                self.detect_line_flag_pub.publish(self.enable_detect_line)
-                self.detect_traffic_light_flag_pub.publish(
-                    self.exec_traffic_light_detector
-                )
                 self.finish_flag_pub.publish(self.finish_flag.data)
                 self.skip_mode_flag_pub.publish(self.skip_mode_flag.data)
                 self.recovery_mode_flag_pub.publish(
                     self.recovery_mode_flag.data
                 )
+
                 if self.finish_flag.data:
                     rospy.sleep(self.sleep_time_after_finish)
 
                 prev_task_type = task_type
-                self.skip_mode_flag.data = False
-                self.recovery_mode_flag.data = False
                 self.finish_flag.data = False
             else:
                 rospy.logwarn_throttle(1, "Checkpoint id is not updated")
@@ -278,26 +245,9 @@ class TaskManager:
     def current_checkpoint_id_callback(self, msg):
         self.current_checkpoint_id = int(msg.data)
         self.checkpoint_id_subscribed = True
-        self.stop_node_flag = self.is_stop_node(
-            self.stop_list, self.current_checkpoint_id
-        )
-        if self.stop_node_flag:
-            self.stop_node_flag_updated = True
 
     def next_checkpoint_id_callback(self, msg):
         self.next_checkpoint_id = int(msg.data)
-
-    def stop_line_flag_callback(self, flag):
-        self.stop_line_flag = flag.data
-
-    def cross_traffic_light_flag_callback(self, flag):
-        if self.flag.data:
-            resp = self.task_stop_client(False)
-            rospy.logwarn(resp.message)
-
-    def joy_callback(self, msg):
-        self.joy = msg
-        self.joy_updated = True
 
     def checkpoint_callback(self, msg):
         self.checkpoint_list = msg
@@ -314,6 +264,11 @@ class TaskManager:
 
     def finish_flag_callback(self, flag):
         self.finish_flag.data = flag.data
+
+    def stop_line_detected_callback(self, req):
+        self.task_stop_client(req.data)
+        self.target_velocity.linear.x = self.pfp_target_velocity
+        return SetBoolResponse(True, "success")
 
     def init_stop_list(self):
         for id in self.checkpoint_list.data:
@@ -346,15 +301,6 @@ class TaskManager:
         if stop_list[0] == checkpoint_id:
             return True
         return False
-
-    def get_go_signal(self, joy):
-        if self.joy_updated == True:
-            self.joy_updated = False
-            if joy.buttons[1] == 1:
-                return True
-            return False
-        else:
-            return False
 
     def set_sound_volume(self):
         if self.enable_announce == True:
