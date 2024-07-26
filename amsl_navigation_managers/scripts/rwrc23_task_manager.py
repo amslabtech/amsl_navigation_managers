@@ -4,6 +4,7 @@
 
 import math
 import subprocess
+from dataclasses import dataclass
 
 import rospy
 import tf2_ros
@@ -13,72 +14,62 @@ from std_msgs.msg import Bool, Float64, Int32, Int32MultiArray, String
 from std_srvs.srv import SetBool, SetBoolResponse
 
 
+@dataclass(frozen=True)
+class TaskManagerParam:
+    task_list_path: str
+    stop_list_path: str
+    announce_sound_path: str
+    use_detect_white_line: bool
+    use_traffic_light: bool
+    start_node_id: int
+    debug: bool
+
+
+@dataclass(frozen=True)
+class TopicConfig:
+    cmd_vel_topic: str
+    cand_traj_topic: str
+    sel_traj_topic: str
+    footprint_topic: str
+    finish_flag_topic: str
+
+
+@dataclass(frozen=True)
+class PlannerConfig:
+    target_velocity: float
+    cmd_vel: str
+    cand_traj: str
+    sel_traj: str
+    footprint: str
+    finish_flag: str
+
+
+@dataclass(frozen=True)
+class PlannerParam:
+    detect_line_pfp_target_velocity: float
+    slow_target_velocity: float
+    sleep_time_after_finish: float
+
+
 class TaskManager:
     def __init__(self):
         rospy.init_node("task_manager")
         rospy.loginfo("=== task manager ===")
 
-        self.TASK_LIST_PATH = rospy.get_param("~TASK_LIST_PATH")
-        self.STOP_LIST_PATH = rospy.get_param("~STOP_LIST_PATH")
-        self.ANNOUNCE_SOUND_PATH = rospy.get_param(
-            "~ANNOUNCE_SOUND_PATH", "../sounds/announcement_long.wav"
+        # Publisher
+        self.target_velocity_pub = rospy.Publisher(
+            "/target_velocity", Twist, queue_size=1
         )
-        self.USE_DETECT_WHITE_LINE = rospy.get_param(
-            "~USE_DETECT_WHITE_LINE", False
+        self.finish_flag_pub = rospy.Publisher(
+            "/finish_flag", Bool, queue_size=1
         )
-        self.USE_TRAFFIC_LIGHT = rospy.get_param("~USE_TRAFFIC_LIGHT", False)
-        self.STOP_LINE_THRESHOLD = rospy.get_param("~STOP_LINE_THRESHOLD")
-        self.debug = rospy.get_param("~debug", False)
-        self.start_node_id = rospy.get_param("~start_node_id", 0)
-        self.turn_rate = rospy.get_param("~turn_rate", 0.5)
-        self.sound_volume = rospy.get_param("~sound_volume", 100)
-        self.dwa_target_velocity = rospy.get_param("~dwa_target_velocity", 1.0)
-        self.pfp_target_velocity = rospy.get_param("~pfp_target_velocity", 1.0)
-        self.detect_line_pfp_target_velocity = rospy.get_param(
-            "~detect_line_pfp_target_velocity", 0.3
+        self.skip_mode_flag_pub = rospy.Publisher(
+            "/skip_mode_flag", Bool, queue_size=1
         )
-        self.slow_target_velocity = rospy.get_param(
-            "~slow_target_velocity", 0.6
+        self.recovery_mode_flag_pub = rospy.Publisher(
+            "/recovery_mode_flag", Bool, queue_size=1
         )
-        self.sleep_time_after_finish = rospy.get_param(
-            "~sleep_time_after_finish", 0.5
-        )
-
-        # mux topic
-        self.cmd_vel_topic = rospy.get_param("~cmd_vel_topic", "")
-        self.cand_traj_topic = rospy.get_param("~cand_traj_topic", "")
-        self.sel_traj_topic = rospy.get_param("~sel_traj_topic", "")
-        self.footprint_topic = rospy.get_param("~footprint_topic", "")
-        self.finish_flag_topic = rospy.get_param("~finish_flag_topic", "")
-        self.dwa_cmd_vel = rospy.get_param("~dwa_cmd_vel", "")
-        self.dwa_cand_traj = rospy.get_param("~dwa_cand_traj", "")
-        self.dwa_sel_traj = rospy.get_param("~dwa_sel_traj", "")
-        self.dwa_footprint = rospy.get_param("~dwa_footprint", "")
-        self.dwa_finish_flag = rospy.get_param("~dwa_finish_flag", "")
-        self.pfp_cmd_vel = rospy.get_param("~pfp_cmd_vel", "")
-        self.pfp_cand_traj = rospy.get_param("~pfp_cand_traj", "")
-        self.pfp_best_traj = rospy.get_param("~pfp_best_traj", "")
-        self.pfp_footprint = rospy.get_param("~pfp_footprint", "")
-        self.pfp_finish_flag = rospy.get_param("~pfp_finish_flag", "")
-
-        # params in callback function
-        self.current_checkpoint_id = None
-        self.next_checkpoint_id = None
-        self.target_velocity = Twist()
-
-        # params
-        self.task_data = self.load_task_from_yaml()
-        self.stop_list = self.load_stop_list_from_yaml()
-        self.current_planner = None
-        self.checkpoint_list = None
-        self.finish_flag = Bool()
-        self.skip_mode_flag = Bool()
-        self.recovery_mode_flag = Bool()
-
-        # msg update flags
-        self.checkpoint_list_subscribed = False
-
-        # ros
+        # Subscriber
         self.current_checkpoint_id_sub = rospy.Subscriber(
             "/current_checkpoint", Int32, self.current_checkpoint_id_callback
         )
@@ -94,19 +85,7 @@ class TaskManager:
         self.finish_flag_sub = rospy.Subscriber(
             "/local_planner/finish_flag", Bool, self.finish_flag_callback
         )
-
-        self.target_velocity_pub = rospy.Publisher(
-            "/target_velocity", Twist, queue_size=1
-        )
-        self.finish_flag_pub = rospy.Publisher(
-            "/finish_flag", Bool, queue_size=1
-        )
-        self.skip_mode_flag_pub = rospy.Publisher(
-            "/skip_mode_flag", Bool, queue_size=1
-        )
-        self.recovery_mode_flag_pub = rospy.Publisher(
-            "/recovery_mode_flag", Bool, queue_size=1
-        )
+        # Service
         self.stop_line_detected_server = rospy.Service(
             "/stop_line_detector/stop",
             SetBool,
@@ -120,18 +99,82 @@ class TaskManager:
             "/traffic_light_detector/request", SetBool
         )
 
+        # Param
+        self.load_param()
+        self.current_checkpoint_id = None
+        self.next_checkpoint_id = None
+        self.target_velocity = Twist()
+        self.task_data = self.load_task_from_yaml()
+        self.stop_list = self.load_stop_list_from_yaml()
+        self.current_planner = None
+        self.checkpoint_list = None
+        self.finish_flag = Bool()
+        self.skip_mode_flag = Bool()
+        self.recovery_mode_flag = Bool()
+        self.checkpoint_list_subscribed = False
+
+    def load_param(self):
+        # TaskManagerParams
+        self.task_manager_param = TaskManagerParam(
+            task_list_path=rospy.get_param("~TASK_LIST_PATH"),
+            stop_list_path=rospy.get_param("~STOP_LIST_PATH"),
+            announce_sound_path=rospy.get_param(
+                "~ANNOUNCE_SOUND_PATH", "../sounds/announcement_long.wav"
+            ),
+            use_detect_white_line=rospy.get_param(
+                "~USE_DETECT_WHITE_LINE", False
+            ),
+            use_traffic_light=rospy.get_param("~USE_TRAFFIC_LIGHT", False),
+            start_node_id=rospy.get_param("~start_node_id", 0),
+            debug=rospy.get_param("~debug", False),
+        )
+
+        # PlannerParams
+        self.topic_config = TopicConfig(
+            cmd_vel_topic=rospy.get_param("~cmd_vel_topic", ""),
+            cand_traj_topic=rospy.get_param("~cand_traj_topic", ""),
+            sel_traj_topic=rospy.get_param("~sel_traj_topic", ""),
+            footprint_topic=rospy.get_param("~footprint_topic", ""),
+            finish_flag_topic=rospy.get_param("~finish_flag_topic", ""),
+        )
+        self.dwa_config = PlannerConfig(
+            target_velocity=rospy.get_param("~dwa_target_velocity", 1.0),
+            cmd_vel=rospy.get_param("~dwa_cmd_vel", ""),
+            cand_traj=rospy.get_param("~dwa_cand_traj", ""),
+            sel_traj=rospy.get_param("~dwa_sel_traj", ""),
+            footprint=rospy.get_param("~dwa_footprint", ""),
+            finish_flag=rospy.get_param("~dwa_finish_flag", ""),
+        )
+        self.pfp_config = PlannerConfig(
+            target_velocity=rospy.get_param("~pfp_target_velocity", 1.0),
+            cmd_vel=rospy.get_param("~pfp_cmd_vel", ""),
+            cand_traj=rospy.get_param("~pfp_cand_traj", ""),
+            sel_traj=rospy.get_param("~pfp_best_traj", ""),
+            footprint=rospy.get_param("~pfp_footprint", ""),
+            finish_flag=rospy.get_param("~pfp_finish_flag", ""),
+        )
+        self.planner_param = PlannerParam(
+            detect_line_pfp_target_velocity=rospy.get_param(
+                "~detect_line_pfp_target_velocity", 0.3
+            ),
+            slow_target_velocity=rospy.get_param("~slow_target_velocity", 0.6),
+            sleep_time_after_finish=rospy.get_param(
+                "~sleep_time_after_finish", 0.5
+            ),
+        )
+
     def process(self):
-        if self.debug:
+        if self.task_manager_param.debug:
             rospy.logwarn("waiting for services")
             rospy.wait_for_service("/task/stop")
-            if self.USE_DETECT_WHITE_LINE:
+            if self.task_manager_param.use_detect_white_line:
                 rospy.wait_for_service("/stop_line_detector/request")
-            if self.USE_TRAFFIC_LIGHT:
+            if self.task_manager_param.use_traffic_light:
                 rospy.wait_for_service("/traffic_light_detector/request")
 
         prev_task_type = "init"
         r = rospy.Rate(10)
-        self.target_velocity.linear.x = self.dwa_target_velocity
+        self.target_velocity.linear.x = self.dwa_config.target_velocity
         while not rospy.is_shutdown():
             if self.current_checkpoint_id is None:
                 rospy.logwarn_throttle(1, "Checkpoint id is not updated")
@@ -150,111 +193,126 @@ class TaskManager:
                 r.sleep()
                 continue
 
-            rospy.loginfo_throttle(1, "=====")
+            # get task type
             task_type = self.search_task_from_node_id(
                 self.current_checkpoint_id, self.next_checkpoint_id
             )
-            rospy.loginfo_throttle(1, f"task_type : {task_type}")
-            rospy.loginfo_throttle(1, f"planner : {self.current_planner}")
-            rospy.loginfo_throttle(
-                1, f"current_checkpoint : {self.current_checkpoint_id}"
-            )
-            rospy.loginfo_throttle(
-                1, f"next_checkpoint : {self.next_checkpoint_id}"
-            )
+
+            # print status
+            self.print_status(task_type)
 
             # update task
             if prev_task_type != task_type:
-                rospy.logwarn(f"task updated : {task_type}")
-                # detect_line
-                if task_type == "detect_line" and self.USE_DETECT_WHITE_LINE:
-                    try:
-                        resp = self.stop_line_detector_client(True)
-                        rospy.logwarn(resp.message)
-                    except rospy.ServiceException as e:
-                        rospy.logwarn(e)
-                    self.use_point_follow_planner()
-                    self.target_velocity.linear.x = (
-                        self.detect_line_pfp_target_velocity
-                    )
-                else:
-                    try:
-                        resp = self.stop_line_detector_client(False)
-                        rospy.logwarn(resp.message)
-                    except rospy.ServiceException as e:
-                        rospy.logwarn(e)
-
-                # traffic_light
-                if task_type == "traffic_light" and self.USE_TRAFFIC_LIGHT:
-                    try:
-                        resp = self.traffic_light_detector_client(True)
-                        rospy.logwarn(resp.message)
-                    except rospy.ServiceException as e:
-                        rospy.logwarn(e)
-                    self.use_dwa_planner()
-                else:
-                    try:
-                        resp = self.traffic_light_detector_client(False)
-                        rospy.logwarn(resp.message)
-                    except rospy.ServiceException as e:
-                        rospy.logwarn(e)
-
-                # point_follow_planner
-                if task_type == "in_line":
-                    self.use_point_follow_planner()
-
-                # slow
-                if task_type == "slow":
-                    self.target_velocity.linear.x = self.slow_target_velocity
-
-                # no task
-                if task_type == "":
-                    self.use_dwa_planner()
-
-                # skip_mode
-                if task_type == "" and not self.is_stop_node(
-                    self.stop_list, self.next_checkpoint_id
-                ):
-                    self.skip_mode_flag.data = True
-                else:
-                    self.skip_mode_flag.data = False
-
-                # stop node
-                if self.is_stop_node(
-                    self.stop_list, self.current_checkpoint_id
-                ):
-                    try:
-                        resp = self.task_stop_client(True)
-                        rospy.logwarn(resp.message)
-                    except rospy.ServiceException as e:
-                        rospy.logwarn(e)
-                    del self.stop_list[0]
-
-                # recovery_mode
-                if task_type == "" or task_type == "slow":
-                    self.recovery_mode_flag.data = True
-                else:
-                    self.recovery_mode_flag.data = False
+                self.update_task(task_type)
 
             # publish
             self.target_velocity_pub.publish(self.target_velocity)
             self.finish_flag_pub.publish(self.finish_flag.data)
             self.skip_mode_flag_pub.publish(self.skip_mode_flag.data)
             self.recovery_mode_flag_pub.publish(self.recovery_mode_flag.data)
-
             if self.finish_flag.data:
-                rospy.sleep(self.sleep_time_after_finish)
+                rospy.sleep(self.planner_param.sleep_time_after_finish)
 
             prev_task_type = task_type
             self.finish_flag.data = False
 
             r.sleep()
 
+    def print_status(self, task_type: str):
+        rospy.loginfo_throttle(1, "=====")
+        rospy.loginfo_throttle(1, f"task_type : {task_type}")
+        rospy.loginfo_throttle(1, f"planner : {self.current_planner}")
+        rospy.loginfo_throttle(
+            1, f"current_checkpoint : {self.current_checkpoint_id}"
+        )
+        rospy.loginfo_throttle(
+            1, f"next_checkpoint : {self.next_checkpoint_id}"
+        )
+
+    def update_task(self, task_type: str):
+        rospy.logwarn(f"task updated : {task_type}")
+
+        # detect_line
+        if (
+            task_type == "detect_line"
+            and self.task_manager_param.use_detect_white_line
+        ):
+            try:
+                resp = self.stop_line_detector_client(True)
+                rospy.logwarn(resp.message)
+            except rospy.ServiceException as e:
+                rospy.logwarn(e)
+            self.select_planner("pfp")
+            self.target_velocity.linear.x = (
+                self.planner_param.detect_line_pfp_target_velocity
+            )
+        else:
+            try:
+                resp = self.stop_line_detector_client(False)
+                rospy.logwarn(resp.message)
+            except rospy.ServiceException as e:
+                rospy.logwarn(e)
+
+        # traffic_light
+        if (
+            task_type == "traffic_light"
+            and self.task_manager_param.use_traffic_light
+        ):
+            try:
+                resp = self.traffic_light_detector_client(True)
+                rospy.logwarn(resp.message)
+            except rospy.ServiceException as e:
+                rospy.logwarn(e)
+            self.select_planner("dwa")
+        else:
+            try:
+                resp = self.traffic_light_detector_client(False)
+                rospy.logwarn(resp.message)
+            except rospy.ServiceException as e:
+                rospy.logwarn(e)
+
+        # point_follow_planner
+        if task_type == "in_line":
+            self.select_planner("pfp")
+
+        # slow
+        if task_type == "slow":
+            self.target_velocity.linear.x = (
+                self.planner_param.slow_target_velocity
+            )
+
+        # no task
+        if task_type == "":
+            self.select_planner("dwa")
+
+        # skip_mode
+        if task_type == "" and not self.is_stop_node(
+            self.stop_list, self.next_checkpoint_id
+        ):
+            self.skip_mode_flag.data = True
+        else:
+            self.skip_mode_flag.data = False
+
+        # stop node
+        if self.is_stop_node(self.stop_list, self.current_checkpoint_id):
+            try:
+                resp = self.task_stop_client(True)
+                rospy.logwarn(resp.message)
+            except rospy.ServiceException as e:
+                rospy.logwarn(e)
+            del self.stop_list[0]
+
+        # recovery_mode
+        if task_type == "" or task_type == "slow":
+            self.recovery_mode_flag.data = True
+        else:
+            self.recovery_mode_flag.data = False
+
     def load_task_from_yaml(self):
         while not rospy.is_shutdown():
             task_data = None
             try:
-                with open(self.TASK_LIST_PATH) as file:
+                with open(self.task_manager_param.task_list_path) as file:
                     task_data = yaml.safe_load(file)
                 if task_data is not None:
                     break
@@ -266,7 +324,7 @@ class TaskManager:
     def load_stop_list_from_yaml(self):
         while not rospy.is_shutdown():
             try:
-                with open(self.STOP_LIST_PATH) as file:
+                with open(self.task_manager_param.stop_list_path) as file:
                     stop_list_from_yaml = yaml.safe_load(file)
                 stop_list = []
                 for count, stop in enumerate(stop_list_from_yaml["stop_list"]):
@@ -307,12 +365,12 @@ class TaskManager:
             rospy.logwarn(resp.message)
         except rospy.ServiceException as e:
             rospy.logwarn(e)
-        self.target_velocity.linear.x = self.pfp_target_velocity
+        self.target_velocity.linear.x = self.pfp_config.target_velocity
         return SetBoolResponse(True, "success")
 
     def init_stop_list(self):
         for id in self.checkpoint_list.data:
-            if id == self.start_node_id:
+            if id == self.task_manager_param.start_node_id:
                 return
             if id == self.stop_list[0]:
                 if len(self.stop_list) == 1:
@@ -338,65 +396,25 @@ class TaskManager:
         return False
 
     def announce_once(self):
-        announce_cmd = "aplay " + self.ANNOUNCE_SOUND_PATH
+        announce_cmd = "aplay " + self.task_manager_param.announce_sound_path
         announce_proc = subprocess.call(announce_cmd.split())
 
-    def use_dwa_planner(self):
-        subprocess.Popen(
-            [
-                "rosrun",
-                "topic_tools",
-                "mux_select",
-                str(self.cmd_vel_topic),
-                str(self.dwa_cmd_vel),
-            ]
-        )
-        subprocess.Popen(
-            [
-                "rosrun",
-                "topic_tools",
-                "mux_select",
-                str(self.cand_traj_topic),
-                str(self.dwa_cand_traj),
-            ]
-        )
-        subprocess.Popen(
-            [
-                "rosrun",
-                "topic_tools",
-                "mux_select",
-                str(self.sel_traj_topic),
-                str(self.dwa_sel_traj),
-            ]
-        )
-        subprocess.Popen(
-            [
-                "rosrun",
-                "topic_tools",
-                "mux_select",
-                str(self.footprint_topic),
-                str(self.dwa_footprint),
-            ]
-        )
-        subprocess.Popen(
-            [
-                "rosrun",
-                "topic_tools",
-                "mux_select",
-                str(self.finish_flag_topic),
-                str(self.dwa_finish_flag),
-            ]
-        )
-        self.target_velocity.linear.x = self.dwa_target_velocity
+    def select_planner(self, planner_name: str):
+        if planner_name == "dwa":
+            self.select_topic(self.dwa_config)
+        elif planner_name == "pfp":
+            self.select_topic(self.pfp_config)
+        else:
+            rospy.logwarn("Invalid planner")
 
-    def use_point_follow_planner(self):
+    def select_topic(self, planner_config: PlannerConfig):
         subprocess.Popen(
             [
                 "rosrun",
                 "topic_tools",
                 "mux_select",
-                str(self.cmd_vel_topic),
-                str(self.pfp_cmd_vel),
+                str(self.topic_config.cmd_vel_topic),
+                str(planner_config.cmd_vel),
             ]
         )
         subprocess.Popen(
@@ -404,8 +422,8 @@ class TaskManager:
                 "rosrun",
                 "topic_tools",
                 "mux_select",
-                str(self.cand_traj_topic),
-                str(self.pfp_cand_traj),
+                str(self.topic_config.cand_traj_topic),
+                str(planner_config.cand_traj),
             ]
         )
         subprocess.Popen(
@@ -413,8 +431,8 @@ class TaskManager:
                 "rosrun",
                 "topic_tools",
                 "mux_select",
-                str(self.sel_traj_topic),
-                str(self.pfp_best_traj),
+                str(self.topic_config.sel_traj_topic),
+                str(planner_config.sel_traj),
             ]
         )
         subprocess.Popen(
@@ -422,8 +440,8 @@ class TaskManager:
                 "rosrun",
                 "topic_tools",
                 "mux_select",
-                str(self.footprint_topic),
-                str(self.pfp_footprint),
+                str(self.topic_config.footprint_topic),
+                str(planner_config.footprint),
             ]
         )
         subprocess.Popen(
@@ -431,11 +449,11 @@ class TaskManager:
                 "rosrun",
                 "topic_tools",
                 "mux_select",
-                str(self.finish_flag_topic),
-                str(self.pfp_finish_flag),
+                str(self.topic_config.finish_flag_topic),
+                str(planner_config.finish_flag),
             ]
         )
-        self.target_velocity.linear.x = self.pfp_target_velocity
+        self.target_velocity.linear.x = planner_config.target_velocity
 
 
 if __name__ == "__main__":
