@@ -188,10 +188,6 @@ class TaskManager:
                 rospy.logwarn_throttle(1, "Checkpoint list is not updated")
                 r.sleep()
                 continue
-            elif self.current_planner is None:
-                rospy.logwarn_throttle(1, "Cannot get current planner")
-                r.sleep()
-                continue
 
             # get task type
             task_type = self.search_task_from_node_id(
