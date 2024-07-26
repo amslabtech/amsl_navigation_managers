@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-#! coding:utf-8
 
 # 注：rwrc22_task_managerをベースにしています
 
@@ -28,8 +27,6 @@ class TaskManager:
         self.STOP_LINE_THRESHOLD = rospy.get_param("~STOP_LINE_THRESHOLD")
         self.start_node_id = rospy.get_param("~start_node_id", 0)
         self.turn_rate = rospy.get_param("~turn_rate", 0.5)
-        # self.enable_announce = rospy.get_param('~enable_announce', False)
-        self.enable_announce = rospy.get_param("~enable_announce", False)
         self.sound_volume = rospy.get_param("~sound_volume", 100)
         self.dwa_target_velocity = rospy.get_param("~dwa_target_velocity", 1.0)
         self.pfp_target_velocity = rospy.get_param("~pfp_target_velocity", 1.0)
@@ -136,9 +133,6 @@ class TaskManager:
 
         prev_task_type = "init"
         r = rospy.Rate(10)
-        # self.set_sound_volume(0)
-        # proc = announce_once()
-        self.set_sound_volume()
         self.target_velocity.linear.x = self.dwa_target_velocity
         while not rospy.is_shutdown():
             if self.checkpoint_id_subscribed:
@@ -329,21 +323,9 @@ class TaskManager:
             return True
         return False
 
-    def set_sound_volume(self):
-        if self.enable_announce == True:
-            volume_cmd = (
-                "amixer -c1 sset Speaker "
-                + str(self.sound_volume)
-                + "%,"
-                + str(self.sound_volume)
-                + "% unmute"
-            )
-            subprocess.Popen(volume_cmd.split())
-
     def announce_once(self):
-        if self.enable_announce == True:
-            announce_cmd = "aplay " + self.ANNOUNCE_SOUND_PATH
-            announce_proc = subprocess.call(announce_cmd.split())
+        announce_cmd = "aplay " + self.ANNOUNCE_SOUND_PATH
+        announce_proc = subprocess.call(announce_cmd.split())
 
     def use_dwa_planner(self):
         subprocess.Popen(
