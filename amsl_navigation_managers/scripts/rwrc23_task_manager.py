@@ -23,8 +23,12 @@ class TaskManager:
         self.ANNOUNCE_SOUND_PATH = rospy.get_param(
             "~ANNOUNCE_SOUND_PATH", "../sounds/announcement_long.wav"
         )
-        self.USE_DETECT_WHITE_LINE = rospy.get_param("~USE_DETECT_WHITE_LINE")
+        self.USE_DETECT_WHITE_LINE = rospy.get_param(
+            "~USE_DETECT_WHITE_LINE", False
+        )
+        self.USE_TRAFFIC_LIGHT = rospy.get_param("~USE_TRAFFIC_LIGHT", False)
         self.STOP_LINE_THRESHOLD = rospy.get_param("~STOP_LINE_THRESHOLD")
+        self.debug = rospy.get_param("~debug", False)
         self.start_node_id = rospy.get_param("~start_node_id", 0)
         self.turn_rate = rospy.get_param("~turn_rate", 0.5)
         self.sound_volume = rospy.get_param("~sound_volume", 100)
@@ -117,11 +121,13 @@ class TaskManager:
         )
 
     def process(self):
-        rospy.logwarn("waiting for services")
-        rospy.wait_for_service("/task/stop")
-        if self.USE_DETECT_WHITE_LINE:
-            rospy.wait_for_service("/stop_line_detector/request")
-        rospy.wait_for_service("/traffic_light_detector/request")
+        if self.debug:
+            rospy.logwarn("waiting for services")
+            rospy.wait_for_service("/task/stop")
+            if self.USE_DETECT_WHITE_LINE:
+                rospy.wait_for_service("/stop_line_detector/request")
+            if self.USE_TRAFFIC_LIGHT:
+                rospy.wait_for_service("/traffic_light_detector/request")
 
         prev_task_type = "init"
         r = rospy.Rate(10)
@@ -179,7 +185,7 @@ class TaskManager:
                         rospy.logwarn(e)
 
                 # traffic_light
-                if task_type == "traffic_light":
+                if task_type == "traffic_light" and self.USE_TRAFFIC_LIGHT:
                     try:
                         resp = self.traffic_light_detector_client(True)
                         rospy.logwarn(resp.message)
