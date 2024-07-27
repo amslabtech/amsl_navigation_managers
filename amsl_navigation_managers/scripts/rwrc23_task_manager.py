@@ -233,21 +233,25 @@ class TaskManager:
             task_type == "detect_line"
             and self.task_manager_param.use_detect_white_line
         ):
-            try:
-                resp = self.stop_line_detector_client(True)
-                rospy.logwarn(resp.message)
-            except rospy.ServiceException as e:
-                rospy.logwarn(e)
+            while not rospy.is_shutdown():
+                try:
+                    resp = self.stop_line_detector_client(True)
+                    rospy.logwarn(resp.message)
+                    break
+                except rospy.ServiceException as e:
+                    rospy.logwarn(e)
             self.select_planner("pfp")
             self.target_velocity.linear.x = (
                 self.planner_param.detect_line_pfp_target_velocity
             )
         else:
-            try:
-                resp = self.stop_line_detector_client(False)
-                rospy.logwarn(resp.message)
-            except rospy.ServiceException as e:
-                rospy.logwarn(e)
+            while not rospy.is_shutdown():
+                try:
+                    resp = self.stop_line_detector_client(False)
+                    rospy.logwarn(resp.message)
+                    break
+                except rospy.ServiceException as e:
+                    rospy.logwarn(e)
 
         # traffic_light
         if (
@@ -255,24 +259,30 @@ class TaskManager:
             and self.task_manager_param.use_traffic_light
         ):
             # stop
-            try:
-                resp = self.task_stop_client(True)
-                rospy.logwarn(resp.message)
-            except rospy.ServiceException as e:
-                rospy.logwarn(e)
+            while not rospy.is_shutdown():
+                try:
+                    resp = self.task_stop_client(True)
+                    rospy.logwarn(resp.message)
+                    break
+                except rospy.ServiceException as e:
+                    rospy.logwarn(e)
             # launch traffic_light_detector
-            try:
-                resp = self.traffic_light_detector_client(True)
-                rospy.logwarn(resp.message)
-            except rospy.ServiceException as e:
-                rospy.logwarn(e)
+            while not rospy.is_shutdown():
+                try:
+                    resp = self.traffic_light_detector_client(True)
+                    rospy.logwarn(resp.message)
+                    break
+                except rospy.ServiceException as e:
+                    rospy.logwarn(e)
             self.select_planner("dwa")
         else:
-            try:
-                resp = self.traffic_light_detector_client(False)
-                rospy.logwarn(resp.message)
-            except rospy.ServiceException as e:
-                rospy.logwarn(e)
+            while not rospy.is_shutdown():
+                try:
+                    resp = self.traffic_light_detector_client(False)
+                    rospy.logwarn(resp.message)
+                    break
+                except rospy.ServiceException as e:
+                    rospy.logwarn(e)
 
         # point_follow_planner
         if task_type == "in_line":
@@ -298,11 +308,13 @@ class TaskManager:
 
         # stop node
         if self.is_stop_node(self.stop_list, self.current_checkpoint_id):
-            try:
-                resp = self.task_stop_client(True)
-                rospy.logwarn(resp.message)
-            except rospy.ServiceException as e:
-                rospy.logwarn(e)
+            while not rospy.is_shutdown():
+                try:
+                    resp = self.task_stop_client(True)
+                    rospy.logwarn(resp.message)
+                    break
+                except rospy.ServiceException as e:
+                    rospy.logwarn(e)
             del self.stop_list[0]
 
         # recovery_mode
@@ -363,11 +375,13 @@ class TaskManager:
         self.finish_flag.data = flag.data
 
     def stop_line_detected_callback(self, req):
-        try:
-            resp = self.task_stop_client(req.data)
-            rospy.logwarn(resp.message)
-        except rospy.ServiceException as e:
-            rospy.logwarn(e)
+        while not rospy.is_shutdown():
+            try:
+                resp = self.task_stop_client(req.data)
+                rospy.logwarn(resp.message)
+                break
+            except rospy.ServiceException as e:
+                rospy.logwarn(e)
         self.target_velocity.linear.x = self.pfp_config.target_velocity
         return SetBoolResponse(True, "success")
 
