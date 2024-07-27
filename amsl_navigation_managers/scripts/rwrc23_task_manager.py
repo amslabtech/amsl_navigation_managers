@@ -254,6 +254,13 @@ class TaskManager:
             task_type == "traffic_light"
             and self.task_manager_param.use_traffic_light
         ):
+            # stop
+            try:
+                resp = self.task_stop_client(True)
+                rospy.logwarn(resp.message)
+            except rospy.ServiceException as e:
+                rospy.logwarn(e)
+            # launch traffic_light_detector
             try:
                 resp = self.traffic_light_detector_client(True)
                 rospy.logwarn(resp.message)
