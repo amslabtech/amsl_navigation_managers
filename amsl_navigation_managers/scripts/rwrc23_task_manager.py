@@ -233,56 +233,24 @@ class TaskManager:
             task_type == "detect_line"
             and self.task_manager_param.use_detect_white_line
         ):
-            while not rospy.is_shutdown():
-                try:
-                    resp = self.stop_line_detector_client(True)
-                    rospy.logwarn(resp.message)
-                    break
-                except rospy.ServiceException as e:
-                    rospy.logwarn(e)
+            self.service_call(self.stop_line_detector_client, True)
             self.select_planner("pfp")
             self.target_velocity.linear.x = (
                 self.planner_param.detect_line_pfp_target_velocity
             )
         else:
-            while not rospy.is_shutdown():
-                try:
-                    resp = self.stop_line_detector_client(False)
-                    rospy.logwarn(resp.message)
-                    break
-                except rospy.ServiceException as e:
-                    rospy.logwarn(e)
+            self.service_call(self.stop_line_detector_client, False)
 
         # traffic_light
         if (
             task_type == "traffic_light"
             and self.task_manager_param.use_traffic_light
         ):
-            # stop
-            while not rospy.is_shutdown():
-                try:
-                    resp = self.task_stop_client(True)
-                    rospy.logwarn(resp.message)
-                    break
-                except rospy.ServiceException as e:
-                    rospy.logwarn(e)
-            # launch traffic_light_detector
-            while not rospy.is_shutdown():
-                try:
-                    resp = self.traffic_light_detector_client(True)
-                    rospy.logwarn(resp.message)
-                    break
-                except rospy.ServiceException as e:
-                    rospy.logwarn(e)
+            self.service_call(self.task_stop_client, True)
+            self.service_call(self.traffic_light_detector_client, True)
             self.select_planner("dwa")
         else:
-            while not rospy.is_shutdown():
-                try:
-                    resp = self.traffic_light_detector_client(False)
-                    rospy.logwarn(resp.message)
-                    break
-                except rospy.ServiceException as e:
-                    rospy.logwarn(e)
+            self.service_call(self.traffic_light_detector_client, False)
 
         # point_follow_planner
         if task_type == "in_line":
@@ -308,13 +276,7 @@ class TaskManager:
 
         # stop node
         if self.is_stop_node(self.stop_list, self.current_checkpoint_id):
-            while not rospy.is_shutdown():
-                try:
-                    resp = self.task_stop_client(True)
-                    rospy.logwarn(resp.message)
-                    break
-                except rospy.ServiceException as e:
-                    rospy.logwarn(e)
+            self.service_call(self.task_stop_client, True)
             del self.stop_list[0]
 
         # recovery_mode
@@ -322,6 +284,16 @@ class TaskManager:
             self.recovery_mode_flag.data = True
         else:
             self.recovery_mode_flag.data = False
+
+    def service_call(self, service_name, req):
+        while not rospy.is_shutdown():
+            try:
+                resp = service_name(req)
+                rospy.logwarn(resp.message)
+                break
+            except rospy.ServiceException as e:
+                rospy.logwarn(e)
+                rospy.sleep(0.5)
 
     def load_task_from_yaml(self):
         while not rospy.is_shutdown():
@@ -375,13 +347,7 @@ class TaskManager:
         self.finish_flag.data = flag.data
 
     def stop_line_detected_callback(self, req):
-        while not rospy.is_shutdown():
-            try:
-                resp = self.task_stop_client(req.data)
-                rospy.logwarn(resp.message)
-                break
-            except rospy.ServiceException as e:
-                rospy.logwarn(e)
+        self.service_call(self.task_stop_client, req.data)
         self.target_velocity.linear.x = self.pfp_config.target_velocity
         return SetBoolResponse(True, "success")
 
