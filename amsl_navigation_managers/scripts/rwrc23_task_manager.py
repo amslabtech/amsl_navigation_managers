@@ -261,10 +261,6 @@ class TaskManager:
                 self.planner_param.slow_target_velocity
             )
 
-        # no task
-        if task_type == "":
-            self.select_planner("dwa")
-
         # skip_mode
         if task_type == "" and not self.is_stop_node(self.next_checkpoint_id):
             self.service_call(self.skip_mode_client, True)
@@ -276,6 +272,10 @@ class TaskManager:
             self.service_call(self.recovery_mode_client, True)
         else:
             self.service_call(self.recovery_mode_client, False)
+
+        # no task
+        if task_type == "":
+            self.select_planner("dwa")
 
     def service_call(self, service_name, req):
         while not rospy.is_shutdown():
