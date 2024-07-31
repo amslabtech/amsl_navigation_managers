@@ -63,14 +63,14 @@ class TaskManager:
             "/finish_flag", Bool, queue_size=1
         )
         # Subscriber
+        self.checkpoint_sub = rospy.Subscriber(
+            "/checkpoint", Int32MultiArray, self.checkpoint_callback
+        )
         self.current_checkpoint_id_sub = rospy.Subscriber(
             "/current_checkpoint", Int32, self.current_checkpoint_id_callback
         )
         self.next_checkpoint_id_sub = rospy.Subscriber(
             "/next_checkpoint", Int32, self.next_checkpoint_id_callback
-        )
-        self.checkpoint_sub = rospy.Subscriber(
-            "/checkpoint", Int32MultiArray, self.checkpoint_callback
         )
         self.select_topic_sub = rospy.Subscriber(
             "/select_topic", String, self.select_topic_callback
@@ -163,7 +163,7 @@ class TaskManager:
         if self.task_manager_param.debug:
             self.wait_for_service()
 
-        prev_task_type = "_init"
+        prev_checkpoint_id = None
         r = rospy.Rate(10)
         self.target_velocity.linear.x = self.dwa_config.target_velocity
         while not rospy.is_shutdown():
@@ -189,7 +189,7 @@ class TaskManager:
             self.print_status(task_type)
 
             # update task
-            if prev_task_type != task_type:
+            if prev_checkpoint_id != self.current_checkpoint_id:
                 self.update_task(task_type)
 
             # publish
@@ -198,7 +198,7 @@ class TaskManager:
             if self.finish_flag.data:
                 rospy.sleep(self.planner_param.sleep_time_after_finish)
 
-            prev_task_type = task_type
+            prev_checkpoint_id = self.current_checkpoint_id
             self.finish_flag.data = False
 
             r.sleep()
@@ -300,15 +300,14 @@ class TaskManager:
                 rospy.sleep(1.0)
         return task_data
 
+    def checkpoint_callback(self, msg):
+        self.checkpoint_list = msg
+
     def current_checkpoint_id_callback(self, msg):
         self.current_checkpoint_id = int(msg.data)
-        self.checkpoint_id_subscribed = True
 
     def next_checkpoint_id_callback(self, msg):
         self.next_checkpoint_id = int(msg.data)
-
-    def checkpoint_callback(self, msg):
-        self.checkpoint_list = msg
 
     def select_topic_callback(self, msg):
         self.current_planner = (
