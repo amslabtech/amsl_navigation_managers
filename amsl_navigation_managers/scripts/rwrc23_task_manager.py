@@ -17,7 +17,6 @@ from std_srvs.srv import SetBool, SetBoolResponse
 @dataclass(frozen=True)
 class TaskManagerParam:
     task_list_path: str
-    stop_list_path: str
     announce_sound_path: str
     use_detect_white_line: bool
     use_traffic_light: bool
@@ -105,19 +104,16 @@ class TaskManager:
         self.next_checkpoint_id = None
         self.target_velocity = Twist()
         self.task_data = self.load_task_from_yaml()
-        self.stop_list = self.load_stop_list_from_yaml()
         self.current_planner = None
         self.checkpoint_list = None
         self.finish_flag = Bool()
         self.skip_mode_flag = Bool()
         self.recovery_mode_flag = Bool()
-        self.checkpoint_list_subscribed = False
 
     def load_param(self):
         # TaskManagerParams
         self.task_manager_param = TaskManagerParam(
             task_list_path=rospy.get_param("~TASK_LIST_PATH"),
-            stop_list_path=rospy.get_param("~STOP_LIST_PATH"),
             announce_sound_path=rospy.get_param(
                 "~ANNOUNCE_SOUND_PATH", "../sounds/announcement_long.wav"
             ),
@@ -172,7 +168,7 @@ class TaskManager:
             if self.task_manager_param.use_traffic_light:
                 rospy.wait_for_service("/traffic_light_detector/request")
 
-        prev_task_type = "init"
+        prev_task_type = "_init"
         r = rospy.Rate(10)
         self.target_velocity.linear.x = self.dwa_config.target_velocity
         while not rospy.is_shutdown():
@@ -228,6 +224,10 @@ class TaskManager:
     def update_task(self, task_type: str):
         rospy.logwarn(f"task updated : {task_type}")
 
+        # stop
+        if task_type == "stop":
+            self.service_call(self.task_stop_client, True)
+
         # detect_line
         if (
             task_type == "detect_line"
@@ -267,17 +267,10 @@ class TaskManager:
             self.select_planner("dwa")
 
         # skip_mode
-        if task_type == "" and not self.is_stop_node(
-            self.stop_list, self.next_checkpoint_id
-        ):
+        if task_type == "" and not self.is_stop_node(self.next_checkpoint_id):
             self.skip_mode_flag.data = True
         else:
             self.skip_mode_flag.data = False
-
-        # stop node
-        if self.is_stop_node(self.stop_list, self.current_checkpoint_id):
-            self.service_call(self.task_stop_client, True)
-            del self.stop_list[0]
 
         # recovery_mode
         if task_type == "" or task_type == "slow":
@@ -308,21 +301,6 @@ class TaskManager:
                 rospy.sleep(1.0)
         return task_data
 
-    def load_stop_list_from_yaml(self):
-        while not rospy.is_shutdown():
-            try:
-                with open(self.task_manager_param.stop_list_path) as file:
-                    stop_list_from_yaml = yaml.safe_load(file)
-                stop_list = []
-                for count, stop in enumerate(stop_list_from_yaml["stop_list"]):
-                    stop_list.append(stop["node_id"])
-                if len(stop_list) != 0:
-                    break
-            except Exception as e:
-                rospy.logerr_throttle(5.0, e)
-                rospy.sleep(1.0)
-        return stop_list
-
     def current_checkpoint_id_callback(self, msg):
         self.current_checkpoint_id = int(msg.data)
         self.checkpoint_id_subscribed = True
@@ -332,9 +310,6 @@ class TaskManager:
 
     def checkpoint_callback(self, msg):
         self.checkpoint_list = msg
-        if self.checkpoint_list_subscribed == False:
-            self.init_stop_list()
-        self.checkpoint_list_subscribed = True
 
     def select_topic_callback(self, msg):
         self.current_planner = (
@@ -351,17 +326,6 @@ class TaskManager:
         self.target_velocity.linear.x = self.pfp_config.target_velocity
         return SetBoolResponse(True, "success")
 
-    def init_stop_list(self):
-        for id in self.checkpoint_list.data:
-            if id == self.task_manager_param.start_node_id:
-                return
-            if id == self.stop_list[0]:
-                if len(self.stop_list) == 1:
-                    self.stop_list[0] = -1
-                    return
-                else:
-                    del self.stop_list[0]
-
     def search_task_from_node_id(self, node0_id, node1_id):
         for count, task in enumerate(self.task_data["task"]):
             if (
@@ -371,11 +335,14 @@ class TaskManager:
                 return task["task_type"]
         return ""
 
-    def is_stop_node(self, stop_list, checkpoint_id):
-        if len(stop_list) == 0:
-            return False
-        if stop_list[0] == checkpoint_id:
-            return True
+    def is_stop_node(self, node_id):
+        for count, task in enumerate(self.task_data["task"]):
+            if (
+                task["edge"]["node0_id"] == node_id
+                and task["task_type"] == "stop"
+            ):
+                return True
+
         return False
 
     def announce_once(self):
