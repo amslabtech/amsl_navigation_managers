@@ -47,7 +47,6 @@ class PlannerConfig:
 class PlannerParam:
     detect_line_pfp_target_velocity: float
     slow_target_velocity: float
-    sleep_time_after_finish: float
 
 
 class TaskManager:
@@ -58,9 +57,6 @@ class TaskManager:
         # Publisher
         self.target_velocity_pub = rospy.Publisher(
             "/target_velocity", Twist, queue_size=1
-        )
-        self.finish_flag_pub = rospy.Publisher(
-            "/finish_flag", Bool, queue_size=1
         )
         # Subscriber
         self.checkpoint_sub = rospy.Subscriber(
@@ -74,9 +70,6 @@ class TaskManager:
         )
         self.select_topic_sub = rospy.Subscriber(
             "/select_topic", String, self.select_topic_callback
-        )
-        self.finish_flag_sub = rospy.Subscriber(
-            "/local_planner/finish_flag", Bool, self.finish_flag_callback
         )
         # Service
         self.stop_line_detected_server = rospy.Service(
@@ -106,7 +99,6 @@ class TaskManager:
         self.task_data = self.load_task_from_yaml()
         self.current_planner = None
         self.checkpoint_list = None
-        self.finish_flag = Bool()
         self.skip_mode_flag = Bool()
         self.recovery_mode_flag = Bool()
 
@@ -154,9 +146,6 @@ class TaskManager:
                 "~detect_line_pfp_target_velocity", 0.3
             ),
             slow_target_velocity=rospy.get_param("~slow_target_velocity", 0.6),
-            sleep_time_after_finish=rospy.get_param(
-                "~sleep_time_after_finish", 0.5
-            ),
         )
 
     def process(self):
@@ -194,13 +183,8 @@ class TaskManager:
 
             # publish
             self.target_velocity_pub.publish(self.target_velocity)
-            self.finish_flag_pub.publish(self.finish_flag.data)
-            if self.finish_flag.data:
-                rospy.sleep(self.planner_param.sleep_time_after_finish)
 
             prev_checkpoint_id = self.current_checkpoint_id
-            self.finish_flag.data = False
-
             r.sleep()
 
     def wait_for_service(self):
@@ -315,9 +299,6 @@ class TaskManager:
             .replace("_planner", "")
             .replace("point_follow", "pfp")
         )
-
-    def finish_flag_callback(self, flag):
-        self.finish_flag.data = flag.data
 
     def stop_line_detected_callback(self, req):
         self.service_call(self.task_stop_client, req.data)
