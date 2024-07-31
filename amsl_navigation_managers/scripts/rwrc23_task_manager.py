@@ -62,12 +62,6 @@ class TaskManager:
         self.finish_flag_pub = rospy.Publisher(
             "/finish_flag", Bool, queue_size=1
         )
-        self.skip_mode_flag_pub = rospy.Publisher(
-            "/skip_mode_flag", Bool, queue_size=1
-        )
-        self.recovery_mode_flag_pub = rospy.Publisher(
-            "/recovery_mode_flag", Bool, queue_size=1
-        )
         # Subscriber
         self.current_checkpoint_id_sub = rospy.Subscriber(
             "/current_checkpoint", Int32, self.current_checkpoint_id_callback
@@ -90,10 +84,16 @@ class TaskManager:
             SetBool,
             self.stop_line_detected_callback,
         )
-        self.task_stop_client = rospy.ServiceProxy("/task/stop", SetBool)
+        self.recovery_mode_client = rospy.ServiceProxy(
+            "/recovery/available", SetBool
+        )
+        self.skip_mode_client = rospy.ServiceProxy(
+            "/local_goal_creator/skip_mode/avaliable", SetBool
+        )
         self.stop_line_detector_client = rospy.ServiceProxy(
             "/stop_line_detector/request", SetBool
         )
+        self.task_stop_client = rospy.ServiceProxy("/task/stop", SetBool)
         self.traffic_light_detector_client = rospy.ServiceProxy(
             "/traffic_light_detector/request", SetBool
         )
@@ -161,12 +161,7 @@ class TaskManager:
 
     def process(self):
         if self.task_manager_param.debug:
-            rospy.logwarn("waiting for services")
-            rospy.wait_for_service("/task/stop")
-            if self.task_manager_param.use_detect_white_line:
-                rospy.wait_for_service("/stop_line_detector/request")
-            if self.task_manager_param.use_traffic_light:
-                rospy.wait_for_service("/traffic_light_detector/request")
+            self.wait_for_service()
 
         prev_task_type = "_init"
         r = rospy.Rate(10)
@@ -200,8 +195,6 @@ class TaskManager:
             # publish
             self.target_velocity_pub.publish(self.target_velocity)
             self.finish_flag_pub.publish(self.finish_flag.data)
-            self.skip_mode_flag_pub.publish(self.skip_mode_flag.data)
-            self.recovery_mode_flag_pub.publish(self.recovery_mode_flag.data)
             if self.finish_flag.data:
                 rospy.sleep(self.planner_param.sleep_time_after_finish)
 
@@ -209,6 +202,16 @@ class TaskManager:
             self.finish_flag.data = False
 
             r.sleep()
+
+    def wait_for_service(self):
+        rospy.logwarn("waiting for services")
+        rospy.wait_for_service("/recovery/available")
+        rospy.wait_for_service("/local_goal_creator/skip_mode/avaliable")
+        if self.task_manager_param.use_detect_white_line:
+            rospy.wait_for_service("/stop_line_detector/request")
+        rospy.wait_for_service("/task/stop")
+        if self.task_manager_param.use_traffic_light:
+            rospy.wait_for_service("/traffic_light_detector/request")
 
     def print_status(self, task_type: str):
         rospy.loginfo_throttle(1, "=====")
@@ -268,15 +271,15 @@ class TaskManager:
 
         # skip_mode
         if task_type == "" and not self.is_stop_node(self.next_checkpoint_id):
-            self.skip_mode_flag.data = True
+            self.service_call(self.skip_mode_client, True)
         else:
-            self.skip_mode_flag.data = False
+            self.service_call(self.skip_mode_client, False)
 
         # recovery_mode
         if task_type == "" or task_type == "slow" or task_type == "stop":
-            self.recovery_mode_flag.data = True
+            self.service_call(self.recovery_mode_client, True)
         else:
-            self.recovery_mode_flag.data = False
+            self.service_call(self.recovery_mode_client, False)
 
     def service_call(self, service_name, req):
         while not rospy.is_shutdown():
