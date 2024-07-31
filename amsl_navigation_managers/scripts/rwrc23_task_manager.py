@@ -273,7 +273,7 @@ class TaskManager:
             self.skip_mode_flag.data = False
 
         # recovery_mode
-        if task_type == "" or task_type == "slow":
+        if task_type == "" or task_type == "slow" or task_type == "stop":
             self.recovery_mode_flag.data = True
         else:
             self.recovery_mode_flag.data = False
