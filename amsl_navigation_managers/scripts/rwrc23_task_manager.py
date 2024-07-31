@@ -232,28 +232,24 @@ class TaskManager:
             self.service_call(self.task_stop_client, True)
 
         # detect_line
-        if (
-            task_type == "detect_line"
-            and self.task_manager_param.use_detect_white_line
-        ):
-            self.service_call(self.stop_line_detector_client, True)
-            self.select_planner("pfp")
-            self.target_velocity.linear.x = (
-                self.planner_param.detect_line_pfp_target_velocity
-            )
-        else:
-            self.service_call(self.stop_line_detector_client, False)
+        if self.task_manager_param.use_detect_white_line:
+            if task_type == "detect_line":
+                self.service_call(self.stop_line_detector_client, True)
+                self.select_planner("pfp")
+                self.target_velocity.linear.x = (
+                    self.planner_param.detect_line_pfp_target_velocity
+                )
+            else:
+                self.service_call(self.stop_line_detector_client, False)
 
         # traffic_light
-        if (
-            task_type == "traffic_light"
-            and self.task_manager_param.use_traffic_light
-        ):
-            self.service_call(self.task_stop_client, True)
-            self.service_call(self.traffic_light_detector_client, True)
-            self.select_planner("dwa")
-        else:
-            self.service_call(self.traffic_light_detector_client, False)
+        if self.task_manager_param.use_traffic_light:
+            if task_type == "traffic_light":
+                self.service_call(self.task_stop_client, True)
+                self.service_call(self.traffic_light_detector_client, True)
+                self.select_planner("dwa")
+            else:
+                self.service_call(self.traffic_light_detector_client, False)
 
         # point_follow_planner
         if task_type == "in_line":
