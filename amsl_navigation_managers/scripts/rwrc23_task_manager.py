@@ -71,7 +71,7 @@ class TaskManager:
         self.recovery_mode_flag = Bool()
         self.task_type = None
 
-        if self.task_manager_param.debug:
+        if not self.task_manager_param.debug:
             self.wait_for_service()
 
         # Publisher
@@ -178,6 +178,7 @@ class TaskManager:
         rospy.logwarn("waiting for services")
         rospy.wait_for_service("/recovery/available")
         rospy.wait_for_service("/local_goal_creator/skip_mode/avaliable")
+        rospy.wait_for_service("/local_goal_creator/update")
         if self.task_manager_param.use_detect_white_line:
             rospy.wait_for_service("/stop_line_detector/request")
         rospy.wait_for_service("/task/stop")
@@ -293,11 +294,15 @@ class TaskManager:
                 1, f"next_checkpoint : {self.current_edge.node1_id}"
             )
 
-    def service_call(self, service_name, req):
+    def service_call(self, service_name, req=None):
         while not rospy.is_shutdown():
             try:
-                resp = service_name(req)
-                rospy.logwarn(resp.message)
+                if req is None:
+                    resp = service_name()
+                    rospy.logwarn(resp.message)
+                else:
+                    resp = service_name(req)
+                    rospy.logwarn(resp.message)
                 break
             except rospy.ServiceException as e:
                 rospy.logwarn(e)
@@ -380,7 +385,7 @@ class TaskManager:
             self.target_velocity_pub.publish(self.target_velocity)
 
             if self.finish_flag.data:
-                self.service_call(self.checkpoint_update_client, Trigger())
+                self.service_call(self.checkpoint_update_client)
                 rospy.sleep(self.planner_param.sleep_time_after_finish)
                 self.finish_flag.data = False
             else:
