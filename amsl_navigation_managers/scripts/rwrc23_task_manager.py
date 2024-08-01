@@ -11,7 +11,9 @@ import tf2_ros
 import yaml
 from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped, Twist
 from std_msgs.msg import Bool, Float64, Int32, Int32MultiArray, String
-from std_srvs.srv import SetBool, SetBoolResponse
+from std_srvs.srv import SetBool, SetBoolResponse, Trigger
+
+from amsl_navigation_msgs.msg import Edge
 
 
 @dataclass(frozen=True)
@@ -55,23 +57,32 @@ class TaskManager:
         rospy.init_node("task_manager")
         rospy.loginfo("=== task manager ===")
 
+        # Param
+        self.load_param()
+        self.current_edge = None
+        self.prev_edge = None
+        self.target_velocity = Twist()
+        self.target_velocity.linear.x = self.dwa_config.target_velocity
+        self.task_data = self.load_task_from_yaml()
+        self.current_planner = None
+        self.checkpoint_list = None
+        self.finish_flag = Bool()
+        self.skip_mode_flag = Bool()
+        self.recovery_mode_flag = Bool()
+        self.task_type = None
+
+        if not self.task_manager_param.debug:
+            self.wait_for_service()
+
         # Publisher
         self.target_velocity_pub = rospy.Publisher(
             "/target_velocity", Twist, queue_size=1
-        )
-        self.finish_flag_pub = rospy.Publisher(
-            "/finish_flag", Bool, queue_size=1
         )
         # Subscriber
         self.checkpoint_sub = rospy.Subscriber(
             "/checkpoint", Int32MultiArray, self.checkpoint_callback
         )
-        self.current_checkpoint_id_sub = rospy.Subscriber(
-            "/current_checkpoint", Int32, self.current_checkpoint_id_callback
-        )
-        self.next_checkpoint_id_sub = rospy.Subscriber(
-            "/next_checkpoint", Int32, self.next_checkpoint_id_callback
-        )
+        self.edge_sub = rospy.Subscriber("/edge", Edge, self.edge_callback)
         self.select_topic_sub = rospy.Subscriber(
             "/select_topic", String, self.select_topic_callback
         )
@@ -83,6 +94,9 @@ class TaskManager:
             "/stop_line_detector/stop",
             SetBool,
             self.stop_line_detected_callback,
+        )
+        self.checkpoint_update_client = rospy.ServiceProxy(
+            "/local_goal_creator/update", Trigger
         )
         self.recovery_mode_client = rospy.ServiceProxy(
             "/recovery/available", SetBool
@@ -97,18 +111,6 @@ class TaskManager:
         self.traffic_light_detector_client = rospy.ServiceProxy(
             "/traffic_light_detector/request", SetBool
         )
-
-        # Param
-        self.load_param()
-        self.current_checkpoint_id = None
-        self.next_checkpoint_id = None
-        self.target_velocity = Twist()
-        self.task_data = self.load_task_from_yaml()
-        self.current_planner = None
-        self.checkpoint_list = None
-        self.finish_flag = Bool()
-        self.skip_mode_flag = Bool()
-        self.recovery_mode_flag = Bool()
 
     def load_param(self):
         # TaskManagerParams
@@ -159,72 +161,64 @@ class TaskManager:
             ),
         )
 
-    def process(self):
-        if self.task_manager_param.debug:
-            self.wait_for_service()
-
-        prev_checkpoint_id = None
-        r = rospy.Rate(10)
-        self.target_velocity.linear.x = self.dwa_config.target_velocity
+    def load_task_from_yaml(self):
         while not rospy.is_shutdown():
-            if self.current_checkpoint_id is None:
-                rospy.logwarn_throttle(1, "Checkpoint id is not updated")
-                r.sleep()
-                continue
-            elif self.next_checkpoint_id is None:
-                rospy.logwarn_throttle(1, "Next checkpoint id is not updated")
-                r.sleep()
-                continue
-            elif self.checkpoint_list is None:
-                rospy.logwarn_throttle(1, "Checkpoint list is not updated")
-                r.sleep()
-                continue
-
-            # get task type
-            task_type = self.search_task_from_node_id(
-                self.current_checkpoint_id, self.next_checkpoint_id
-            )
-
-            # print status
-            self.print_status(task_type)
-
-            # update task
-            if prev_checkpoint_id != self.current_checkpoint_id:
-                self.update_task(task_type)
-
-            # publish
-            self.target_velocity_pub.publish(self.target_velocity)
-            self.finish_flag_pub.publish(self.finish_flag.data)
-            if self.finish_flag.data:
-                rospy.sleep(self.planner_param.sleep_time_after_finish)
-
-            prev_checkpoint_id = self.current_checkpoint_id
-            self.finish_flag.data = False
-
-            r.sleep()
+            task_data = None
+            try:
+                with open(self.task_manager_param.task_list_path) as file:
+                    task_data = yaml.safe_load(file)
+                if task_data is not None:
+                    break
+            except Exception as e:
+                rospy.logerr_throttle(5.0, e)
+                rospy.sleep(1.0)
+        return task_data
 
     def wait_for_service(self):
         rospy.logwarn("waiting for services")
         rospy.wait_for_service("/recovery/available")
         rospy.wait_for_service("/local_goal_creator/skip_mode/avaliable")
+        rospy.wait_for_service("/local_goal_creator/update")
         if self.task_manager_param.use_detect_white_line:
             rospy.wait_for_service("/stop_line_detector/request")
         rospy.wait_for_service("/task/stop")
         if self.task_manager_param.use_traffic_light:
             rospy.wait_for_service("/traffic_light_detector/request")
 
-    def print_status(self, task_type: str):
-        rospy.loginfo_throttle(1, "=====")
-        rospy.loginfo_throttle(1, f"task_type : {task_type}")
-        rospy.loginfo_throttle(1, f"planner : {self.current_planner}")
-        rospy.loginfo_throttle(
-            1, f"current_checkpoint : {self.current_checkpoint_id}"
-        )
-        rospy.loginfo_throttle(
-            1, f"next_checkpoint : {self.next_checkpoint_id}"
+    def checkpoint_callback(self, msg):
+        self.checkpoint_list = msg
+
+    def edge_callback(self, msg):
+        self.current_edge = msg
+
+        if self.checkpoint_list is None:
+            rospy.logwarn_throttle(1, "Checkpoint list is not updated")
+            return
+
+        if (
+            self.prev_edge is None
+            or self.current_edge.node0_id != self.prev_edge.node0_id
+        ):
+            self.task_type = self.search_task_from_node_id(self.current_edge)
+            self.update_task(self.task_type)
+            self.prev_edge = self.current_edge
+
+    def select_topic_callback(self, msg):
+        self.current_planner = (
+            msg.data.split("/")[-2]
+            .replace("_planner", "")
+            .replace("point_follow", "pfp")
         )
 
-    def update_task(self, task_type: str):
+    def finish_flag_callback(self, flag):
+        self.finish_flag.data = flag.data
+
+    def stop_line_detected_callback(self, req):
+        self.service_call(self.task_stop_client, req.data)
+        self.target_velocity.linear.x = self.pfp_config.target_velocity
+        return SetBoolResponse(True, "success")
+
+    def update_task(self, task_type):
         rospy.logwarn(f"task updated : {task_type}")
 
         # stop
@@ -262,7 +256,9 @@ class TaskManager:
             )
 
         # skip_mode
-        if task_type == "" and not self.is_stop_node(self.next_checkpoint_id):
+        if task_type == "" and not self.is_stop_node(
+            self.current_edge.node1_id
+        ):
             self.service_call(self.skip_mode_client, True)
         else:
             self.service_call(self.skip_mode_client, False)
@@ -277,61 +273,40 @@ class TaskManager:
         if task_type == "":
             self.select_planner("dwa")
 
-    def service_call(self, service_name, req):
+    def search_task_from_node_id(self, edge):
+        for count, task in enumerate(self.task_data["task"]):
+            if (
+                task["edge"]["node0_id"] == edge.node0_id
+                and task["edge"]["node1_id"] == edge.node1_id
+            ):
+                return task["task_type"]
+        return ""
+
+    def print_status(self):
+        rospy.loginfo_throttle(1, "=====")
+        rospy.loginfo_throttle(1, f"task_type : {self.task_type}")
+        rospy.loginfo_throttle(1, f"planner : {self.current_planner}")
+        if self.current_edge is not None:
+            rospy.loginfo_throttle(
+                1, f"current_checkpoint : {self.current_edge.node0_id}"
+            )
+            rospy.loginfo_throttle(
+                1, f"next_checkpoint : {self.current_edge.node1_id}"
+            )
+
+    def service_call(self, service_name, req=None):
         while not rospy.is_shutdown():
             try:
-                resp = service_name(req)
-                rospy.logwarn(resp.message)
+                if req is None:
+                    resp = service_name()
+                    rospy.logwarn(resp.message)
+                else:
+                    resp = service_name(req)
+                    rospy.logwarn(resp.message)
                 break
             except rospy.ServiceException as e:
                 rospy.logwarn(e)
                 rospy.sleep(0.5)
-
-    def load_task_from_yaml(self):
-        while not rospy.is_shutdown():
-            task_data = None
-            try:
-                with open(self.task_manager_param.task_list_path) as file:
-                    task_data = yaml.safe_load(file)
-                if task_data is not None:
-                    break
-            except Exception as e:
-                rospy.logerr_throttle(5.0, e)
-                rospy.sleep(1.0)
-        return task_data
-
-    def checkpoint_callback(self, msg):
-        self.checkpoint_list = msg
-
-    def current_checkpoint_id_callback(self, msg):
-        self.current_checkpoint_id = int(msg.data)
-
-    def next_checkpoint_id_callback(self, msg):
-        self.next_checkpoint_id = int(msg.data)
-
-    def select_topic_callback(self, msg):
-        self.current_planner = (
-            msg.data.split("/")[-2]
-            .replace("_planner", "")
-            .replace("point_follow", "pfp")
-        )
-
-    def finish_flag_callback(self, flag):
-        self.finish_flag.data = flag.data
-
-    def stop_line_detected_callback(self, req):
-        self.service_call(self.task_stop_client, req.data)
-        self.target_velocity.linear.x = self.pfp_config.target_velocity
-        return SetBoolResponse(True, "success")
-
-    def search_task_from_node_id(self, node0_id, node1_id):
-        for count, task in enumerate(self.task_data["task"]):
-            if (
-                task["edge"]["node0_id"] == node0_id
-                and task["edge"]["node1_id"] == node1_id
-            ):
-                return task["task_type"]
-        return ""
 
     def is_stop_node(self, node_id):
         for count, task in enumerate(self.task_data["task"]):
@@ -402,6 +377,19 @@ class TaskManager:
             ]
         )
         self.target_velocity.linear.x = planner_config.target_velocity
+
+    def process(self):
+        r = rospy.Rate(10)
+        while not rospy.is_shutdown():
+            self.print_status()
+            self.target_velocity_pub.publish(self.target_velocity)
+
+            if self.finish_flag.data:
+                self.service_call(self.checkpoint_update_client)
+                rospy.sleep(self.planner_param.sleep_time_after_finish)
+                self.finish_flag.data = False
+            else:
+                r.sleep()
 
 
 if __name__ == "__main__":
