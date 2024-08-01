@@ -9,6 +9,7 @@ from dataclasses import dataclass
 import rospy
 import tf2_ros
 import yaml
+from amsl_navigation_managers.msg import Edge
 from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped, Twist
 from std_msgs.msg import Bool, Float64, Int32, Int32MultiArray, String
 from std_srvs.srv import SetBool, SetBoolResponse
@@ -57,9 +58,8 @@ class TaskManager:
 
         # Param
         self.load_param()
-        self.prev_checkpoint_id = None
-        self.current_checkpoint_id = None
-        self.next_checkpoint_id = None
+        self.prev_edge = None
+        self.current_edge = None
         self.target_velocity = Twist()
         self.target_velocity.linear.x = self.dwa_config.target_velocity
         self.task_data = self.load_task_from_yaml()
@@ -83,12 +83,7 @@ class TaskManager:
         self.checkpoint_sub = rospy.Subscriber(
             "/checkpoint", Int32MultiArray, self.checkpoint_callback
         )
-        self.current_checkpoint_id_sub = rospy.Subscriber(
-            "/current_checkpoint", Int32, self.current_checkpoint_id_callback
-        )
-        self.next_checkpoint_id_sub = rospy.Subscriber(
-            "/next_checkpoint", Int32, self.next_checkpoint_id_callback
-        )
+        self.edge_sub = rospy.Subscriber("/edge", Edge, self.edge_callback)
         self.select_topic_sub = rospy.Subscriber(
             "/select_topic", String, self.select_topic_callback
         )
@@ -190,23 +185,16 @@ class TaskManager:
     def checkpoint_callback(self, msg):
         self.checkpoint_list = msg
 
-    def current_checkpoint_id_callback(self, msg):
-        self.current_checkpoint_id = int(msg.data)
+    def edge_callback(self, msg):
+        self.current_edge = msg
 
-        if self.next_checkpoint_id is None:
-            rospy.logwarn_throttle(1, "Next checkpoint id is not updated")
-            return
-        elif self.checkpoint_list is None:
+        if self.checkpoint_list is None:
             rospy.logwarn_throttle(1, "Checkpoint list is not updated")
             return
 
-        if self.prev_checkpoint_id != self.current_checkpoint_id:
+        if self.current_edge.node0_id != self.prev_edge.node0_id:
             self.update_task()
-
-        self.prev_checkpoint_id = self.current_checkpoint_id
-
-    def next_checkpoint_id_callback(self, msg):
-        self.next_checkpoint_id = int(msg.data)
+            self.prev_edge = self.current_edge
 
     def select_topic_callback(self, msg):
         self.current_planner = (
@@ -224,9 +212,7 @@ class TaskManager:
         return SetBoolResponse(True, "success")
 
     def update_task(self):
-        task_type = self.search_task_from_node_id(
-            self.current_checkpoint_id, self.next_checkpoint_id
-        )
+        task_type = self.search_task_from_node_id(self.current_edge)
         self.print_status(task_type)
         rospy.logwarn(f"task updated : {task_type}")
 
@@ -265,7 +251,9 @@ class TaskManager:
             )
 
         # skip_mode
-        if task_type == "" and not self.is_stop_node(self.next_checkpoint_id):
+        if task_type == "" and not self.is_stop_node(
+            self.current_edge.node1_id
+        ):
             self.service_call(self.skip_mode_client, True)
         else:
             self.service_call(self.skip_mode_client, False)
@@ -280,11 +268,11 @@ class TaskManager:
         if task_type == "":
             self.select_planner("dwa")
 
-    def search_task_from_node_id(self, node0_id, node1_id):
+    def search_task_from_node_id(self, edge):
         for count, task in enumerate(self.task_data["task"]):
             if (
-                task["edge"]["node0_id"] == node0_id
-                and task["edge"]["node1_id"] == node1_id
+                task["edge"]["node0_id"] == edge.node0_id
+                and task["edge"]["node1_id"] == edge.node1_id
             ):
                 return task["task_type"]
         return ""
@@ -294,10 +282,10 @@ class TaskManager:
         rospy.loginfo_throttle(1, f"task_type : {task_type}")
         rospy.loginfo_throttle(1, f"planner : {self.current_planner}")
         rospy.loginfo_throttle(
-            1, f"current_checkpoint : {self.current_checkpoint_id}"
+            1, f"current_checkpoint : {self.current_edge.node0_id}"
         )
         rospy.loginfo_throttle(
-            1, f"next_checkpoint : {self.next_checkpoint_id}"
+            1, f"next_checkpoint : {self.current_edge.node1_id}"
         )
 
     def service_call(self, service_name, req):
