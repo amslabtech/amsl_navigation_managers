@@ -11,7 +11,7 @@ import tf2_ros
 import yaml
 from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped, Twist
 from std_msgs.msg import Bool, Float64, Int32, Int32MultiArray, String
-from std_srvs.srv import SetBool, SetBoolResponse
+from std_srvs.srv import SetBool, SetBoolResponse, Trigger
 
 from amsl_navigation_msgs.msg import Edge
 
@@ -78,9 +78,6 @@ class TaskManager:
         self.target_velocity_pub = rospy.Publisher(
             "/target_velocity", Twist, queue_size=1
         )
-        self.finish_flag_pub = rospy.Publisher(
-            "/finish_flag", Bool, queue_size=1
-        )
         # Subscriber
         self.checkpoint_sub = rospy.Subscriber(
             "/checkpoint", Int32MultiArray, self.checkpoint_callback
@@ -97,6 +94,9 @@ class TaskManager:
             "/stop_line_detector/stop",
             SetBool,
             self.stop_line_detected_callback,
+        )
+        self.checkpoint_update_client = rospy.ServiceProxy(
+            "/local_goal_creator/update", Trigger
         )
         self.recovery_mode_client = rospy.ServiceProxy(
             "/recovery/available", SetBool
@@ -377,11 +377,10 @@ class TaskManager:
         r = rospy.Rate(10)
         while not rospy.is_shutdown():
             self.print_status()
-
             self.target_velocity_pub.publish(self.target_velocity)
-            self.finish_flag_pub.publish(self.finish_flag.data)
 
             if self.finish_flag.data:
+                self.service_call(self.checkpoint_update_client, Trigger())
                 rospy.sleep(self.planner_param.sleep_time_after_finish)
                 self.finish_flag.data = False
             else:
