@@ -373,11 +373,12 @@ class TaskManager:
         while not rospy.is_shutdown():
             self.target_velocity_pub.publish(self.target_velocity)
             self.finish_flag_pub.publish(self.finish_flag.data)
+
             if self.finish_flag.data:
                 rospy.sleep(self.planner_param.sleep_time_after_finish)
                 self.finish_flag.data = False
-
-            r.sleep()
+            else:
+                r.sleep()
 
 
 if __name__ == "__main__":
