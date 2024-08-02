@@ -164,6 +164,14 @@ class TaskManager:
             footprint=rospy.get_param("~pfp_footprint", ""),
             finish_flag=rospy.get_param("~pfp_finish_flag", ""),
         )
+        self.pfp_config = PlannerConfig(
+            target_velocity=rospy.get_param("~pfp_target_velocity", 1.0),
+            cmd_vel=rospy.get_param("~elevator_cmd_vel", ""),
+            cand_traj=rospy.get_param("~pfp_cand_traj", ""),
+            sel_traj=rospy.get_param("~pfp_best_traj", ""),
+            footprint=rospy.get_param("~pfp_footprint", ""),
+            finish_flag=rospy.get_param("~pfp_finish_flag", ""),
+        )
         self.planner_param = PlannerParam(
             detect_line_pfp_target_velocity=rospy.get_param(
                 "~detect_line_pfp_target_velocity", 0.3
@@ -264,6 +272,10 @@ class TaskManager:
         if task_type == "in_line":
             self.select_planner("pfp")
 
+        # elevator_task
+        if task_type == "elevator":
+            self.select_planner("elevator")
+
         # slow
         if task_type == "slow":
             self.target_velocity.linear.x = (
@@ -328,6 +340,8 @@ class TaskManager:
             self.select_topic(self.dwa_config)
         elif planner_name == "pfp":
             self.select_topic(self.pfp_config)
+        elif planner_name == "elevator":
+            self.select_topic(self.elevator_config)
         else:
             rospy.logwarn("Invalid planner")
 
