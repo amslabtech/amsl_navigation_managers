@@ -54,6 +54,7 @@ class PlannerParam:
 class TaskManagerState:
     task_type: str = "_init"
     planner: str = ""
+    assigned_planner: str = ""
     edge: Edge = None
 
     def print(self):
@@ -246,6 +247,8 @@ class TaskManager:
 
         # stop
         if task_type == "stop":
+            if self.state.assigned_planner != "":
+                self.select_planner(self.state.assigned_planner)
             self.service_call(self.task_stop_client, True)
 
         # detect_line
@@ -289,7 +292,9 @@ class TaskManager:
             self.service_call(self.skip_mode_client, False)
 
         # recovery_mode
-        if task_type == "" or task_type == "slow" or task_type == "stop":
+        if (
+            task_type == "" or task_type == "slow" or task_type == "stop"
+        ) and self.state.assigned_planner != "pfp":
             self.service_call(self.recovery_mode_client, True)
         else:
             self.service_call(self.recovery_mode_client, False)
@@ -299,11 +304,14 @@ class TaskManager:
             self.select_planner("dwa")
 
     def search_task_from_node_id(self, edge):
+        self.state.assigned_planner = ""
         for count, task in enumerate(self.task_list["task"]):
             if (
                 task["edge"]["node0_id"] == edge.node0_id
                 and task["edge"]["node1_id"] == edge.node1_id
             ):
+                if "planner" in task:
+                    self.state.assigned_planner = task["planner"]
                 return task["task_type"]
         return ""
 
