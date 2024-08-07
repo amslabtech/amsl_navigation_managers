@@ -6,9 +6,8 @@ from typing import Optional
 import rospy
 import yaml
 from geometry_msgs.msg import Point
-from std_msgs.msg import Int32
 
-from amsl_navigation_msgs.msg import NodeEdgeMap, Road
+from amsl_navigation_msgs.msg import Edge, NodeEdgeMap, Road
 
 
 @dataclass(frozen=True)
@@ -30,14 +29,10 @@ class RoadPublisher:
     Attributes:
         _param (Param): parameters
         _road_pub (rospy.Publisher): road publisher
-        _current_checkpoint_id_sub (rospy.Subscriber): current checkpoint id
-          subscriber
-        _next_checkpoint_id_sub (rospy.Subscriber): next checkpoint id
-          subscriber
+        _edge_sub (rospy.Subscriber): edge subscriber
         _node_edge_map_sub (rospy.Subscriber): node edge map subscriber
-        _current_checkpoint_id (int): current checkpoint id
-        _next_checkpoint_id (int): next checkpoint id
-        _node_edge_map (NodeEdgeMap): node edge map
+        _edge (Optional[Edge]): edge
+        _node_edge_map (Optional[NodeEdgeMap]): node edge map
         _widths (dict): road widths
     """
 
@@ -53,20 +48,22 @@ class RoadPublisher:
         self._road_pub = rospy.Publisher(
             "/node_edge_map/road", Road, queue_size=1
         )
-        self._current_checkpoint_id_sub = rospy.Subscriber(
-            "/current_checkpoint", Int32, self._current_checkpoint_id_callback
-        )
-        self._next_checkpoint_id_sub = rospy.Subscriber(
-            "/next_checkpoint", Int32, self._next_checkpoint_id_callback
-        )
+        self._edge_sub = rospy.Subscriber("/edge", Edge, self._edge_callback)
         self._node_edge_map_sub = rospy.Subscriber(
             "/node_edge_map/map", NodeEdgeMap, self._node_edge_map_callback
         )
 
-        self._current_checkpoint_id: Optional[int] = None
-        self._next_checkpoint_id: Optional[int] = None
+        self._edge: Optional[Edge] = None
         self._node_edge_map: Optional[NodeEdgeMap] = None
         self._widths: dict = self._load_width_from_yaml(self._param.path)
+
+    def _edge_callback(self, msg) -> None:
+        """edge callback
+
+        Args:
+            msg (Edge): edge
+        """
+        self._edge = msg
 
     def _node_edge_map_callback(self, msg: NodeEdgeMap) -> None:
         """node edge map callback
@@ -75,22 +72,6 @@ class RoadPublisher:
             msg (NodeEdgeMap): node edge map
         """
         self._node_edge_map = msg
-
-    def _current_checkpoint_id_callback(self, msg: Int32) -> None:
-        """current checkpoint id callback
-
-        Args:
-            msg (Int32): current checkpoint id
-        """
-        self._current_checkpoint_id = msg.data
-
-    def _next_checkpoint_id_callback(self, msg: Int32) -> None:
-        """next checkpoint id callback
-
-        Args:
-            msg (Int32): next checkpoint id
-        """
-        self._next_checkpoint_id = msg.data
 
     def _load_width_from_yaml(self, file_path: str) -> dict:
         """load road widths from yaml file
@@ -123,15 +104,10 @@ class RoadPublisher:
         """process"""
         r: rospy.Rate = rospy.Rate(self._param.hz)
         while not rospy.is_shutdown():
-            if (
-                self._node_edge_map is not None
-                and self._current_checkpoint_id is not None
-                and self._next_checkpoint_id is not None
-            ):
+            if self._node_edge_map is not None and self._edge is not None:
                 road: Optional[Road] = self._make_road(
                     self._node_edge_map,
-                    self._current_checkpoint_id,
-                    self._next_checkpoint_id,
+                    self._edge,
                     self._widths,
                 )
                 if road is not None:
@@ -144,16 +120,14 @@ class RoadPublisher:
     def _make_road(
         self,
         map: NodeEdgeMap,
-        current_checkpoint: int,
-        next_checkpoint: int,
+        edge: Edge,
         widths: dict,
     ) -> Optional[Road]:
         """make road
 
         Args:
             map (NodeEdgeMap): node edge map
-            current_checkpoint (int): current checkpoint id
-            next_checkpoint (int): next checkpoint id
+            edge (Edge): edge
             widths (dict): road widths
 
         Returns:
@@ -164,14 +138,14 @@ class RoadPublisher:
 
         for width in widths["widths"]:
             if (
-                width["edge"]["node0_id"] == current_checkpoint
-                and width["edge"]["node1_id"] == next_checkpoint
+                width["edge"]["node0_id"] == edge.node0_id
+                and width["edge"]["node1_id"] == edge.node1_id
             ):
                 current_right_width = width["distance_to_right"]
                 current_width = width["width"]
             elif (
-                width["edge"]["node0_id"] == next_checkpoint
-                and width["edge"]["node1_id"] == current_checkpoint
+                width["edge"]["node0_id"] == edge.node1_id
+                and width["edge"]["node1_id"] == edge.node0_id
             ):
                 current_right_width = (
                     width["width"] - width["distance_to_right"]
@@ -182,9 +156,9 @@ class RoadPublisher:
             return None
 
         for node in map.nodes:
-            if node.id == current_checkpoint:
+            if node.id == edge.node0_id:
                 current_node_point: Point = node.point
-            elif node.id == next_checkpoint:
+            elif node.id == edge.node1_id:
                 next_node_point: Point = node.point
 
         return Road(
