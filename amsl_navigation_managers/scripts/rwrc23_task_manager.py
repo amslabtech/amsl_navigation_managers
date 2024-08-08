@@ -8,7 +8,7 @@ from dataclasses import dataclass
 import rospy
 import yaml
 from geometry_msgs.msg import Twist
-from std_msgs.msg import Bool, Int32MultiArray, String
+from std_msgs.msg import Bool, Int32MultiArray, String, Float64
 from std_srvs.srv import SetBool, SetBoolResponse, Trigger
 
 from amsl_navigation_msgs.msg import Edge
@@ -83,6 +83,7 @@ class TaskManager:
         self.task_list = self.load_task_from_yaml()
         self.finish_flag = Bool()
         self.target_velocity = Twist()
+        self.expand_radius = Float64()
         self.target_velocity.linear.x = self.dwa_config.target_velocity
 
         if not self.task_manager_param.debug:
@@ -91,6 +92,9 @@ class TaskManager:
         # Publisher
         self.target_velocity_pub = rospy.Publisher(
             "/target_velocity", Twist, queue_size=1
+        )
+        self.expand_radius_pub = rospy.Publisher(
+            "/local_map/expand_radius", Float64, queue_size=1
         )
         # Subscriber
         self.checkpoint_sub = rospy.Subscriber(
@@ -346,10 +350,13 @@ class TaskManager:
     def select_planner(self, planner_name: str):
         if planner_name == "dwa":
             self.select_topic(self.dwa_config)
+            self.expand_radius.data = 0.075
         elif planner_name == "pfp":
             self.select_topic(self.pfp_config)
+            self.expand_radius.data = 0.075
         elif planner_name == "elevator":
             self.select_topic(self.elevator_config)
+            self.expand_radius.data = 0.0
         else:
             rospy.logwarn("Invalid planner")
 
@@ -406,6 +413,7 @@ class TaskManager:
         while not rospy.is_shutdown():
             self.state.print()
             self.target_velocity_pub.publish(self.target_velocity)
+            self.expand_radius_pub.publish(self.expand_radius)
 
             if self.finish_flag.data:
                 self.service_call(self.checkpoint_update_client)
