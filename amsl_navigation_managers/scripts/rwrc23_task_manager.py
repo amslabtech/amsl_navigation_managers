@@ -281,7 +281,8 @@ class TaskManager:
 
         # elevator_task
         if task_type == "elevator":
-            self.select_planner("elevator")
+            self.select_planner("pfp")
+            self.expand_radius = 0.0
 
         # slow
         if task_type == "slow":
