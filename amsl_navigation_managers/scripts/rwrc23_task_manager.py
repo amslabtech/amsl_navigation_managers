@@ -281,8 +281,19 @@ class TaskManager:
 
         # elevator_task
         if task_type == "elevator":
+            self.select_planner("elevator")
+
+        # elevator_in
+        if task_type == "elevator_in":
             self.select_planner("pfp")
             self.expand_radius = 0.0
+            self.target_velocity.linear.x = 0.1
+
+        # elevator_out
+        if task_type == "elevator_out":
+            self.select_planner("pfp")
+            self.expand_radius = 0.0
+            self.target_velocity.linear.x = -0.1
 
         # slow
         if task_type == "slow":
