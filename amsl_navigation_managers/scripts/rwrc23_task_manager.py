@@ -179,6 +179,22 @@ class TaskManager:
             footprint=rospy.get_param("~pfp_footprint", ""),
             finish_flag=rospy.get_param("~elevator_finish_flag", ""),
         )
+        self.elevator_in_config = PlannerConfig(
+            target_velocity=rospy.get_param("~pfp_target_velocity", 1.0),
+            cmd_vel=rospy.get_param("~elevator_cmd_vel", ""),
+            cand_traj=rospy.get_param("~pfp_cand_traj", ""),
+            sel_traj=rospy.get_param("~pfp_best_traj", ""),
+            footprint=rospy.get_param("~pfp_footprint", ""),
+            finish_flag=rospy.get_param("~elevator_finish_flag", ""),
+        )
+        self.elevator_out_config = PlannerConfig(
+            target_velocity=rospy.get_param("~pfp_target_velocity", 1.0),
+            cmd_vel=rospy.get_param("~pfp_cmd_vel", ""),
+            cand_traj=rospy.get_param("~pfp_cand_traj", ""),
+            sel_traj=rospy.get_param("~pfp_best_traj", ""),
+            footprint=rospy.get_param("~pfp_footprint", ""),
+            finish_flag=rospy.get_param("~pfp_finish_flag", ""),
+        )
         self.planner_param = PlannerParam(
             detect_line_pfp_target_velocity=rospy.get_param(
                 "~detect_line_pfp_target_velocity", 0.3
@@ -293,16 +309,14 @@ class TaskManager:
 
         # elevator_in
         if task_type == "elevator_in":
-            self.select_planner("pfp")
-            self.expand_radius = 0.0
+            self.select_planner("elevator_in")
             self.target_velocity.linear.x = (
                 self.planner_param.elevatior_in_target_velocity
             )
 
         # elevator_out
         if task_type == "elevator_out":
-            self.select_planner("pfp")
-            self.expand_radius = 0.0
+            self.select_planner("elevator_out")
             self.target_velocity.linear.x = (
                 self.planner_param.elevator_out_target_velocity
             )
@@ -380,6 +394,12 @@ class TaskManager:
             self.expand_radius.data = 0.075
         elif planner_name == "elevator":
             self.select_topic(self.elevator_config)
+            self.expand_radius.data = 0.075
+        elif planner_name == "elevator_in":
+            self.select_topic(self.elevator_in_config)
+            self.expand_radius.data = 0.0
+        elif planner_name == "elevator_out":
+            self.select_topic(self.elevator_out_config)
             self.expand_radius.data = 0.0
         else:
             rospy.logwarn("Invalid planner")
