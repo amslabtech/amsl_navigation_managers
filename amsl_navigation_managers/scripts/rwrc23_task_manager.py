@@ -47,6 +47,8 @@ class PlannerConfig:
 class PlannerParam:
     detect_line_pfp_target_velocity: float
     slow_target_velocity: float
+    elevatior_in_target_velocity: float
+    elevator_out_target_velocity: float
     sleep_time_after_finish: float
 
 
@@ -182,6 +184,12 @@ class TaskManager:
                 "~detect_line_pfp_target_velocity", 0.3
             ),
             slow_target_velocity=rospy.get_param("~slow_target_velocity", 0.6),
+            elevatior_in_target_velocity=rospy.get_param(
+                "~elevator_in_target_velocity", 0.1
+            ),
+            elevator_out_target_velocity=rospy.get_param(
+                "~elevator_out_target_velocity", -0.1
+            ),
             sleep_time_after_finish=rospy.get_param(
                 "~sleep_time_after_finish", 0.5
             ),
@@ -287,13 +295,17 @@ class TaskManager:
         if task_type == "elevator_in":
             self.select_planner("pfp")
             self.expand_radius = 0.0
-            self.target_velocity.linear.x = 0.1
+            self.target_velocity.linear.x = (
+                self.planner_param.elevatior_in_target_velocity
+            )
 
         # elevator_out
         if task_type == "elevator_out":
             self.select_planner("pfp")
             self.expand_radius = 0.0
-            self.target_velocity.linear.x = -0.1
+            self.target_velocity.linear.x = (
+                self.planner_param.elevator_out_target_velocity
+            )
 
         # slow
         if task_type == "slow":
