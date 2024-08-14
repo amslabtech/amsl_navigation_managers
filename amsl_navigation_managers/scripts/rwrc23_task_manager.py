@@ -31,6 +31,7 @@ class TopicConfig:
     sel_traj_topic: str
     footprint_topic: str
     finish_flag_topic: str
+    local_goal_topic: str
 
 
 @dataclass(frozen=True)
@@ -41,6 +42,7 @@ class PlannerConfig:
     sel_traj: str
     footprint: str
     finish_flag: str
+    local_goal: str
 
 
 @dataclass(frozen=True)
@@ -154,6 +156,7 @@ class TaskManager:
             sel_traj_topic=rospy.get_param("~sel_traj_topic", ""),
             footprint_topic=rospy.get_param("~footprint_topic", ""),
             finish_flag_topic=rospy.get_param("~finish_flag_topic", ""),
+            local_goal_topic=rospy.get_param("~local_goal_topic", ""),
         )
         self.dwa_config = PlannerConfig(
             target_velocity=rospy.get_param("~dwa_target_velocity", 1.0),
@@ -162,6 +165,7 @@ class TaskManager:
             sel_traj=rospy.get_param("~dwa_sel_traj", ""),
             footprint=rospy.get_param("~dwa_footprint", ""),
             finish_flag=rospy.get_param("~dwa_finish_flag", ""),
+            local_goal=rospy.get_param("~localgoal_creator_localgoal", ""),
         )
         self.pfp_config = PlannerConfig(
             target_velocity=rospy.get_param("~pfp_target_velocity", 1.0),
@@ -170,6 +174,7 @@ class TaskManager:
             sel_traj=rospy.get_param("~pfp_best_traj", ""),
             footprint=rospy.get_param("~pfp_footprint", ""),
             finish_flag=rospy.get_param("~pfp_finish_flag", ""),
+            local_goal=rospy.get_param("~localgoal_creator_localgoal", ""),
         )
         self.elevator_config = PlannerConfig(
             target_velocity=rospy.get_param("~pfp_target_velocity", 1.0),
@@ -178,6 +183,7 @@ class TaskManager:
             sel_traj=rospy.get_param("~pfp_best_traj", ""),
             footprint=rospy.get_param("~pfp_footprint", ""),
             finish_flag=rospy.get_param("~elevator_finish_flag", ""),
+            local_goal=rospy.get_param("~localgoal_creator_localgoal", ""),
         )
         self.elevator_in_config = PlannerConfig(
             target_velocity=rospy.get_param("~pfp_target_velocity", 1.0),
@@ -186,6 +192,7 @@ class TaskManager:
             sel_traj=rospy.get_param("~pfp_best_traj", ""),
             footprint=rospy.get_param("~pfp_footprint", ""),
             finish_flag=rospy.get_param("~elevator_finish_flag", ""),
+            local_goal=rospy.get_param("~elevator_manager_localgoal", ""),
         )
         self.elevator_out_config = PlannerConfig(
             target_velocity=rospy.get_param("~pfp_target_velocity", 1.0),
@@ -194,6 +201,7 @@ class TaskManager:
             sel_traj=rospy.get_param("~pfp_best_traj", ""),
             footprint=rospy.get_param("~pfp_footprint", ""),
             finish_flag=rospy.get_param("~pfp_finish_flag", ""),
+            local_goal=rospy.get_param("~elevator_manager_localgoal", ""),
         )
         self.planner_param = PlannerParam(
             detect_line_pfp_target_velocity=rospy.get_param(
@@ -448,6 +456,15 @@ class TaskManager:
                 "mux_select",
                 str(self.topic_config.finish_flag_topic),
                 str(planner_config.finish_flag),
+            ]
+        )
+        subprocess.Popen(
+            [
+                "rosrun",
+                "topic_tools",
+                "mux_select",
+                str(self.topic_config.local_goal_topic),
+                str(planner_config.local_goal),
             ]
         )
         self.target_velocity.linear.x = planner_config.target_velocity
