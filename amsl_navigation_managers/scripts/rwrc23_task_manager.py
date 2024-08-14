@@ -8,7 +8,7 @@ from dataclasses import dataclass
 import rospy
 import yaml
 from geometry_msgs.msg import Twist
-from std_msgs.msg import Bool, Int32MultiArray, String, Float64
+from std_msgs.msg import Bool, Float64, Int32MultiArray, String
 from std_srvs.srv import SetBool, SetBoolResponse, Trigger
 
 from amsl_navigation_msgs.msg import Edge
@@ -126,6 +126,12 @@ class TaskManager:
         self.skip_mode_client = rospy.ServiceProxy(
             "/local_goal_creator/skip_mode/avaliable", SetBool
         )
+        self.local_goal_restore_mode_client = rospy.ServiceProxy(
+            "/local_goal_creator/restore_mode", SetBool
+        )
+        self.pfp_recovery_mode_client = rospy.ServiceProxy(
+            "/local_planner/point_follow_planner/recovery/available", SetBool
+        )
         self.stop_line_detector_client = rospy.ServiceProxy(
             "/stop_line_detector/request", SetBool
         )
@@ -202,7 +208,6 @@ class TaskManager:
             footprint=rospy.get_param("~pfp_footprint", ""),
             finish_flag=rospy.get_param("~pfp_finish_flag", ""),
             local_goal=rospy.get_param("~elevator_manager_localgoal", ""),
-
         )
         self.planner_param = PlannerParam(
             detect_line_pfp_target_velocity=rospy.get_param(
@@ -237,7 +242,11 @@ class TaskManager:
         rospy.logwarn("waiting for services")
         rospy.wait_for_service("/recovery/available")
         rospy.wait_for_service("/local_goal_creator/skip_mode/avaliable")
+        rospy.wait_for_service("/local_goal_creator/restore_mode")
         rospy.wait_for_service("/local_goal_creator/update")
+        rospy.wait_for_service(
+            "/local_planner/point_follow_planner/recovery/available"
+        )
         if self.task_manager_param.use_detect_white_line:
             rospy.wait_for_service("/stop_line_detector/request")
         rospy.wait_for_service("/task/stop")
@@ -311,6 +320,15 @@ class TaskManager:
         # point_follow_planner
         if task_type == "in_line":
             self.select_planner("pfp")
+
+        # autodoor
+        if task_type == "autodoor":
+            self.select_planner("pfp")
+            self.service_call(self.local_goal_restore_mode_client, True)
+            self.service_call(self.pfp_recovery_mode_client, True)
+        else:
+            self.service_call(self.local_goal_restore_mode_client, False)
+            self.service_call(self.pfp_recovery_mode_client, False)
 
         # elevator_task
         if task_type == "elevator":
