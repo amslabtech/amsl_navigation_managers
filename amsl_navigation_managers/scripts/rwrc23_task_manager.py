@@ -8,7 +8,7 @@ from dataclasses import dataclass
 import rospy
 import yaml
 from geometry_msgs.msg import Twist
-from std_msgs.msg import Bool, Int32MultiArray, String
+from std_msgs.msg import Bool, Int32MultiArray, String, Float64
 from std_srvs.srv import SetBool, SetBoolResponse, Trigger
 
 from amsl_navigation_msgs.msg import Edge
@@ -31,6 +31,7 @@ class TopicConfig:
     sel_traj_topic: str
     footprint_topic: str
     finish_flag_topic: str
+    local_goal_topic: str
 
 
 @dataclass(frozen=True)
@@ -41,12 +42,15 @@ class PlannerConfig:
     sel_traj: str
     footprint: str
     finish_flag: str
+    local_goal: str
 
 
 @dataclass(frozen=True)
 class PlannerParam:
     detect_line_pfp_target_velocity: float
     slow_target_velocity: float
+    elevatior_in_target_velocity: float
+    elevator_out_target_velocity: float
     sleep_time_after_finish: float
 
 
@@ -54,6 +58,7 @@ class PlannerParam:
 class TaskManagerState:
     task_type: str = "_init"
     planner: str = ""
+    assigned_planner: str = ""
     edge: Edge = None
 
     def print(self):
@@ -82,6 +87,7 @@ class TaskManager:
         self.task_list = self.load_task_from_yaml()
         self.finish_flag = Bool()
         self.target_velocity = Twist()
+        self.expand_radius = Float64()
         self.target_velocity.linear.x = self.dwa_config.target_velocity
 
         if not self.task_manager_param.debug:
@@ -90,6 +96,9 @@ class TaskManager:
         # Publisher
         self.target_velocity_pub = rospy.Publisher(
             "/target_velocity", Twist, queue_size=1
+        )
+        self.expand_radius_pub = rospy.Publisher(
+            "/local_map/expand_radius", Float64, queue_size=1
         )
         # Subscriber
         self.checkpoint_sub = rospy.Subscriber(
@@ -147,6 +156,7 @@ class TaskManager:
             sel_traj_topic=rospy.get_param("~sel_traj_topic", ""),
             footprint_topic=rospy.get_param("~footprint_topic", ""),
             finish_flag_topic=rospy.get_param("~finish_flag_topic", ""),
+            local_goal_topic=rospy.get_param("~local_goal_topic", ""),
         )
         self.dwa_config = PlannerConfig(
             target_velocity=rospy.get_param("~dwa_target_velocity", 1.0),
@@ -155,6 +165,7 @@ class TaskManager:
             sel_traj=rospy.get_param("~dwa_sel_traj", ""),
             footprint=rospy.get_param("~dwa_footprint", ""),
             finish_flag=rospy.get_param("~dwa_finish_flag", ""),
+            local_goal=rospy.get_param("~localgoal_creator_localgoal", ""),
         )
         self.pfp_config = PlannerConfig(
             target_velocity=rospy.get_param("~pfp_target_velocity", 1.0),
@@ -163,12 +174,47 @@ class TaskManager:
             sel_traj=rospy.get_param("~pfp_best_traj", ""),
             footprint=rospy.get_param("~pfp_footprint", ""),
             finish_flag=rospy.get_param("~pfp_finish_flag", ""),
+            local_goal=rospy.get_param("~localgoal_creator_localgoal", ""),
+        )
+        self.elevator_config = PlannerConfig(
+            target_velocity=rospy.get_param("~pfp_target_velocity", 1.0),
+            cmd_vel=rospy.get_param("~elevator_cmd_vel", ""),
+            cand_traj=rospy.get_param("~pfp_cand_traj", ""),
+            sel_traj=rospy.get_param("~pfp_best_traj", ""),
+            footprint=rospy.get_param("~pfp_footprint", ""),
+            finish_flag=rospy.get_param("~elevator_finish_flag", ""),
+            local_goal=rospy.get_param("~localgoal_creator_localgoal", ""),
+        )
+        self.elevator_in_config = PlannerConfig(
+            target_velocity=rospy.get_param("~pfp_target_velocity", 1.0),
+            cmd_vel=rospy.get_param("~pfp_cmd_vel", ""),
+            cand_traj=rospy.get_param("~pfp_cand_traj", ""),
+            sel_traj=rospy.get_param("~pfp_best_traj", ""),
+            footprint=rospy.get_param("~pfp_footprint", ""),
+            finish_flag=rospy.get_param("~elevator_finish_flag", ""),
+            local_goal=rospy.get_param("~elevator_manager_localgoal", ""),
+        )
+        self.elevator_out_config = PlannerConfig(
+            target_velocity=rospy.get_param("~pfp_target_velocity", 1.0),
+            cmd_vel=rospy.get_param("~pfp_cmd_vel", ""),
+            cand_traj=rospy.get_param("~pfp_cand_traj", ""),
+            sel_traj=rospy.get_param("~pfp_best_traj", ""),
+            footprint=rospy.get_param("~pfp_footprint", ""),
+            finish_flag=rospy.get_param("~pfp_finish_flag", ""),
+            local_goal=rospy.get_param("~elevator_manager_localgoal", ""),
+
         )
         self.planner_param = PlannerParam(
             detect_line_pfp_target_velocity=rospy.get_param(
                 "~detect_line_pfp_target_velocity", 0.3
             ),
             slow_target_velocity=rospy.get_param("~slow_target_velocity", 0.6),
+            elevatior_in_target_velocity=rospy.get_param(
+                "~elevator_in_target_velocity", 0.1
+            ),
+            elevator_out_target_velocity=rospy.get_param(
+                "~elevator_out_target_velocity", -0.1
+            ),
             sleep_time_after_finish=rospy.get_param(
                 "~sleep_time_after_finish", 0.5
             ),
@@ -238,6 +284,8 @@ class TaskManager:
 
         # stop
         if task_type == "stop":
+            if self.state.assigned_planner != "":
+                self.select_planner(self.state.assigned_planner)
             self.service_call(self.task_stop_client, True)
 
         # detect_line
@@ -264,6 +312,24 @@ class TaskManager:
         if task_type == "in_line":
             self.select_planner("pfp")
 
+        # elevator_task
+        if task_type == "elevator":
+            self.select_planner("elevator")
+
+        # elevator_in
+        if task_type == "elevator_in":
+            self.select_planner("elevator_in")
+            self.target_velocity.linear.x = (
+                self.planner_param.elevatior_in_target_velocity
+            )
+
+        # elevator_out
+        if task_type == "elevator_out":
+            self.select_planner("elevator_out")
+            self.target_velocity.linear.x = (
+                self.planner_param.elevator_out_target_velocity
+            )
+
         # slow
         if task_type == "slow":
             self.target_velocity.linear.x = (
@@ -277,7 +343,9 @@ class TaskManager:
             self.service_call(self.skip_mode_client, False)
 
         # recovery_mode
-        if task_type == "" or task_type == "slow" or task_type == "stop":
+        if (
+            task_type == "" or task_type == "slow" or task_type == "stop"
+        ) and self.state.assigned_planner != "pfp":
             self.service_call(self.recovery_mode_client, True)
         else:
             self.service_call(self.recovery_mode_client, False)
@@ -287,11 +355,14 @@ class TaskManager:
             self.select_planner("dwa")
 
     def search_task_from_node_id(self, edge):
+        self.state.assigned_planner = ""
         for count, task in enumerate(self.task_list["task"]):
             if (
                 task["edge"]["node0_id"] == edge.node0_id
                 and task["edge"]["node1_id"] == edge.node1_id
             ):
+                if "planner" in task:
+                    self.state.assigned_planner = task["planner"]
                 return task["task_type"]
         return ""
 
@@ -326,8 +397,19 @@ class TaskManager:
     def select_planner(self, planner_name: str):
         if planner_name == "dwa":
             self.select_topic(self.dwa_config)
+            self.expand_radius.data = 0.075
         elif planner_name == "pfp":
             self.select_topic(self.pfp_config)
+            self.expand_radius.data = 0.075
+        elif planner_name == "elevator":
+            self.select_topic(self.elevator_config)
+            self.expand_radius.data = 0.075
+        elif planner_name == "elevator_in":
+            self.select_topic(self.elevator_in_config)
+            self.expand_radius.data = 0.0
+        elif planner_name == "elevator_out":
+            self.select_topic(self.elevator_out_config)
+            self.expand_radius.data = 0.0
         else:
             rospy.logwarn("Invalid planner")
 
@@ -377,6 +459,15 @@ class TaskManager:
                 str(planner_config.finish_flag),
             ]
         )
+        subprocess.Popen(
+            [
+                "rosrun",
+                "topic_tools",
+                "mux_select",
+                str(self.topic_config.local_goal_topic),
+                str(planner_config.local_goal),
+            ]
+        )
         self.target_velocity.linear.x = planner_config.target_velocity
 
     def process(self):
@@ -384,6 +475,7 @@ class TaskManager:
         while not rospy.is_shutdown():
             self.state.print()
             self.target_velocity_pub.publish(self.target_velocity)
+            self.expand_radius_pub.publish(self.expand_radius)
 
             if self.finish_flag.data:
                 self.service_call(self.checkpoint_update_client)
