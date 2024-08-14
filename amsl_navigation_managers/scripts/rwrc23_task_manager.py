@@ -129,6 +129,9 @@ class TaskManager:
         self.local_goal_restore_mode_client = rospy.ServiceProxy(
             "/local_goal_creator/restore_mode", SetBool
         )
+        self.pfp_recovery_mode_client = rospy.ServiceProxy(
+            "/local_planner/point_follow_planner/recovery/available", SetBool
+        )
         self.stop_line_detector_client = rospy.ServiceProxy(
             "/stop_line_detector/request", SetBool
         )
@@ -241,6 +244,9 @@ class TaskManager:
         rospy.wait_for_service("/local_goal_creator/skip_mode/avaliable")
         rospy.wait_for_service("/local_goal_creator/restore_mode")
         rospy.wait_for_service("/local_goal_creator/update")
+        rospy.wait_for_service(
+            "/local_planner/point_follow_planner/recovery/available"
+        )
         if self.task_manager_param.use_detect_white_line:
             rospy.wait_for_service("/stop_line_detector/request")
         rospy.wait_for_service("/task/stop")
@@ -319,8 +325,10 @@ class TaskManager:
         if task_type == "autodoor":
             self.select_planner("pfp")
             self.service_call(self.local_goal_restore_mode_client, True)
+            self.service_call(self.pfp_recovery_mode_client, True)
         else:
             self.service_call(self.local_goal_restore_mode_client, False)
+            self.service_call(self.pfp_recovery_mode_client, False)
 
         # elevator_task
         if task_type == "elevator":
