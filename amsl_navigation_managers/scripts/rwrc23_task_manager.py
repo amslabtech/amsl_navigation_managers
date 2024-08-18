@@ -203,7 +203,7 @@ class TaskManager:
             cand_traj=rospy.get_param("~pfp_cand_traj", ""),
             sel_traj=rospy.get_param("~pfp_best_traj", ""),
             footprint=rospy.get_param("~pfp_footprint", ""),
-            finish_flag=rospy.get_param("~elevator_finish_flag", ""),
+            finish_flag=rospy.get_param("~elevator_in_finish_flag", ""),
             local_goal=rospy.get_param("~elevator_manager_localgoal", ""),
         )
         self.elevator_out_config = PlannerConfig(
@@ -212,7 +212,7 @@ class TaskManager:
             cand_traj=rospy.get_param("~pfp_cand_traj", ""),
             sel_traj=rospy.get_param("~pfp_best_traj", ""),
             footprint=rospy.get_param("~pfp_footprint", ""),
-            finish_flag=rospy.get_param("~pfp_finish_flag", ""),
+            finish_flag=rospy.get_param("~elevator_out_finish_flag", ""),
             local_goal=rospy.get_param("~elevator_manager_localgoal", ""),
         )
         self.planner_param = PlannerParam(
