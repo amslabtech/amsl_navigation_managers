@@ -395,6 +395,9 @@ class TaskManager:
         return ""
 
     def service_call(self, service_name, req=None):
+        if self.task_manager_param.debug:
+            return
+
         while not rospy.is_shutdown():
             try:
                 if req is None:
