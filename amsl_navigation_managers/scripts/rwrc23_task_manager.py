@@ -425,29 +425,19 @@ class TaskManager:
     def select_planner(self, planner_name: str):
         if planner_name == "dwa":
             self.select_topic(self.dwa_config)
-            self.expand_radius.data = (
-                self.local_map_param.expand_radius
-            )
+            self.expand_radius.data = self.local_map_param.expand_radius
         elif planner_name == "pfp":
             self.select_topic(self.pfp_config)
-            self.expand_radius.data = (
-                self.local_map_param.expand_radius
-            )
+            self.expand_radius.data = self.local_map_param.expand_radius
         elif planner_name == "elevator":
             self.select_topic(self.elevator_config)
-            self.expand_radius.data = (
-                self.local_map_param.no_expand_radius
-            )
+            self.expand_radius.data = self.local_map_param.no_expand_radius
         elif planner_name == "elevator_in":
             self.select_topic(self.elevator_in_config)
-            self.expand_radius.data = (
-                self.local_map_param.no_expand_radius
-            )
+            self.expand_radius.data = self.local_map_param.no_expand_radius
         elif planner_name == "elevator_out":
             self.select_topic(self.elevator_out_config)
-            self.expand_radius.data = (
-                self.local_map_param.no_expand_radius
-            )
+            self.expand_radius.data = self.local_map_param.no_expand_radius
         else:
             rospy.logwarn("Invalid planner")
 
