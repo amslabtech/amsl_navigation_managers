@@ -221,10 +221,10 @@ class TaskManager:
             ),
             slow_target_velocity=rospy.get_param("~slow_target_velocity", 0.6),
             elevatior_in_target_velocity=rospy.get_param(
-                "~elevator_in_target_velocity", 0.1
+                "~elevator_in_target_velocity", 0.3
             ),
             elevator_out_target_velocity=rospy.get_param(
-                "~elevator_out_target_velocity", -0.1
+                "~elevator_out_target_velocity", -0.3
             ),
             sleep_time_after_finish=rospy.get_param(
                 "~sleep_time_after_finish", 0.5
@@ -232,7 +232,7 @@ class TaskManager:
         )
         self.local_map_param = LocalMapParam(
             expand_radius=rospy.get_param("~expand_radius", 0.075),
-            no_expand_radius=rospy.get_param("~no_expand_radius", 0.0),
+            no_expand_radius=rospy.get_param("~no_expand_radius", 0.02),
         )
 
     def load_task_from_yaml(self):
