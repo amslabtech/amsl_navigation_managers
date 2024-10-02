@@ -305,6 +305,8 @@ class TaskManager:
         if task_type == "stop":
             if self.state.assigned_planner != "":
                 self.select_planner(self.state.assigned_planner)
+            else:
+                self.select_planner("dwa")
             self.service_call(self.task_stop_client, True)
 
         # detect_line
