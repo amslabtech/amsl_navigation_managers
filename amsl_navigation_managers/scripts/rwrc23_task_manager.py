@@ -215,6 +215,15 @@ class TaskManager:
             finish_flag=rospy.get_param("~elevator_out_finish_flag", ""),
             local_goal=rospy.get_param("~elevator_manager_localgoal", ""),
         )
+        self.delivery_boc_config = PlannerConfig(
+            target_velocity=rospy.get_param("~pfp_target_velocity", 1.0),
+            cmd_vel=rospy.get_param("~pfp_cmd_vel", ""),
+            cand_traj=rospy.get_param("~pfp_cand_traj", ""),
+            sel_traj=rospy.get_param("~pfp_best_traj", ""),
+            footprint=rospy.get_param("~pfp_footprint", ""),
+            finish_flag=rospy.get_param("~pfp_finish_flag", ""),
+            local_goal=rospy.get_param("~delivery_box_localgoal", ""),
+        )
         self.planner_param = PlannerParam(
             detect_line_pfp_target_velocity=rospy.get_param(
                 "~detect_line_pfp_target_velocity", 0.3
@@ -360,6 +369,10 @@ class TaskManager:
                 self.planner_param.elevator_out_target_velocity
             )
 
+        # delivery_box
+        if task_type == "delivery_box":
+            self.select_planner("delivery_box")
+
         # slow
         if task_type == "slow":
             self.target_velocity.linear.x = (
@@ -443,6 +456,9 @@ class TaskManager:
         elif planner_name == "elevator_out":
             self.select_topic(self.elevator_out_config)
             self.expand_radius.data = self.local_map_param.no_expand_radius
+        elif planner_name == "delivery_box":
+            self.select_topic(self.delivery_box_config)
+            self.expand_radius.data = self.local_map_param.expand_radius
         else:
             rospy.logwarn("Invalid planner")
 
