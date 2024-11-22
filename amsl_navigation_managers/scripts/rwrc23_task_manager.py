@@ -215,7 +215,7 @@ class TaskManager:
             finish_flag=rospy.get_param("~elevator_out_finish_flag", ""),
             local_goal=rospy.get_param("~elevator_manager_localgoal", ""),
         )
-        self.delivery_boc_config = PlannerConfig(
+        self.delivery_box_config = PlannerConfig(
             target_velocity=rospy.get_param("~pfp_target_velocity", 1.0),
             cmd_vel=rospy.get_param("~pfp_cmd_vel", ""),
             cand_traj=rospy.get_param("~pfp_cand_traj", ""),
