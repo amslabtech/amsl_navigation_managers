@@ -485,7 +485,7 @@ class TaskManager:
             self.expand_radius.data = self.local_map_param.no_expand_radius
         elif planner_name == "delivery_box":
             self.select_topic(self.delivery_box_config)
-            self.expand_radius.data = self.local_map_param.expand_radius
+            self.expand_radius.data = self.local_map_param.no_expand_radius
         else:
             rospy.logwarn("Invalid planner")
 
