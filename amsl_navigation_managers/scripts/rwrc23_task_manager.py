@@ -51,6 +51,8 @@ class PlannerParam:
     slow_target_velocity: float
     elevatior_in_target_velocity: float
     elevator_out_target_velocity: float
+    dist_from_head_to_obj: float
+    delivery_box_dist_from_head_to_obj: float
     sleep_time_after_finish: float
 
 
@@ -94,6 +96,7 @@ class TaskManager:
         self.finish_flag = Bool()
         self.target_velocity = Twist()
         self.expand_radius = Float64()
+        self.dist_from_head_to_obj = Float64()
         self.target_velocity.linear.x = self.dwa_config.target_velocity
 
         if not self.task_manager_param.debug:
@@ -105,6 +108,9 @@ class TaskManager:
         )
         self.expand_radius_pub = rospy.Publisher(
             "/local_map/expand_radius", Float64, queue_size=1
+        )
+        self.dist_from_head_to_obj_pub = rospy.Publisher(
+            "/dist_from_head_to_obj", Float64, queue_size=1
         )
         # Subscriber
         self.checkpoint_sub = rospy.Subscriber(
@@ -215,13 +221,13 @@ class TaskManager:
             finish_flag=rospy.get_param("~elevator_out_finish_flag", ""),
             local_goal=rospy.get_param("~elevator_manager_localgoal", ""),
         )
-        self.delivery_boc_config = PlannerConfig(
+        self.delivery_box_config = PlannerConfig(
             target_velocity=rospy.get_param("~pfp_target_velocity", 1.0),
             cmd_vel=rospy.get_param("~pfp_cmd_vel", ""),
             cand_traj=rospy.get_param("~pfp_cand_traj", ""),
             sel_traj=rospy.get_param("~pfp_best_traj", ""),
             footprint=rospy.get_param("~pfp_footprint", ""),
-            finish_flag=rospy.get_param("~pfp_finish_flag", ""),
+            finish_flag=rospy.get_param("~delivery_finish_flag", ""),
             local_goal=rospy.get_param("~delivery_box_localgoal", ""),
         )
         self.planner_param = PlannerParam(
@@ -234,6 +240,12 @@ class TaskManager:
             ),
             elevator_out_target_velocity=rospy.get_param(
                 "~elevator_out_target_velocity", -0.3
+            ),
+            dist_from_head_to_obj=rospy.get_param(
+                "~dist_from_head_to_obj", 0.3
+            ),
+            delivery_box_dist_from_head_to_obj=rospy.get_param(
+                "~delivery_box_dist_from_head_to_obj", 0.15
             ),
             sleep_time_after_finish=rospy.get_param(
                 "~sleep_time_after_finish", 0.5
@@ -326,6 +338,9 @@ class TaskManager:
                 self.target_velocity.linear.x = (
                     self.planner_param.detect_line_pfp_target_velocity
                 )
+                self.dist_from_head_to_obj.data = (
+                    self.planner_param.dist_from_head_to_obj
+                )
             else:
                 self.service_call(self.stop_line_detector_client, False)
 
@@ -341,6 +356,9 @@ class TaskManager:
         # point_follow_planner
         if task_type == "in_line":
             self.select_planner("pfp")
+            self.dist_from_head_to_obj.data = (
+                self.planner_param.dist_from_head_to_obj
+            )
 
         # autodoor
         if task_type == "autodoor":
@@ -361,6 +379,9 @@ class TaskManager:
             self.target_velocity.linear.x = (
                 self.planner_param.elevatior_in_target_velocity
             )
+            self.dist_from_head_to_obj.data = (
+                self.planner_param.dist_from_head_to_obj
+            )
 
         # elevator_out
         if task_type == "elevator_out":
@@ -368,10 +389,16 @@ class TaskManager:
             self.target_velocity.linear.x = (
                 self.planner_param.elevator_out_target_velocity
             )
+            self.dist_from_head_to_obj.data = (
+                self.planner_param.dist_from_head_to_obj
+            )
 
         # delivery_box
         if task_type == "delivery_box":
             self.select_planner("delivery_box")
+            self.dist_from_head_to_obj.data = (
+                self.planner_param.delivery_box_dist_from_head_to_obj
+            )
 
         # slow
         if task_type == "slow":
@@ -458,7 +485,7 @@ class TaskManager:
             self.expand_radius.data = self.local_map_param.no_expand_radius
         elif planner_name == "delivery_box":
             self.select_topic(self.delivery_box_config)
-            self.expand_radius.data = self.local_map_param.expand_radius
+            self.expand_radius.data = self.local_map_param.no_expand_radius
         else:
             rospy.logwarn("Invalid planner")
 
@@ -525,6 +552,7 @@ class TaskManager:
             self.state.print()
             self.target_velocity_pub.publish(self.target_velocity)
             self.expand_radius_pub.publish(self.expand_radius)
+            self.dist_from_head_to_obj_pub.publish(self.dist_from_head_to_obj)
 
             if self.finish_flag.data:
                 self.service_call(self.checkpoint_update_client)
