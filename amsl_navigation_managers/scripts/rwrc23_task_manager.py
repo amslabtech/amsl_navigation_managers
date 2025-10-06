@@ -12,6 +12,7 @@ from std_msgs.msg import Bool, Float64, Int32MultiArray, String
 from std_srvs.srv import SetBool, SetBoolResponse, Trigger
 
 from amsl_navigation_msgs.msg import Edge
+from apriltag_ros.msg import AprilTagDetectionArray
 
 
 @dataclass(frozen=True)
@@ -49,6 +50,7 @@ class PlannerConfig:
 class PlannerParam:
     detect_line_pfp_target_velocity: float
     slow_target_velocity: float
+    apriltag_target_velocity: float
     elevatior_in_target_velocity: float
     elevator_out_target_velocity: float
     dist_from_head_to_obj: float
@@ -98,6 +100,7 @@ class TaskManager:
         self.expand_radius = Float64()
         self.dist_from_head_to_obj = Float64()
         self.target_velocity.linear.x = self.dwa_config.target_velocity
+        self.latest_apriltag_id = None
 
         if not self.task_manager_param.debug:
             self.wait_for_service()
@@ -122,6 +125,9 @@ class TaskManager:
         )
         self.finish_flag_sub = rospy.Subscriber(
             "/local_planner/finish_flag", Bool, self.finish_flag_callback
+        )
+        self.apriltag_sub = rospy.Subscriber(
+            "/tag_detections", AprilTagDetectionArray, self.apriltag_callback
         )
         # Service
         self.stop_line_detected_server = rospy.Service(
@@ -185,6 +191,15 @@ class TaskManager:
             finish_flag=rospy.get_param("~dwa_finish_flag", ""),
             local_goal=rospy.get_param("~localgoal_creator_localgoal", ""),
         )
+        self.apriltag_config = PlannerConfig(
+            target_velocity=rospy.get_param("~dwa_target_velocity", 1.0),
+            cmd_vel=rospy.get_param("~dwa_cmd_vel", ""),
+            cand_traj=rospy.get_param("~dwa_cand_traj", ""),
+            sel_traj=rospy.get_param("~dwa_sel_traj", ""),
+            footprint=rospy.get_param("~dwa_footprint", ""),
+            finish_flag=rospy.get_param("~apriltag_finish_flag", ""),
+            local_goal=rospy.get_param("~localgoal_creator_localgoal", ""),
+        )
         self.pfp_config = PlannerConfig(
             target_velocity=rospy.get_param("~pfp_target_velocity", 1.0),
             cmd_vel=rospy.get_param("~pfp_cmd_vel", ""),
@@ -235,6 +250,9 @@ class TaskManager:
                 "~detect_line_pfp_target_velocity", 0.3
             ),
             slow_target_velocity=rospy.get_param("~slow_target_velocity", 0.6),
+            apriltag_target_velocity=rospy.get_param(
+                "~apriltag_target_velocity", 1.0
+            ),
             elevatior_in_target_velocity=rospy.get_param(
                 "~elevator_in_target_velocity", 0.3
             ),
@@ -318,6 +336,11 @@ class TaskManager:
         self.service_call(self.task_stop_client, req.data)
         self.target_velocity.linear.x = self.pfp_config.target_velocity
         return SetBoolResponse(True, "success")
+
+    def apriltag_callback(self, msg):
+        if len(msg.detections) > 0:
+            self.latest_apriltag_id = msg.detections[0].id[0]
+            rospy.loginfo_throttle(1.0, f"Detected AprilTag ID: {self.latest_apriltag_id}")
 
     def update_task(self, task_type):
         rospy.logwarn(f"task updated : {task_type}")
@@ -422,7 +445,10 @@ class TaskManager:
 
         # no task
         if task_type == "":
-            self.select_planner("dwa")
+            self.select_planner("apriltag")
+            self.target_velocity.linear.x = (
+                self.planner_param.apriltag_target_velocity * self.apriltag_parameter()
+            )
 
     def search_task_from_node_id(self, edge):
         self.state.assigned_planner = ""
@@ -470,6 +496,9 @@ class TaskManager:
     def select_planner(self, planner_name: str):
         if planner_name == "dwa":
             self.select_topic(self.dwa_config)
+            self.expand_radius.data = self.local_map_param.expand_radius
+        if planner_name == "apriltag":
+            self.select_topic(self.apriltag_config)
             self.expand_radius.data = self.local_map_param.expand_radius
         elif planner_name == "pfp":
             self.select_topic(self.pfp_config)
@@ -545,6 +574,21 @@ class TaskManager:
             ]
         )
         self.target_velocity.linear.x = planner_config.target_velocity
+
+
+    def apriltag_parameter(self):
+        default_coeff = 1.0
+
+        if self.latest_apriltag_id is None:
+            return default_coeff
+
+        coeff_dict = {
+            0: 0.0,
+            1: 0.5,
+            2: 1.5,
+        }
+
+        return coeff_dict.get(self.latest_apriltag_id, default_coeff)
 
     def process(self):
         r = rospy.Rate(10)
