@@ -50,7 +50,6 @@ class PlannerConfig:
 class PlannerParam:
     detect_line_pfp_target_velocity: float
     slow_target_velocity: float
-    apriltag_target_velocity: float
     elevatior_in_target_velocity: float
     elevator_out_target_velocity: float
     dist_from_head_to_obj: float
@@ -191,15 +190,6 @@ class TaskManager:
             finish_flag=rospy.get_param("~dwa_finish_flag", ""),
             local_goal=rospy.get_param("~localgoal_creator_localgoal", ""),
         )
-        self.apriltag_config = PlannerConfig(
-            target_velocity=rospy.get_param("~dwa_target_velocity", 1.0),
-            cmd_vel=rospy.get_param("~dwa_cmd_vel", ""),
-            cand_traj=rospy.get_param("~dwa_cand_traj", ""),
-            sel_traj=rospy.get_param("~dwa_sel_traj", ""),
-            footprint=rospy.get_param("~dwa_footprint", ""),
-            finish_flag=rospy.get_param("~apriltag_finish_flag", ""),
-            local_goal=rospy.get_param("~localgoal_creator_localgoal", ""),
-        )
         self.pfp_config = PlannerConfig(
             target_velocity=rospy.get_param("~pfp_target_velocity", 1.0),
             cmd_vel=rospy.get_param("~pfp_cmd_vel", ""),
@@ -250,9 +240,6 @@ class TaskManager:
                 "~detect_line_pfp_target_velocity", 0.3
             ),
             slow_target_velocity=rospy.get_param("~slow_target_velocity", 0.6),
-            apriltag_target_velocity=rospy.get_param(
-                "~apriltag_target_velocity", 1.0
-            ),
             elevatior_in_target_velocity=rospy.get_param(
                 "~elevator_in_target_velocity", 0.3
             ),
@@ -445,10 +432,7 @@ class TaskManager:
 
         # no task
         if task_type == "":
-            self.select_planner("apriltag")
-            self.target_velocity.linear.x = (
-                self.planner_param.apriltag_target_velocity * self.apriltag_parameter()
-            )
+            self.select_planner("dwa")
 
     def search_task_from_node_id(self, edge):
         self.state.assigned_planner = ""
@@ -496,9 +480,6 @@ class TaskManager:
     def select_planner(self, planner_name: str):
         if planner_name == "dwa":
             self.select_topic(self.dwa_config)
-            self.expand_radius.data = self.local_map_param.expand_radius
-        if planner_name == "apriltag":
-            self.select_topic(self.apriltag_config)
             self.expand_radius.data = self.local_map_param.expand_radius
         elif planner_name == "pfp":
             self.select_topic(self.pfp_config)
@@ -573,7 +554,7 @@ class TaskManager:
                 str(planner_config.local_goal),
             ]
         )
-        self.target_velocity.linear.x = planner_config.target_velocity
+        self.target_velocity.linear.x = planner_config.target_velocity * self.apriltag_parameter()
 
 
     def apriltag_parameter(self):
@@ -594,6 +575,12 @@ class TaskManager:
         r = rospy.Rate(10)
         while not rospy.is_shutdown():
             self.state.print()
+
+            self.target_velocity.linear.x = (
+                self.dwa_config.target_velocity * self.apriltag_parameter()
+            )
+
+
             self.target_velocity_pub.publish(self.target_velocity)
             self.expand_radius_pub.publish(self.expand_radius)
             self.dist_from_head_to_obj_pub.publish(self.dist_from_head_to_obj)
